@@ -1,0 +1,60 @@
+name: diet_coach_ai
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  mobx: ^2.3.3+2
+  flutter_mobx: ^2.2.1+1
+
+  # Navigation
+  go_router: ^14.1.4
+
+  # HTTP Client
+  dio: ^5.4.0
+
+  # Charts & Visualization
+  fl_chart: ^0.68.0
+
+  # UI Components
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
+  smooth_page_indicator: ^1.1.0
+  shimmer: ^3.0.0
+
+  # Camera & Image
+  camera: ^0.11.0+2
+  flutter_image_compress: ^2.1.0
+  image_picker: ^1.0.7
+
+  # Auth
+  firebase_auth: ^6.4.0
+  firebase_core: ^4.7.0
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Utils
+  intl: ^0.19.0
+  uuid: ^4.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.7
+  mobx_codegen: ^2.6.0+1
+
+flutter:
+  uses-material-design: true
