@@ -32,7 +32,7 @@ class AppRouter {
   static final _planNavKey = GlobalKey<NavigatorState>();
   static final _profileNavKey = GlobalKey<NavigatorState>();
 
-  static GoRouter get router => GoRouter(
+  static final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/home',
     routes: [
@@ -158,4 +158,6 @@ class AppRouter {
       ),
     ],
   );
+
+  static GoRouter get router => _router;
 }

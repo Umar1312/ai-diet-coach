@@ -28,7 +28,7 @@ class _PantryScreenState extends State<PantryScreen> {
         child: Observer(
           builder: (_) {
             final items = dashboardStore.pantry;
-            final isLoading = dashboardStore.isLoadingPantry;
+            final isLoading = dashboardStore.isLoadingPantry.value;
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [

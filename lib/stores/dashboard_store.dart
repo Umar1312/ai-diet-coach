@@ -6,112 +6,78 @@ import '../../shared/models/home_models.dart';
 import '../../shared/models/meal.dart';
 import '../../shared/models/meal_log_response.dart';
 
-part 'dashboard_store.g.dart';
-
-class DashboardStore = _DashboardStore with _$DashboardStore;
-
-abstract class _DashboardStore with Store {
-  _DashboardStore() {
+/// MobX store WITHOUT codegen.
+/// All observables/computed are declared manually via Observable()/Computed().
+class DashboardStore {
+  DashboardStore() {
     refresh();
   }
 
   // ── Core daily numbers ──────────────────────────────────────────────────
 
-  @observable
-  int consumedCalories = 0;
+  final consumedCalories = Observable<int>(0);
+  final consumedProtein = Observable<int>(0);
+  final consumedCarbs = Observable<int>(0);
+  final consumedFats = Observable<int>(0);
 
-  @observable
-  int consumedProtein = 0;
+  final targetCalories = Observable<int>(2191);
+  final targetProtein = Observable<int>(170);
+  final targetCarbs = Observable<int>(240);
+  final targetFats = Observable<int>(60);
 
-  @observable
-  int consumedCarbs = 0;
+  final todayMeals = ObservableList<Meal>();
 
-  @observable
-  int consumedFats = 0;
+  // ── Legacy AI coach fields ──────────────────────────────────────────────
 
-  @observable
-  int targetCalories = 2191;
+  final aiCardText = Observable<String>('');
+  final aiCardState = Observable<AICardState>(AICardState.onTrack);
+  final showAiSuggestion = Observable<bool>(false);
 
-  @observable
-  int targetProtein = 170;
+  // ── Autopilot home state ────────────────────────────────────────────────
 
-  @observable
-  int targetCarbs = 240;
+  final dayStatus = Observable<DayStatus>(DayStatus.onTrack);
+  final nextMeal = Observable<NextMealRecommendation?>(null);
+  final recalibration = Observable<RecalibrationStatus?>(null);
+  final flexPlan = ObservableList<FlexPlanSlot>();
+  final pantry = ObservableList<PantryItem>();
 
-  @observable
-  int targetFats = 60;
-
-  @observable
-  ObservableList<Meal> todayMeals = ObservableList<Meal>();
-
-  // ── Legacy AI coach fields (kept for back-compat with other screens) ────
-
-  @observable
-  String aiCardText = '';
-
-  @observable
-  AICardState aiCardState = AICardState.onTrack;
-
-  @observable
-  bool showAiSuggestion = false;
-
-  // ── New autopilot home state ────────────────────────────────────────────
-
-  @observable
-  DayStatus dayStatus = DayStatus.onTrack;
-
-  @observable
-  NextMealRecommendation? nextMeal;
-
-  @observable
-  RecalibrationStatus? recalibration;
-
-  @observable
-  ObservableList<FlexPlanSlot> flexPlan = ObservableList<FlexPlanSlot>();
-
-  @observable
-  ObservableList<PantryItem> pantry = ObservableList<PantryItem>();
-
-  @observable
-  bool isLoadingPantry = false;
-
-  // ── Loading / error flags (kept so shimmer still works if needed) ───────
-
-  @observable
-  bool isLoading = false;
-
-  @observable
-  bool hasError = false;
-
-  @observable
-  String errorMessage = '';
+  final isLoadingPantry = Observable<bool>(false);
+  final isLoading = Observable<bool>(false);
+  final hasError = Observable<bool>(false);
+  final errorMessage = Observable<String>('');
 
   // ── Computed ────────────────────────────────────────────────────────────
 
-  @computed
-  double get caloriesProgress =>
-      targetCalories > 0 ? consumedCalories / targetCalories : 0.0;
+  late final caloriesProgress = Computed<double>(
+    () => targetCalories.value > 0
+        ? consumedCalories.value / targetCalories.value
+        : 0.0,
+  );
 
-  @computed
-  double get proteinProgress =>
-      targetProtein > 0 ? consumedProtein / targetProtein : 0.0;
+  late final proteinProgress = Computed<double>(
+    () => targetProtein.value > 0
+        ? consumedProtein.value / targetProtein.value
+        : 0.0,
+  );
 
-  @computed
-  double get carbsProgress =>
-      targetCarbs > 0 ? consumedCarbs / targetCarbs : 0.0;
+  late final carbsProgress = Computed<double>(
+    () => targetCarbs.value > 0 ? consumedCarbs.value / targetCarbs.value : 0.0,
+  );
 
-  @computed
-  double get fatsProgress => targetFats > 0 ? consumedFats / targetFats : 0.0;
+  late final fatsProgress = Computed<double>(
+    () => targetFats.value > 0 ? consumedFats.value / targetFats.value : 0.0,
+  );
 
-  @computed
-  int get caloriesLeft => targetCalories - consumedCalories;
+  late final caloriesLeft = Computed<int>(
+    () => targetCalories.value - consumedCalories.value,
+  );
 
-  @computed
-  int get proteinLeft => targetProtein - consumedProtein;
+  late final proteinLeft = Computed<int>(
+    () => targetProtein.value - consumedProtein.value,
+  );
 
-  @computed
-  String? get aiSuggestionTitle {
-    switch (aiCardState) {
+  late final aiSuggestionTitle = Computed<String?>(() {
+    switch (aiCardState.value) {
       case AICardState.onTrack:
         return 'On Track';
       case AICardState.skippedMeal:
@@ -123,48 +89,58 @@ abstract class _DashboardStore with Store {
       case AICardState.goalHit:
         return 'Goal Hit!';
     }
-  }
+  });
 
-  @computed
-  String? get aiSuggestionMessage => aiCardText.isEmpty ? null : aiCardText;
+  late final aiSuggestionMessage = Computed<String?>(
+    () => aiCardText.value.isEmpty ? null : aiCardText.value,
+  );
 
   // ── Actions ─────────────────────────────────────────────────────────────
 
-  @action
   void applyPlan(DailyPlan plan) {
-    consumedCalories = plan.consumed.calories;
-    consumedProtein = plan.consumed.proteinG;
-    consumedCarbs = plan.consumed.carbsG;
-    consumedFats = plan.consumed.fatsG;
-    targetCalories = plan.targets.calories;
-    targetProtein = plan.targets.proteinG;
-    targetCarbs = plan.targets.carbsG;
-    targetFats = plan.targets.fatsG;
-    todayMeals = ObservableList.of(plan.meals);
-    aiCardText = plan.aiCardText;
-    aiCardState = plan.aiCardState;
-    dayStatus = plan.dayStatus;
-    nextMeal = plan.nextMeal;
-    recalibration = plan.recalibration;
-    flexPlan = ObservableList.of(plan.flexPlan);
+    runInAction(() {
+      consumedCalories.value = plan.consumed.calories;
+      consumedProtein.value = plan.consumed.proteinG;
+      consumedCarbs.value = plan.consumed.carbsG;
+      consumedFats.value = plan.consumed.fatsG;
+      targetCalories.value = plan.targets.calories;
+      targetProtein.value = plan.targets.proteinG;
+      targetCarbs.value = plan.targets.carbsG;
+      targetFats.value = plan.targets.fatsG;
+      todayMeals
+        ..clear()
+        ..addAll(plan.meals);
+      aiCardText.value = plan.aiCardText;
+      aiCardState.value = plan.aiCardState;
+      dayStatus.value = plan.dayStatus;
+      nextMeal.value = plan.nextMeal;
+      recalibration.value = plan.recalibration;
+      flexPlan
+        ..clear()
+        ..addAll(plan.flexPlan);
+    });
   }
 
-  @action
   Future<void> refresh() async {
-    isLoading = true;
-    hasError = false;
+    runInAction(() {
+      isLoading.value = true;
+      hasError.value = false;
+    });
     try {
       final plan = await apiService.fetchDashboard();
       applyPlan(plan);
     } catch (e) {
-      hasError = true;
-      errorMessage = e is ApiException ? e.message : 'Failed to load dashboard';
+      runInAction(() {
+        hasError.value = true;
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to load dashboard';
+      });
     } finally {
-      isLoading = false;
+      runInAction(() => isLoading.value = false);
     }
   }
 
-  @action
   Future<void> addMeal(Meal meal) async {
     final response = await apiService.logManual(
       ManualLogRequest(
@@ -179,9 +155,8 @@ abstract class _DashboardStore with Store {
     applyPlan(response.updatedPlan);
   }
 
-  @action
   Future<void> acceptNextMeal() async {
-    final meal = nextMeal;
+    final meal = nextMeal.value;
     if (meal == null) return;
     final response = await apiService.logManual(
       ManualLogRequest(
@@ -196,54 +171,53 @@ abstract class _DashboardStore with Store {
     applyPlan(response.updatedPlan);
   }
 
-  @action
   Future<void> swapNextMeal() async {
-    final current = nextMeal?.name ?? '';
+    final current = nextMeal.value?.name ?? '';
     final response = await apiService.swapMeal(current);
-    nextMeal = response.nextMeal;
+    runInAction(() => nextMeal.value = response.nextMeal);
   }
 
-  @action
   Future<List<DayHistoryEntry>> fetchHistory({int days = 7}) async {
     final response = await apiService.fetchHistory(days: days);
     return response.days;
   }
 
-  @action
   Future<void> quickAction(String action) async {
     final response = await apiService.quickAction(action);
-    nextMeal = response.nextMeal;
+    runInAction(() => nextMeal.value = response.nextMeal);
   }
 
-  @action
   Future<void> loadPantry() async {
-    isLoadingPantry = true;
+    runInAction(() => isLoadingPantry.value = true);
     try {
       final response = await apiService.fetchPantry();
-      pantry = ObservableList.of(
-        response.items.map(PantryItem.fromResponse).toList(),
-      );
+      runInAction(() {
+        pantry
+          ..clear()
+          ..addAll(response.items.map(PantryItem.fromResponse).toList());
+      });
     } catch (e) {
-      // Silently fail — pantry is optional
+      // Silently fail
     } finally {
-      isLoadingPantry = false;
+      runInAction(() => isLoadingPantry.value = false);
     }
   }
 
-  @action
   void reset() {
-    consumedCalories = 0;
-    consumedProtein = 0;
-    consumedCarbs = 0;
-    consumedFats = 0;
-    todayMeals = ObservableList<Meal>();
-    aiCardText = '';
-    aiCardState = AICardState.onTrack;
-    showAiSuggestion = false;
-    dayStatus = DayStatus.onTrack;
-    nextMeal = null;
-    recalibration = null;
-    flexPlan = ObservableList<FlexPlanSlot>();
-    pantry = ObservableList<PantryItem>();
+    runInAction(() {
+      consumedCalories.value = 0;
+      consumedProtein.value = 0;
+      consumedCarbs.value = 0;
+      consumedFats.value = 0;
+      todayMeals.clear();
+      aiCardText.value = '';
+      aiCardState.value = AICardState.onTrack;
+      showAiSuggestion.value = false;
+      dayStatus.value = DayStatus.onTrack;
+      nextMeal.value = null;
+      recalibration.value = null;
+      flexPlan.clear();
+      pantry.clear();
+    });
   }
 }

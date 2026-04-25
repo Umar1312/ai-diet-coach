@@ -18,97 +18,97 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
       ),
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.inter(
+        displayLarge: GoogleFonts.openSans(
           fontSize: 64,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
           height: 1.05,
           letterSpacing: -2,
         ),
-        displayMedium: GoogleFonts.inter(
+        displayMedium: GoogleFonts.openSans(
           fontSize: 48,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
           height: 1.1,
           letterSpacing: -1.5,
         ),
-        displaySmall: GoogleFonts.inter(
+        displaySmall: GoogleFonts.openSans(
           fontSize: 36,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
           height: 1.15,
           letterSpacing: -1,
         ),
-        headlineLarge: GoogleFonts.inter(
+        headlineLarge: GoogleFonts.openSans(
           fontSize: 32,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           height: 1.2,
           letterSpacing: -0.8,
         ),
-        headlineMedium: GoogleFonts.inter(
+        headlineMedium: GoogleFonts.openSans(
           fontSize: 26,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           height: 1.25,
           letterSpacing: -0.6,
         ),
-        headlineSmall: GoogleFonts.inter(
+        headlineSmall: GoogleFonts.openSans(
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
           height: 1.3,
           letterSpacing: -0.4,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.openSans(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           letterSpacing: -0.3,
         ),
-        titleMedium: GoogleFonts.inter(
+        titleMedium: GoogleFonts.openSans(
           fontSize: 17,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           letterSpacing: -0.2,
         ),
-        titleSmall: GoogleFonts.inter(
+        titleSmall: GoogleFonts.openSans(
           fontSize: 15,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
           letterSpacing: -0.1,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.openSans(
           fontSize: 18,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
           height: 1.5,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.openSans(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
           height: 1.5,
         ),
-        bodySmall: GoogleFonts.inter(
+        bodySmall: GoogleFonts.openSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
           height: 1.4,
         ),
-        labelLarge: GoogleFonts.inter(
+        labelLarge: GoogleFonts.openSans(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           letterSpacing: -0.2,
         ),
-        labelMedium: GoogleFonts.inter(
+        labelMedium: GoogleFonts.openSans(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
           letterSpacing: -0.1,
         ),
-        labelSmall: GoogleFonts.inter(
+        labelSmall: GoogleFonts.openSans(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textTertiary,
@@ -123,7 +123,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.openSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -132,7 +132,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.inter(
+          textStyle: GoogleFonts.openSans(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -157,7 +157,7 @@ class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: GoogleFonts.inter(
+        hintStyle: GoogleFonts.openSans(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textTertiary,
@@ -176,7 +176,7 @@ class AppTheme {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.openSans(
           fontSize: 17,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,

@@ -59,34 +59,27 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: List.generate(tabs.length, (i) {
-            final active = i == currentIndex;
-            return Expanded(
-              child: _NavItem(
-                tab: tabs[i],
-                active: active,
-                onTap: () => onTap(i),
-              ),
-            );
-          }),
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: List.generate(tabs.length, (i) {
+              final active = i == currentIndex;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(i),
+                  child: _NavItem(tab: tabs[i], active: active),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -96,51 +89,32 @@ class _BottomNavBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _TabItem tab;
   final bool active;
-  final VoidCallback onTap;
 
-  const _NavItem({
-    required this.tab,
-    required this.active,
-    required this.onTap,
-  });
+  const _NavItem({required this.tab, required this.active});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-          decoration: BoxDecoration(
-            color: active
-                ? AppColors.primary.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
+    return SizedBox(
+      height: 64,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            tab.icon,
+            size: 22,
+            color: active ? AppColors.primary : AppColors.textTertiary,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                tab.icon,
-                size: 22,
-                color: active ? AppColors.primary : AppColors.textTertiary,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                tab.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.primary : AppColors.textTertiary,
-                  letterSpacing: -0.1,
-                ),
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            tab.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              color: active ? AppColors.primary : AppColors.textTertiary,
+              letterSpacing: -0.1,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

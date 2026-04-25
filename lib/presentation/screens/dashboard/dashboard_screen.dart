@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -150,69 +152,70 @@ class _CalorieHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final calLeft = store.caloriesLeft.clamp(-9999, 9999);
-    final progress = store.caloriesProgress.clamp(0.0, 1.0);
+    final calLeft = store.caloriesLeft.value.clamp(-9999, 9999);
+
+    final rings = [
+      _RingData(
+        radius: 142,
+        strokeWidth: 14,
+        progress: store.caloriesProgress.value.clamp(0.0, 1.0),
+        color: AppColors.calories,
+      ),
+      _RingData(
+        radius: 117,
+        strokeWidth: 13,
+        progress: store.proteinProgress.value.clamp(0.0, 1.0),
+        color: AppColors.protein,
+      ),
+      _RingData(
+        radius: 92,
+        strokeWidth: 13,
+        progress: store.carbsProgress.value.clamp(0.0, 1.0),
+        color: AppColors.carbs,
+      ),
+      _RingData(
+        radius: 67,
+        strokeWidth: 11,
+        progress: store.fatsProgress.value.clamp(0.0, 1.0),
+        color: AppColors.fats,
+      ),
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         children: [
-          // Big calorie circle
           SizedBox(
-            width: 260,
-            height: 260,
+            width: 306,
+            height: 306,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Background ring
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: CircularProgressIndicator(
-                    value: 1,
-                    strokeWidth: 10,
-                    backgroundColor: AppColors.surface,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.surface,
-                    ),
-                  ),
+                CustomPaint(
+                  size: const Size(306, 306),
+                  painter: _MacroRingsPainter(rings: rings),
                 ),
-                // Progress ring
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 10,
-                    backgroundColor: Colors.transparent,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                    strokeCap: StrokeCap.round,
-                  ),
-                ),
-                // Number
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       '$calLeft',
                       style: const TextStyle(
-                        fontSize: 72,
+                        fontSize: 44,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
-                        letterSpacing: -3,
+                        letterSpacing: -1.5,
                         height: 1,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     const Text(
-                      'calories left',
+                      'cal left',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
-                        letterSpacing: -0.3,
+                        letterSpacing: -0.2,
                       ),
                     ),
                   ],
@@ -220,18 +223,111 @@ class _CalorieHero extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          // Target text
-          Text(
-            'Target: ${store.targetCalories} cal',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textTertiary,
-            ),
+          const SizedBox(height: 28),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _MacroLegendDot(
+                color: AppColors.protein,
+                label: '${store.proteinLeft.value.clamp(0, 999)}g P',
+              ),
+              const SizedBox(width: 20),
+              _MacroLegendDot(
+                color: AppColors.carbs,
+                label:
+                    '${(store.targetCarbs.value - store.consumedCarbs.value).clamp(0, 999)}g C',
+              ),
+              const SizedBox(width: 20),
+              _MacroLegendDot(
+                color: AppColors.fats,
+                label:
+                    '${(store.targetFats.value - store.consumedFats.value).clamp(0, 999)}g F',
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RingData {
+  final double radius;
+  final double strokeWidth;
+  final double progress;
+  final Color color;
+
+  _RingData({
+    required this.radius,
+    required this.strokeWidth,
+    required this.progress,
+    required this.color,
+  });
+}
+
+class _MacroRingsPainter extends CustomPainter {
+  final List<_RingData> rings;
+
+  _MacroRingsPainter({required this.rings});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    for (final ring in rings) {
+      // Background track
+      final trackPaint = Paint()
+        ..color = ring.color.withValues(alpha: 0.08)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ring.strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawCircle(center, ring.radius, trackPaint);
+
+      // Progress arc
+      final progressPaint = Paint()
+        ..color = ring.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ring.strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      final sweepAngle = 2 * math.pi * ring.progress.clamp(0.0, 1.0);
+      final rect = Rect.fromCircle(center: center, radius: ring.radius);
+
+      canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, progressPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MacroRingsPainter old) => true;
+}
+
+class _MacroLegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _MacroLegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -246,113 +342,117 @@ class _NextMeal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meal = store.nextMeal;
-    if (meal == null) return const SizedBox.shrink();
+    return Observer(
+      builder: (_) {
+        final meal = store.nextMeal.value;
+        if (meal == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Up next',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(32),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Up next',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        meal.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.8,
-                          height: 1.15,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            meal.name,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.8,
+                              height: 1.15,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                        Text(meal.emoji, style: const TextStyle(fontSize: 40)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      meal.whyItFits,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Text(meal.emoji, style: const TextStyle(fontSize: 40)),
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          store.acceptNextMeal();
+                          _showAcceptedSnack(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.textOnPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        child: const Text("I'll eat this"),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: TextButton(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          store.swapNextMeal();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: const Text('Suggest something else'),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  meal.whyItFits,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      store.acceptNextMeal();
-                      _showAcceptedSnack(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textOnPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    child: const Text("I'll eat this"),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: TextButton(
-                    onPressed: () {
-                      HapticFeedback.selectionClick();
-                      store.swapNextMeal();
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary,
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    child: const Text('Suggest something else'),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
