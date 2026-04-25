@@ -4,6 +4,7 @@ import '../../shared/models/dashboard_state.dart';
 import '../../shared/models/history_response.dart';
 import '../../shared/models/home_models.dart';
 import '../../shared/models/meal.dart';
+import '../../shared/models/meal_log_item.dart';
 import '../../shared/models/meal_log_response.dart';
 
 /// MobX store WITHOUT codegen.
@@ -25,7 +26,7 @@ class DashboardStore {
   final targetCarbs = Observable<int>(240);
   final targetFats = Observable<int>(60);
 
-  final todayMeals = ObservableList<Meal>();
+  final todayMeals = ObservableList<MealLogItem>();
 
   // ── Legacy AI coach fields ──────────────────────────────────────────────
 
@@ -141,15 +142,15 @@ class DashboardStore {
     }
   }
 
-  Future<void> addMeal(Meal meal) async {
+  Future<void> addMeal(Meal meal, {String source = 'manual'}) async {
     final response = await apiService.logManual(
       ManualLogRequest(
-        foodName: meal.foodName,
+        foodName: meal.name,
         calories: meal.calories,
         proteinG: meal.proteinG,
         carbsG: meal.carbsG,
         fatsG: meal.fatsG,
-        source: meal.source,
+        source: source,
       ),
     );
     applyPlan(response.updatedPlan);

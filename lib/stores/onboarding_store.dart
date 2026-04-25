@@ -33,6 +33,9 @@ abstract class _OnboardingStore with Store {
   List<String> dietaryRestrictions = [];
 
   @observable
+  String? country;
+
+  @observable
   double loadingProgress = 0.0;
 
   @observable
@@ -61,6 +64,11 @@ abstract class _OnboardingStore with Store {
   }
 
   @action
+  void setCountry(String? value) {
+    country = value;
+  }
+
+  @action
   void updateDietaryRestrictions(List<String> restrictions) {
     dietaryRestrictions = restrictions;
   }
@@ -75,6 +83,7 @@ abstract class _OnboardingStore with Store {
       goal: AppConstants.goalMap[goal] ?? 'lose_weight',
       targetWeightKg: targetWeight ?? 65,
       dietaryRestrictions: dietaryRestrictions,
+      country: country,
     );
   }
 
@@ -102,6 +111,7 @@ abstract class _OnboardingStore with Store {
     goal = null;
     targetWeight = null;
     dietaryRestrictions = [];
+    country = null;
     loadingProgress = 0.0;
     loadingStatus = 'Calculating your macros...';
     setupResponse = null;

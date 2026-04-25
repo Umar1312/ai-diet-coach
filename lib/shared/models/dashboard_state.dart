@@ -1,4 +1,4 @@
-import 'meal.dart';
+import 'meal_log_item.dart';
 import 'home_models.dart';
 
 enum AICardState {
@@ -24,7 +24,7 @@ class DailyPlan {
   final String userId;
   final MacroTargets targets;
   final MacroTargets consumed;
-  final List<Meal> meals;
+  final List<MealLogItem> meals;
   final List<FlexPlanSlot> flexPlan;
   final NextMealRecommendation? nextMeal;
   final RecalibrationStatus? recalibration;
@@ -54,7 +54,7 @@ class DailyPlan {
     targets: MacroTargets.fromJson(json['targets'] as Map<String, dynamic>),
     consumed: MacroTargets.fromJson(json['consumed'] as Map<String, dynamic>),
     meals: (json['meals'] as List)
-        .map((e) => Meal.fromJson(e as Map<String, dynamic>))
+        .map((e) => MealLogItem.fromJson(e as Map<String, dynamic>))
         .toList(),
     flexPlan: (json['flex_plan'] as List)
         .map((e) => FlexPlanSlot.fromJson(e as Map<String, dynamic>))

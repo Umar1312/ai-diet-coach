@@ -47,11 +47,11 @@ class _PlanScreenState extends State<PlanScreen> {
                 SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      for (final meal in store.todayMeals)
+                      for (final log in store.todayMeals)
                         _LoggedMealRow(
-                          name: meal.foodName,
-                          calories: meal.calories,
-                          protein: meal.proteinG,
+                          name: log.meal.name,
+                          calories: log.meal.calories,
+                          protein: log.meal.proteinG,
                         ),
                     ],
                   ),

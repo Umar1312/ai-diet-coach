@@ -1,55 +1,47 @@
 class Meal {
-  final String id;
-  final String userId;
-  final String foodName;
+  final String name;
+  final String emoji;
+  final int prepMinutes;
   final int calories;
   final int proteinG;
   final int carbsG;
   final int fatsG;
-  final String? imageUrl;
-  final String loggedAt;
-  final String source;
-  final String dayId;
+  final String? cuisine;
+  final String? servingSize;
 
   const Meal({
-    required this.id,
-    required this.userId,
-    required this.foodName,
+    required this.name,
+    required this.emoji,
+    this.prepMinutes = 0,
     required this.calories,
     required this.proteinG,
     required this.carbsG,
     required this.fatsG,
-    this.imageUrl,
-    required this.loggedAt,
-    required this.source,
-    required this.dayId,
+    this.cuisine,
+    this.servingSize,
   });
 
   factory Meal.fromJson(Map<String, dynamic> json) => Meal(
-    id: json['id'] as String,
-    userId: json['user_id'] as String,
-    foodName: json['food_name'] as String,
+    name: json['name'] as String,
+    emoji: json['emoji'] as String,
+    prepMinutes: json['prep_minutes'] as int? ?? 0,
     calories: json['calories'] as int,
     proteinG: json['protein_g'] as int,
     carbsG: json['carbs_g'] as int,
     fatsG: json['fats_g'] as int,
-    imageUrl: json['image_url'] as String?,
-    loggedAt: json['logged_at'] as String,
-    source: json['source'] as String,
-    dayId: json['day_id'] as String,
+    cuisine: json['cuisine'] as String?,
+    servingSize: json['serving_size'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'user_id': userId,
-    'food_name': foodName,
+    'name': name,
+    'emoji': emoji,
+    'prep_minutes': prepMinutes,
     'calories': calories,
     'protein_g': proteinG,
     'carbs_g': carbsG,
     'fats_g': fatsG,
-    'image_url': imageUrl,
-    'logged_at': loggedAt,
-    'source': source,
-    'day_id': dayId,
+    'cuisine': cuisine,
+    'serving_size': servingSize,
   };
 }

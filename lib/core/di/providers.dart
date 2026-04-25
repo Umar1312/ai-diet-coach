@@ -76,10 +76,11 @@ class ApiService {
     });
   }
 
-  Future<MealLogResponse> logVision(String imagePath) async {
+  Future<MealLogResponse> logVision(String imagePath, {String? context}) async {
     return _wrap(() async {
       final formData = FormData.fromMap({
         'image': await MultipartFile.fromFile(imagePath, filename: 'meal.jpg'),
+        if (context != null) 'context': context,
       });
       final response = await _dio.post('/log/vision', data: formData);
       return MealLogResponse.fromJson(response.data);
@@ -90,10 +91,10 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.post(
         '/log/text',
-        data: {
-          'description': description,
-          if (context case final String c) 'context': c,
-        },
+        data: TextLogRequest(
+          description: description,
+          context: context,
+        ).toJson(),
       );
       return MealLogResponse.fromJson(response.data);
     });
@@ -103,6 +104,35 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.post('/log/manual', data: request.toJson());
       return MealLogResponse.fromJson(response.data);
+    });
+  }
+
+  Future<MealLogResponse> logRecommendation(
+    LogRecommendationRequest request,
+  ) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/log/recommendation',
+        data: request.toJson(),
+      );
+      return MealLogResponse.fromJson(response.data);
+    });
+  }
+
+  Future<MealLogResponse> editMeal(
+    String mealId,
+    MealEditRequest request,
+  ) async {
+    return _wrap(() async {
+      final response = await _dio.patch('/log/$mealId', data: request.toJson());
+      return MealLogResponse.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> deleteMeal(String mealId) async {
+    return _wrap(() async {
+      final response = await _dio.delete('/log/$mealId');
+      return DailyPlan.fromJson(response.data);
     });
   }
 
@@ -130,6 +160,19 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.get('/pantry');
       return PantryListResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantrySuggestionsResponse> fetchPantrySuggestions({
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.get(
+        '/pantry/suggestions',
+        queryParameters: {'page': page, 'page_size': pageSize},
+      );
+      return PantrySuggestionsResponse.fromJson(response.data);
     });
   }
 
@@ -179,27 +222,42 @@ class ApiService {
 }
 
 class ProfilePatchRequest {
+  final String? gender;
+  final int? age;
+  final double? heightCm;
   final double? weightKg;
   final double? targetWeightKg;
   final String? activityLevel;
   final String? goal;
   final List<String>? dietaryRestrictions;
+  final String? timezone;
+  final String? country;
 
   const ProfilePatchRequest({
+    this.gender,
+    this.age,
+    this.heightCm,
     this.weightKg,
     this.targetWeightKg,
     this.activityLevel,
     this.goal,
     this.dietaryRestrictions,
+    this.timezone,
+    this.country,
   });
 
   Map<String, dynamic> toJson() => {
+    if (gender != null) 'gender': gender,
+    if (age != null) 'age': age,
+    if (heightCm != null) 'height_cm': heightCm,
     if (weightKg != null) 'weight_kg': weightKg,
     if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
     if (activityLevel != null) 'activity_level': activityLevel,
     if (goal != null) 'goal': goal,
     if (dietaryRestrictions != null)
       'dietary_restrictions': dietaryRestrictions,
+    if (timezone != null) 'timezone': timezone,
+    if (country != null) 'country': country,
   };
 }
 

@@ -64,7 +64,7 @@ class MealConfirmSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  meal.foodName,
+                  meal.name,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,

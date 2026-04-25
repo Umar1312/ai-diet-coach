@@ -11,6 +11,8 @@ class UserSetupRequest {
   final String goal;
   final double targetWeightKg;
   final List<String> dietaryRestrictions;
+  final String timezone;
+  final String? country;
 
   const UserSetupRequest({
     required this.gender,
@@ -21,6 +23,8 @@ class UserSetupRequest {
     required this.goal,
     required this.targetWeightKg,
     required this.dietaryRestrictions,
+    this.timezone = 'UTC',
+    this.country,
   });
 
   Map<String, dynamic> toJson() => {
@@ -32,6 +36,8 @@ class UserSetupRequest {
     'goal': goal,
     'target_weight_kg': targetWeightKg,
     'dietary_restrictions': dietaryRestrictions,
+    'timezone': timezone,
+    if (country != null) 'country': country,
   };
 }
 
@@ -84,6 +90,8 @@ class UserProfile {
   final String activityLevel;
   final String goal;
   final List<String> dietaryRestrictions;
+  final String timezone;
+  final String? country;
 
   const UserProfile({
     required this.gender,
@@ -94,6 +102,8 @@ class UserProfile {
     required this.activityLevel,
     required this.goal,
     required this.dietaryRestrictions,
+    required this.timezone,
+    this.country,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -107,5 +117,7 @@ class UserProfile {
     dietaryRestrictions: (json['dietary_restrictions'] as List)
         .map((e) => e as String)
         .toList(),
+    timezone: json['timezone'] as String,
+    country: json['country'] as String?,
   );
 }

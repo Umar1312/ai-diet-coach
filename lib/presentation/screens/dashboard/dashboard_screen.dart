@@ -6,7 +6,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/stores/dashboard_store.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
@@ -26,25 +25,20 @@ class DashboardScreen extends StatelessWidget {
             HapticFeedback.mediumImpact();
             await dashboardStore.refresh();
           },
-          child: Observer(
-            builder: (_) {
-              final store = dashboardStore;
-              return CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: [
-                  const SliverToBoxAdapter(child: _Greeting()),
-                  const SliverToBoxAdapter(child: SizedBox(height: 48)),
-                  SliverToBoxAdapter(child: _CalorieHero(store: store)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 56)),
-                  SliverToBoxAdapter(child: _NextMeal(store: store)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                  const SliverToBoxAdapter(child: _BigLogButton()),
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                ],
-              );
-            },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              const SliverToBoxAdapter(child: _Greeting()),
+              const SliverToBoxAdapter(child: SizedBox(height: 48)),
+              const SliverToBoxAdapter(child: _CalorieHero()),
+              const SliverToBoxAdapter(child: SizedBox(height: 56)),
+              const SliverToBoxAdapter(child: _NextMeal()),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              const SliverToBoxAdapter(child: _BigLogButton()),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            ],
           ),
         ),
       ),
@@ -147,106 +141,110 @@ class _Greeting extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _CalorieHero extends StatelessWidget {
-  final DashboardStore store;
-  const _CalorieHero({required this.store});
+  const _CalorieHero();
 
   @override
   Widget build(BuildContext context) {
-    final calLeft = store.caloriesLeft.value.clamp(-9999, 9999);
+    return Observer(
+      builder: (_) {
+        final store = dashboardStore;
+        final calLeft = store.caloriesLeft.value.clamp(-9999, 9999);
 
-    final rings = [
-      _RingData(
-        radius: 142,
-        strokeWidth: 14,
-        progress: store.caloriesProgress.value.clamp(0.0, 1.0),
-        color: AppColors.calories,
-      ),
-      _RingData(
-        radius: 117,
-        strokeWidth: 13,
-        progress: store.proteinProgress.value.clamp(0.0, 1.0),
-        color: AppColors.protein,
-      ),
-      _RingData(
-        radius: 92,
-        strokeWidth: 13,
-        progress: store.carbsProgress.value.clamp(0.0, 1.0),
-        color: AppColors.carbs,
-      ),
-      _RingData(
-        radius: 67,
-        strokeWidth: 11,
-        progress: store.fatsProgress.value.clamp(0.0, 1.0),
-        color: AppColors.fats,
-      ),
-    ];
+        final rings = [
+          _RingData(
+            radius: 142,
+            strokeWidth: 14,
+            progress: store.caloriesProgress.value.clamp(0.0, 1.0),
+            color: AppColors.calories,
+          ),
+          _RingData(
+            radius: 117,
+            strokeWidth: 13,
+            progress: store.proteinProgress.value.clamp(0.0, 1.0),
+            color: AppColors.protein,
+          ),
+          _RingData(
+            radius: 92,
+            strokeWidth: 13,
+            progress: store.carbsProgress.value.clamp(0.0, 1.0),
+            color: AppColors.carbs,
+          ),
+          _RingData(
+            radius: 67,
+            strokeWidth: 11,
+            progress: store.fatsProgress.value.clamp(0.0, 1.0),
+            color: AppColors.fats,
+          ),
+        ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        children: [
-          SizedBox(
-            width: 306,
-            height: 306,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CustomPaint(
-                  size: const Size(306, 306),
-                  painter: _MacroRingsPainter(rings: rings),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            children: [
+              SizedBox(
+                width: 306,
+                height: 306,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Text(
-                      '$calLeft',
-                      style: const TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -1.5,
-                        height: 1,
-                      ),
+                    CustomPaint(
+                      size: const Size(306, 306),
+                      painter: _MacroRingsPainter(rings: rings),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'cal left',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                        letterSpacing: -0.2,
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$calLeft',
+                          style: const TextStyle(
+                            fontSize: 44,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -1.5,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'cal left',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _MacroLegendDot(
-                color: AppColors.protein,
-                label: '${store.proteinLeft.value.clamp(0, 999)}g P',
               ),
-              const SizedBox(width: 20),
-              _MacroLegendDot(
-                color: AppColors.carbs,
-                label:
-                    '${(store.targetCarbs.value - store.consumedCarbs.value).clamp(0, 999)}g C',
-              ),
-              const SizedBox(width: 20),
-              _MacroLegendDot(
-                color: AppColors.fats,
-                label:
-                    '${(store.targetFats.value - store.consumedFats.value).clamp(0, 999)}g F',
+              const SizedBox(height: 28),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _MacroLegendDot(
+                    color: AppColors.protein,
+                    label: '${store.proteinLeft.value.clamp(0, 999)}g P',
+                  ),
+                  const SizedBox(width: 20),
+                  _MacroLegendDot(
+                    color: AppColors.carbs,
+                    label:
+                        '${(store.targetCarbs.value - store.consumedCarbs.value).clamp(0, 999)}g C',
+                  ),
+                  const SizedBox(width: 20),
+                  _MacroLegendDot(
+                    color: AppColors.fats,
+                    label:
+                        '${(store.targetFats.value - store.consumedFats.value).clamp(0, 999)}g F',
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -337,13 +335,13 @@ class _MacroLegendDot extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _NextMeal extends StatelessWidget {
-  final DashboardStore store;
-  const _NextMeal({required this.store});
+  const _NextMeal();
 
   @override
   Widget build(BuildContext context) {
     return Observer(
       builder: (_) {
+        final store = dashboardStore;
         final meal = store.nextMeal.value;
         if (meal == null) return const SizedBox.shrink();
 
