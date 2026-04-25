@@ -11,12 +11,16 @@ import 'core/router/app_router.dart';
 import 'stores/auth_store.dart';
 import 'stores/onboarding_store.dart';
 import 'stores/dashboard_store.dart';
+import 'stores/pantry_suggestions_store.dart';
 import 'features/log_meal/stores/text_log_store.dart';
 
 final authStore = AuthStore();
 final onboardingStore = OnboardingStore();
 final dashboardStore = DashboardStore();
 final textLogStore = TextLogStore();
+final pantrySuggestionsStore = PantrySuggestionsStore(
+  dashboardStore: dashboardStore,
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

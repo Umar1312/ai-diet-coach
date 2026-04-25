@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
@@ -108,17 +110,23 @@ class _Header extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: AppColors.primary,
-                  size: 22,
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.push('/pantry/suggestions');
+                },
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                 ),
               ),
             ],

@@ -24,6 +24,7 @@ import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 import 'package:diet_coach_ai/features/log_meal/camera_screen.dart';
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/pantry/pantry_suggestions_screen.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -155,6 +156,10 @@ class AppRouter {
       GoRoute(
         path: '/history',
         builder: (context, state) => const MealHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/pantry/suggestions',
+        builder: (context, state) => const PantrySuggestionsScreen(),
       ),
     ],
   );
