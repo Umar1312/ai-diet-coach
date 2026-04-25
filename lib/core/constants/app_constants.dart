@@ -1,9 +1,16 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
   static const String appName = 'AI Diet Buddy';
   static const String appTagline = 'Your Personal AI Nutrition Coach';
 
   // API
-  static const String apiBaseUrl = 'https://api.aidietary.app/api/v1';
+  static String get apiBaseUrl => dotenv.get('BASE_URL');
+
+  /// Dev-mode auth bypass.
+  /// Set this to a valid backend test token to skip Firebase Auth in debug builds.
+  /// Leave empty to use real Firebase Auth (production behavior).
+  static const String devBearerToken = '';
 
   // Onboarding
   static const int onboardingSteps = 9;
@@ -33,9 +40,6 @@ class AppConstants {
   static const double macroRingSizeSmall = 80.0;
   static const double macroRingStrokeWidthSmall = 6.0;
 
-  // Max image upload size (bytes)
-  static const int maxImageUploadBytes = 800 * 1024;
-
   // Paywall
   static const String monthlyPrice = '\$6.99';
   static const String yearlyPrice = '\$39.99';
@@ -54,19 +58,19 @@ class AppConstants {
     {'value': 'low_sodium', 'label': 'Low Sodium'},
   ];
 
-  // Activity Levels (maps to API 1-5)
-  static const Map<String, int> activityLevelMap = {
-    'Sedentary': 1,
-    'Lightly Active': 2,
-    'Moderately Active': 3,
-    'Very Active': 4,
-    'Extremely Active': 5,
+  // Activity Levels (maps display to API string values)
+  static const Map<String, String> activityLevelMap = {
+    'Sedentary': 'sedentary',
+    'Lightly Active': 'light',
+    'Moderately Active': 'moderate',
+    'Very Active': 'active',
+    'Extremely Active': 'very_active',
   };
 
   // Goal Map (maps display to API values)
   static const Map<String, String> goalMap = {
-    'Lose Weight': 'lose',
+    'Lose Weight': 'lose_weight',
     'Maintain': 'maintain',
-    'Gain Muscle': 'gain',
+    'Gain Muscle': 'gain_muscle',
   };
 }

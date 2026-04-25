@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class WeightScreen extends StatefulWidget {
 }
 
 class _WeightScreenState extends State<WeightScreen> {
-  final _store = OnboardingStore();
   bool _isKg = true;
   double _weightKg = 70;
   double _weightLbs = 154;
@@ -30,7 +29,7 @@ class _WeightScreenState extends State<WeightScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 4, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 4, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -73,7 +72,7 @@ class _WeightScreenState extends State<WeightScreen> {
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  _store.updateUser(weight: _weightInKg);
+                  onboardingStore.updateUser(weight: _weightInKg);
                   context.push('/onboarding/activity');
                 },
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class TargetWeightScreen extends StatefulWidget {
 }
 
 class _TargetWeightScreenState extends State<TargetWeightScreen> {
-  final _store = OnboardingStore();
   bool _isKg = true;
   double _targetKg = 65;
   double _targetLbs = 143;
@@ -30,7 +29,7 @@ class _TargetWeightScreenState extends State<TargetWeightScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 7, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 7, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -73,7 +72,7 @@ class _TargetWeightScreenState extends State<TargetWeightScreen> {
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  _store.updateUser(targetWeight: _targetInKg);
+                  onboardingStore.updateUser(targetWeight: _targetInKg);
                   context.push('/onboarding/restrictions');
                 },
               ),

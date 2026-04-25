@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class GoalSelectionScreen extends StatefulWidget {
 }
 
 class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
-  final _store = OnboardingStore();
   String? _selectedGoal;
 
   final List<Map<String, dynamic>> _goals = [
@@ -44,7 +43,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 6, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 6, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -75,7 +74,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
                 text: 'Continue',
                 onPressed: _selectedGoal != null
                     ? () {
-                        _store.updateUser(goal: _selectedGoal);
+                        onboardingStore.updateUser(goal: _selectedGoal);
                         context.push('/onboarding/target-weight');
                       }
                     : null,

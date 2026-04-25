@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/core/constants/app_constants.dart';
+
 import 'package:diet_coach_ai/shared/models/meal.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
 
 class MealConfirmSheet extends StatelessWidget {
@@ -80,21 +81,21 @@ class MealConfirmSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _MacroRow(
                   label: 'Protein',
-                  value: '${meal.protein}',
+                  value: '${meal.proteinG}',
                   unit: 'g',
                   color: AppColors.protein,
                 ),
                 const SizedBox(height: 12),
                 _MacroRow(
                   label: 'Carbs',
-                  value: '${meal.carbs}',
+                  value: '${meal.carbsG}',
                   unit: 'g',
                   color: AppColors.carbs,
                 ),
                 const SizedBox(height: 12),
                 _MacroRow(
                   label: 'Fats',
-                  value: '${meal.fats}',
+                  value: '${meal.fatsG}',
                   unit: 'g',
                   color: AppColors.fats,
                 ),
@@ -108,9 +109,10 @@ class MealConfirmSheet extends StatelessWidget {
               children: [
                 PrimaryButton(
                   text: 'Log It',
-                  onPressed: () {
+                  onPressed: () async {
                     HapticFeedback.mediumImpact();
-                    context.go('/home');
+                    await dashboardStore.addMeal(meal);
+                    if (context.mounted) context.go('/home');
                   },
                 ),
                 const SizedBox(height: 12),

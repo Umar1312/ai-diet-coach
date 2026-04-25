@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class HeightScreen extends StatefulWidget {
 }
 
 class _HeightScreenState extends State<HeightScreen> {
-  final _store = OnboardingStore();
   bool _isCm = true;
   int _heightCm = 175;
   int _heightFt = 5;
@@ -32,7 +31,7 @@ class _HeightScreenState extends State<HeightScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 3, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 3, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -75,7 +74,7 @@ class _HeightScreenState extends State<HeightScreen> {
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  _store.updateUser(height: _heightInCm);
+                  onboardingStore.updateUser(height: _heightInCm);
                   context.push('/onboarding/weight');
                 },
               ),

@@ -12,7 +12,7 @@ class ShimmerRing extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: AppColors.surface2,
-      highlightColor: const Color(0xFFE0E0E5),
+      highlightColor: const Color(0xFFE5E5EA),
       child: Container(
         width: size,
         height: size,
@@ -34,7 +34,7 @@ class ShimmerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: AppColors.surface2,
-      highlightColor: const Color(0xFFE0E0E5),
+      highlightColor: const Color(0xFFE5E5EA),
       child: Container(
         height: height,
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -54,7 +54,7 @@ class ShimmerMealItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: AppColors.surface2,
-      highlightColor: const Color(0xFFE0E0E5),
+      highlightColor: const Color(0xFFE5E5EA),
       child: Container(
         height: 76,
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),

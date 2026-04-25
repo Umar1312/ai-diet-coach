@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/core/constants/app_constants.dart';
+
 import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
 
 class CameraScreen extends StatefulWidget {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "5685734036",
+    "project_id": "flex-diet-3aee3",
+    "storage_bucket": "flex-diet-3aee3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:5685734036:android:4de8408743acc6be0c2281",
+        "android_client_info": {
+          "package_name": "com.flex.diet.ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGuA7JEJFnucIRz4GLUtoPw0cPd6hsOZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

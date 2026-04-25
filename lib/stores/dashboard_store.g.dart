@@ -45,6 +45,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
     () => super.caloriesLeft,
     name: '_DashboardStore.caloriesLeft',
   )).value;
+  Computed<int>? _$proteinLeftComputed;
+
+  @override
+  int get proteinLeft => (_$proteinLeftComputed ??= Computed<int>(
+    () => super.proteinLeft,
+    name: '_DashboardStore.proteinLeft',
+  )).value;
   Computed<String?>? _$aiSuggestionTitleComputed;
 
   @override
@@ -260,6 +267,132 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$showAiSuggestionAtom = Atom(
+    name: '_DashboardStore.showAiSuggestion',
+    context: context,
+  );
+
+  @override
+  bool get showAiSuggestion {
+    _$showAiSuggestionAtom.reportRead();
+    return super.showAiSuggestion;
+  }
+
+  @override
+  set showAiSuggestion(bool value) {
+    _$showAiSuggestionAtom.reportWrite(value, super.showAiSuggestion, () {
+      super.showAiSuggestion = value;
+    });
+  }
+
+  late final _$dayStatusAtom = Atom(
+    name: '_DashboardStore.dayStatus',
+    context: context,
+  );
+
+  @override
+  DayStatus get dayStatus {
+    _$dayStatusAtom.reportRead();
+    return super.dayStatus;
+  }
+
+  @override
+  set dayStatus(DayStatus value) {
+    _$dayStatusAtom.reportWrite(value, super.dayStatus, () {
+      super.dayStatus = value;
+    });
+  }
+
+  late final _$nextMealAtom = Atom(
+    name: '_DashboardStore.nextMeal',
+    context: context,
+  );
+
+  @override
+  NextMealRecommendation? get nextMeal {
+    _$nextMealAtom.reportRead();
+    return super.nextMeal;
+  }
+
+  @override
+  set nextMeal(NextMealRecommendation? value) {
+    _$nextMealAtom.reportWrite(value, super.nextMeal, () {
+      super.nextMeal = value;
+    });
+  }
+
+  late final _$recalibrationAtom = Atom(
+    name: '_DashboardStore.recalibration',
+    context: context,
+  );
+
+  @override
+  RecalibrationStatus? get recalibration {
+    _$recalibrationAtom.reportRead();
+    return super.recalibration;
+  }
+
+  @override
+  set recalibration(RecalibrationStatus? value) {
+    _$recalibrationAtom.reportWrite(value, super.recalibration, () {
+      super.recalibration = value;
+    });
+  }
+
+  late final _$flexPlanAtom = Atom(
+    name: '_DashboardStore.flexPlan',
+    context: context,
+  );
+
+  @override
+  ObservableList<FlexPlanSlot> get flexPlan {
+    _$flexPlanAtom.reportRead();
+    return super.flexPlan;
+  }
+
+  @override
+  set flexPlan(ObservableList<FlexPlanSlot> value) {
+    _$flexPlanAtom.reportWrite(value, super.flexPlan, () {
+      super.flexPlan = value;
+    });
+  }
+
+  late final _$pantryAtom = Atom(
+    name: '_DashboardStore.pantry',
+    context: context,
+  );
+
+  @override
+  ObservableList<PantryItem> get pantry {
+    _$pantryAtom.reportRead();
+    return super.pantry;
+  }
+
+  @override
+  set pantry(ObservableList<PantryItem> value) {
+    _$pantryAtom.reportWrite(value, super.pantry, () {
+      super.pantry = value;
+    });
+  }
+
+  late final _$isLoadingPantryAtom = Atom(
+    name: '_DashboardStore.isLoadingPantry',
+    context: context,
+  );
+
+  @override
+  bool get isLoadingPantry {
+    _$isLoadingPantryAtom.reportRead();
+    return super.isLoadingPantry;
+  }
+
+  @override
+  set isLoadingPantry(bool value) {
+    _$isLoadingPantryAtom.reportWrite(value, super.isLoadingPantry, () {
+      super.isLoadingPantry = value;
+    });
+  }
+
   late final _$isLoadingAtom = Atom(
     name: '_DashboardStore.isLoading',
     context: context,
@@ -314,32 +447,74 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  late final _$showAiSuggestionAtom = Atom(
-    name: '_DashboardStore.showAiSuggestion',
+  late final _$refreshAsyncAction = AsyncAction(
+    '_DashboardStore.refresh',
     context: context,
   );
 
   @override
-  bool get showAiSuggestion {
-    _$showAiSuggestionAtom.reportRead();
-    return super.showAiSuggestion;
+  Future<void> refresh() {
+    return _$refreshAsyncAction.run(() => super.refresh());
   }
 
-  @override
-  set showAiSuggestion(bool value) {
-    _$showAiSuggestionAtom.reportWrite(value, super.showAiSuggestion, () {
-      super.showAiSuggestion = value;
-    });
-  }
-
-  late final _$fetchDashboardAsyncAction = AsyncAction(
-    '_DashboardStore.fetchDashboard',
+  late final _$addMealAsyncAction = AsyncAction(
+    '_DashboardStore.addMeal',
     context: context,
   );
 
   @override
-  Future<void> fetchDashboard() {
-    return _$fetchDashboardAsyncAction.run(() => super.fetchDashboard());
+  Future<void> addMeal(Meal meal) {
+    return _$addMealAsyncAction.run(() => super.addMeal(meal));
+  }
+
+  late final _$acceptNextMealAsyncAction = AsyncAction(
+    '_DashboardStore.acceptNextMeal',
+    context: context,
+  );
+
+  @override
+  Future<void> acceptNextMeal() {
+    return _$acceptNextMealAsyncAction.run(() => super.acceptNextMeal());
+  }
+
+  late final _$swapNextMealAsyncAction = AsyncAction(
+    '_DashboardStore.swapNextMeal',
+    context: context,
+  );
+
+  @override
+  Future<void> swapNextMeal() {
+    return _$swapNextMealAsyncAction.run(() => super.swapNextMeal());
+  }
+
+  late final _$fetchHistoryAsyncAction = AsyncAction(
+    '_DashboardStore.fetchHistory',
+    context: context,
+  );
+
+  @override
+  Future<List<DayHistoryEntry>> fetchHistory({int days = 7}) {
+    return _$fetchHistoryAsyncAction.run(() => super.fetchHistory(days: days));
+  }
+
+  late final _$quickActionAsyncAction = AsyncAction(
+    '_DashboardStore.quickAction',
+    context: context,
+  );
+
+  @override
+  Future<void> quickAction(String action) {
+    return _$quickActionAsyncAction.run(() => super.quickAction(action));
+  }
+
+  late final _$loadPantryAsyncAction = AsyncAction(
+    '_DashboardStore.loadPantry',
+    context: context,
+  );
+
+  @override
+  Future<void> loadPantry() {
+    return _$loadPantryAsyncAction.run(() => super.loadPantry());
   }
 
   late final _$_DashboardStoreActionController = ActionController(
@@ -348,24 +523,12 @@ mixin _$DashboardStore on _DashboardStore, Store {
   );
 
   @override
-  void addMeal(Meal meal) {
+  void applyPlan(DailyPlan plan) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
-      name: '_DashboardStore.addMeal',
+      name: '_DashboardStore.applyPlan',
     );
     try {
-      return super.addMeal(meal);
-    } finally {
-      _$_DashboardStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
-  void setDashboardState(DashboardState state) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction(
-      name: '_DashboardStore.setDashboardState',
-    );
-    try {
-      return super.setDashboardState(state);
+      return super.applyPlan(plan);
     } finally {
       _$_DashboardStoreActionController.endAction(_$actionInfo);
     }
@@ -397,15 +560,22 @@ targetFats: ${targetFats},
 todayMeals: ${todayMeals},
 aiCardText: ${aiCardText},
 aiCardState: ${aiCardState},
+showAiSuggestion: ${showAiSuggestion},
+dayStatus: ${dayStatus},
+nextMeal: ${nextMeal},
+recalibration: ${recalibration},
+flexPlan: ${flexPlan},
+pantry: ${pantry},
+isLoadingPantry: ${isLoadingPantry},
 isLoading: ${isLoading},
 hasError: ${hasError},
 errorMessage: ${errorMessage},
-showAiSuggestion: ${showAiSuggestion},
 caloriesProgress: ${caloriesProgress},
 proteinProgress: ${proteinProgress},
 carbsProgress: ${carbsProgress},
 fatsProgress: ${fatsProgress},
 caloriesLeft: ${caloriesLeft},
+proteinLeft: ${proteinLeft},
 aiSuggestionTitle: ${aiSuggestionTitle},
 aiSuggestionMessage: ${aiSuggestionMessage}
     ''';

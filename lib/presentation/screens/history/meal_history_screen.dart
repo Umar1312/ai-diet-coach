@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/core/di/providers.dart';
-import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
+import 'package:diet_coach_ai/shared/models/history_response.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
 
 import 'package:shimmer/shimmer.dart';
 
@@ -15,7 +15,7 @@ class MealHistoryScreen extends StatefulWidget {
 }
 
 class _MealHistoryScreenState extends State<MealHistoryScreen> {
-  List<DashboardState> _history = [];
+  List<DayHistoryEntry> _history = [];
   bool _isLoading = true;
   String _errorMessage = '';
 
@@ -31,7 +31,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
       _errorMessage = '';
     });
     try {
-      final history = await apiService.fetchHistory(days: 7);
+      final history = await dashboardStore.fetchHistory(days: 7);
       if (mounted) {
         setState(() {
           _history = history;
@@ -84,7 +84,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
     );
   }
 
-  Widget _buildDayCard(DashboardState day, int index) {
+  Widget _buildDayCard(DayHistoryEntry day, int index) {
     final date = DateTime.now().subtract(Duration(days: index));
     final dayNames = [
       'Today',
@@ -119,11 +119,11 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                 ),
               ),
               Text(
-                '${day.consumedCalories}/${day.targetCalories} kcal',
+                '${day.consumed.calories}/${day.targets.calories} kcal',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: day.consumedCalories > day.targetCalories
+                  color: day.consumed.calories > day.targets.calories
                       ? AppColors.warning
                       : AppColors.success,
                 ),
@@ -136,22 +136,22 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
             children: [
               _MacroPill(
                 label: 'P',
-                value: '${day.consumedProtein}/${day.targetProtein}g',
+                value: '${day.consumed.proteinG}/${day.targets.proteinG}g',
                 color: AppColors.protein,
               ),
               _MacroPill(
                 label: 'C',
-                value: '${day.consumedCarbs}/${day.targetCarbs}g',
+                value: '${day.consumed.carbsG}/${day.targets.carbsG}g',
                 color: AppColors.carbs,
               ),
               _MacroPill(
                 label: 'F',
-                value: '${day.consumedFats}/${day.targetFats}g',
+                value: '${day.consumed.fatsG}/${day.targets.fatsG}g',
                 color: AppColors.fats,
               ),
             ],
           ),
-          if (day.aiCardText.isNotEmpty) ...[
+          if (day.aiSummary.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -168,7 +168,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      day.aiCardText,
+                      day.aiSummary,
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -198,7 +198,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
           ),
           child: Shimmer.fromColors(
             baseColor: AppColors.surface2,
-            highlightColor: const Color(0xFFE0E0E5),
+            highlightColor: const Color(0xFFE5E5EA),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

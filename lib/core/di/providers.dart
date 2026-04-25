@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
+import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
+import 'package:diet_coach_ai/shared/models/pantry_models.dart';
+import 'package:diet_coach_ai/shared/models/recommendation_models.dart';
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
-import 'package:diet_coach_ai/shared/models/recommended_dish.dart';
 
 final dio = Dio(
   BaseOptions(
@@ -14,7 +16,12 @@ final dio = Dio(
   ),
 );
 
-final apiService = ApiService(dio);
+final apiService = ApiService(
+  dio,
+  devToken: AppConstants.devBearerToken.isNotEmpty
+      ? AppConstants.devBearerToken
+      : null,
+);
 
 class ApiException implements Exception {
   final String code;
@@ -27,101 +34,220 @@ class ApiException implements Exception {
 class ApiService {
   final Dio _dio;
 
-  ApiService(this._dio);
+  ApiService(this._dio, {String? devToken}) {
+    if (devToken != null && devToken.isNotEmpty) {
+      setAuthToken(devToken);
+    }
+  }
 
   void setAuthToken(String token) {
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
+  Future<T> _wrap<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on DioException catch (e) {
+      throw parseApiError(e);
+    }
+  }
+
   Future<UserSetupResponse> setupUser(UserSetupRequest request) async {
-    final response = await _dio.post('/users/setup', data: request.toJson());
-    return UserSetupResponse.fromJson(response.data);
+    return _wrap(() async {
+      final response = await _dio.post('/users/setup', data: request.toJson());
+      return UserSetupResponse.fromJson(response.data);
+    });
   }
 
-  Future<DashboardState> fetchDashboard() async {
-    final response = await _dio.get('/dashboard/state');
-    return DashboardState.fromJson(response.data);
+  Future<DailyPlan> fetchDashboard() async {
+    return _wrap(() async {
+      final response = await _dio.get('/dashboard/state');
+      return DailyPlan.fromJson(response.data);
+    });
   }
 
-  Future<List<DashboardState>> fetchHistory({int days = 7}) async {
-    final response = await _dio.get(
-      '/history',
-      queryParameters: {'days': days},
-    );
-    return (response.data as List)
-        .map((e) => DashboardState.fromJson(e as Map<String, dynamic>))
-        .toList();
+  Future<HistoryResponse> fetchHistory({int days = 7}) async {
+    return _wrap(() async {
+      final response = await _dio.get(
+        '/history',
+        queryParameters: {'days': days},
+      );
+      return HistoryResponse.fromJson(response.data);
+    });
   }
 
   Future<MealLogResponse> logVision(String imagePath) async {
-    final formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(imagePath, filename: 'meal.jpg'),
+    return _wrap(() async {
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(imagePath, filename: 'meal.jpg'),
+      });
+      final response = await _dio.post('/log/vision', data: formData);
+      return MealLogResponse.fromJson(response.data);
     });
-    final response = await _dio.post('/log/vision', data: formData);
-    return MealLogResponse.fromJson(response.data);
   }
 
-  Future<MealLogResponse> logText(String description) async {
-    final response = await _dio.post(
-      '/log/text',
-      data: {'description': description},
-    );
-    return MealLogResponse.fromJson(response.data);
+  Future<MealLogResponse> logText(String description, {String? context}) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/log/text',
+        data: {
+          'description': description,
+          if (context case final String c) 'context': c,
+        },
+      );
+      return MealLogResponse.fromJson(response.data);
+    });
   }
 
-  Future<MenuScanResponse> scanMenu(String imagePath) async {
-    final formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(imagePath, filename: 'menu.jpg'),
+  Future<MealLogResponse> logManual(ManualLogRequest request) async {
+    return _wrap(() async {
+      final response = await _dio.post('/log/manual', data: request.toJson());
+      return MealLogResponse.fromJson(response.data);
     });
-    final response = await _dio.post('/scan/menu', data: formData);
-    return MenuScanResponse.fromJson(response.data);
+  }
+
+  Future<SwapResponse> swapMeal(String currentMealName) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/recommendations/swap',
+        data: {'current_meal_name': currentMealName, 'reason': 'user_swap'},
+      );
+      return SwapResponse.fromJson(response.data);
+    });
+  }
+
+  Future<QuickActionResponse> quickAction(String action) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/recommendations/quick-action',
+        data: {'action': action},
+      );
+      return QuickActionResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantryListResponse> fetchPantry() async {
+    return _wrap(() async {
+      final response = await _dio.get('/pantry');
+      return PantryListResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantryItemResponse> addPantryItem(PantryCreateRequest request) async {
+    return _wrap(() async {
+      final response = await _dio.post('/pantry', data: request.toJson());
+      return PantryItemResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantryItemResponse> updatePantryItem(
+    String id,
+    PantryUpdateRequest request,
+  ) async {
+    return _wrap(() async {
+      final response = await _dio.put('/pantry/$id', data: request.toJson());
+      return PantryItemResponse.fromJson(response.data);
+    });
+  }
+
+  Future<void> deletePantryItem(String id) async {
+    return _wrap(() async {
+      await _dio.delete('/pantry/$id');
+    });
+  }
+
+  Future<DailyPlan> fetchPlan() async {
+    return _wrap(() async {
+      final response = await _dio.get('/plan');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<User> fetchProfile() async {
+    return _wrap(() async {
+      final response = await _dio.get('/users/me');
+      return User.fromJson(response.data);
+    });
+  }
+
+  Future<User> updateProfile(ProfilePatchRequest request) async {
+    return _wrap(() async {
+      final response = await _dio.patch('/users/me', data: request.toJson());
+      return User.fromJson(response.data);
+    });
   }
 }
 
+class ProfilePatchRequest {
+  final double? weightKg;
+  final double? targetWeightKg;
+  final String? activityLevel;
+  final String? goal;
+  final List<String>? dietaryRestrictions;
+
+  const ProfilePatchRequest({
+    this.weightKg,
+    this.targetWeightKg,
+    this.activityLevel,
+    this.goal,
+    this.dietaryRestrictions,
+  });
+
+  Map<String, dynamic> toJson() => {
+    if (weightKg != null) 'weight_kg': weightKg,
+    if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
+    if (activityLevel != null) 'activity_level': activityLevel,
+    if (goal != null) 'goal': goal,
+    if (dietaryRestrictions != null)
+      'dietary_restrictions': dietaryRestrictions,
+  };
+}
+
 /// Parses a DioException into a user-friendly ApiException with the API error code.
-/// Handles all 6 error codes from the PRD.
 ApiException parseApiError(DioException e) {
   final data = e.response?.data;
-  final code = (data is Map<String, dynamic>) ? data['code'] as String? : null;
-  final serverMessage = (data is Map<String, dynamic>)
-      ? data['message'] as String?
+  // Backend wraps errors in {"error": {"code": "...", "message": "..."}}
+  final errorObj = (data is Map<String, dynamic>)
+      ? data['error'] as Map<String, dynamic>?
       : null;
+  final code = errorObj?['code'] as String?;
+  final serverMessage = errorObj?['message'] as String?;
 
   switch (code) {
-    case 'auth_invalid':
+    case 'unauthorized':
       return ApiException(
-        code: 'auth_invalid',
+        code: 'unauthorized',
         message: serverMessage ?? 'Session expired. Please sign in again.',
         statusCode: e.response?.statusCode,
       );
     case 'user_not_found':
       return ApiException(
         code: 'user_not_found',
-        message: serverMessage ?? 'User not found.',
+        message: serverMessage ?? 'User not found. Complete setup first.',
         statusCode: e.response?.statusCode,
       );
-    case 'image_too_large':
+    case 'validation_error':
       return ApiException(
-        code: 'image_too_large',
-        message: 'Image too large. Try a closer photo.',
+        code: 'validation_error',
+        message: serverMessage ?? 'Invalid input. Please check your data.',
         statusCode: e.response?.statusCode,
       );
-    case 'menu_unreadable':
+    case 'rate_limited':
       return ApiException(
-        code: 'menu_unreadable',
-        message: "Couldn't read that menu. Try a clearer photo.",
+        code: 'rate_limited',
+        message: 'Too many requests. Please slow down.',
         statusCode: e.response?.statusCode,
       );
-    case 'log_conflict':
+    case 'analysis_failed':
       return ApiException(
-        code: 'log_conflict',
-        message: serverMessage ?? 'Conflict. Retrying...',
+        code: 'analysis_failed',
+        message: 'AI analysis unavailable. Try again later.',
         statusCode: e.response?.statusCode,
       );
-    case 'ai_unavailable':
+    case 'internal_error':
       return ApiException(
-        code: 'ai_unavailable',
-        message: 'AI is taking too long. Try again in a moment.',
+        code: 'internal_error',
+        message: 'Something went wrong. Please try again.',
         statusCode: e.response?.statusCode,
       );
     default:

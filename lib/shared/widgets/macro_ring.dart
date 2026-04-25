@@ -146,7 +146,7 @@ class _GradientRingPainter extends CustomPainter {
 
     // Background track
     final bgPaint = Paint()
-      ..color = const Color(0xFFF0F0F4)
+      ..color = const Color(0xFFF0F0F0)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;

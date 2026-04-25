@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
+import 'package:diet_coach_ai/core/di/providers.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
 
 class TextLogScreen extends StatefulWidget {
@@ -15,11 +17,35 @@ class TextLogScreen extends StatefulWidget {
 class _TextLogScreenState extends State<TextLogScreen> {
   final _controller = TextEditingController();
   bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final description = _controller.text.trim();
+    if (description.isEmpty || _isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    HapticFeedback.mediumImpact();
+
+    try {
+      final response = await apiService.logText(description);
+      dashboardStore.applyPlan(response.updatedPlan);
+      if (mounted) context.go('/home');
+    } on ApiException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } catch (e) {
+      setState(() => _errorMessage = 'Failed to log meal. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -106,15 +132,22 @@ class _TextLogScreenState extends State<TextLogScreen> {
                   _QuickChip(label: 'Salad'),
                 ],
               ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
               const Spacer(),
               PrimaryButton(
                 text: 'Log Meal',
                 onPressed: _controller.text.trim().isNotEmpty && !_isSubmitting
-                    ? () {
-                        setState(() => _isSubmitting = true);
-                        HapticFeedback.mediumImpact();
-                        context.go('/home');
-                      }
+                    ? _submit
                     : null,
                 isLoading: _isSubmitting,
               ),

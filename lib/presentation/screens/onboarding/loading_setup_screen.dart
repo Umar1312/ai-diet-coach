@@ -29,7 +29,22 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
   }
 
   Future<void> _startCalculation() async {
-    await onboardingStore.calculatePlan();
+    try {
+      await onboardingStore.calculatePlan();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          onboardingStore.loadingStatus =
+              'Unable to reach server. Using default plan.';
+          onboardingStore.loadingProgress = 1.0;
+        });
+      }
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        context.pushReplacement('/onboarding/result');
+      }
+      return;
+    }
 
     for (int i = 0; i < _checklistItems.length; i++) {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -42,7 +57,7 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
 
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
-      context.pushReplacement('/onboarding/plan-ready');
+      context.pushReplacement('/onboarding/result');
     }
   }
 

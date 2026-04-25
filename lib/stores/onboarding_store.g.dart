@@ -183,13 +183,31 @@ mixin _$OnboardingStore on _OnboardingStore, Store {
     });
   }
 
+  late final _$setupResponseAtom = Atom(
+    name: '_OnboardingStore.setupResponse',
+    context: context,
+  );
+
+  @override
+  UserSetupResponse? get setupResponse {
+    _$setupResponseAtom.reportRead();
+    return super.setupResponse;
+  }
+
+  @override
+  set setupResponse(UserSetupResponse? value) {
+    _$setupResponseAtom.reportWrite(value, super.setupResponse, () {
+      super.setupResponse = value;
+    });
+  }
+
   late final _$calculatePlanAsyncAction = AsyncAction(
     '_OnboardingStore.calculatePlan',
     context: context,
   );
 
   @override
-  Future<void> calculatePlan() {
+  Future<UserSetupResponse> calculatePlan() {
     return _$calculatePlanAsyncAction.run(() => super.calculatePlan());
   }
 
@@ -262,7 +280,8 @@ goal: ${goal},
 targetWeight: ${targetWeight},
 dietaryRestrictions: ${dietaryRestrictions},
 loadingProgress: ${loadingProgress},
-loadingStatus: ${loadingStatus}
+loadingStatus: ${loadingStatus},
+setupResponse: ${setupResponse}
     ''';
   }
 }

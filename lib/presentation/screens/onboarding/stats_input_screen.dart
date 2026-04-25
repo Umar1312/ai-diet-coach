@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 
 class StatsInputScreen extends StatefulWidget {
@@ -13,7 +13,6 @@ class StatsInputScreen extends StatefulWidget {
 }
 
 class _StatsInputScreenState extends State<StatsInputScreen> {
-  final _store = OnboardingStore();
   final _ageController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
@@ -36,7 +35,7 @@ class _StatsInputScreenState extends State<StatsInputScreen> {
 
   void _onContinue() {
     if (_isValid) {
-      _store.updateUser(
+      onboardingStore.updateUser(
         age: double.tryParse(_ageController.text),
         weight: double.tryParse(_weightController.text),
         height: double.tryParse(_heightController.text),

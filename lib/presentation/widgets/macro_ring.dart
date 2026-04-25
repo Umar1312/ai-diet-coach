@@ -37,7 +37,7 @@ class MacroRing extends StatelessWidget {
             size: Size(size, size),
             painter: _RingPainter(
               progress: 1.0,
-              color: Colors.grey.shade200,
+              color: AppColors.ringTrack,
               strokeWidth: strokeWidth,
             ),
           ),

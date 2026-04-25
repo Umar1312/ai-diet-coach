@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class AgeScreen extends StatefulWidget {
 }
 
 class _AgeScreenState extends State<AgeScreen> {
-  final _store = OnboardingStore();
   int _selectedAge = 25;
 
   @override
@@ -26,7 +25,7 @@ class _AgeScreenState extends State<AgeScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 2, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 2, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -108,7 +107,7 @@ class _AgeScreenState extends State<AgeScreen> {
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  _store.updateUser(age: _selectedAge.toDouble());
+                  onboardingStore.updateUser(age: _selectedAge.toDouble());
                   context.push('/onboarding/height');
                 },
               ),

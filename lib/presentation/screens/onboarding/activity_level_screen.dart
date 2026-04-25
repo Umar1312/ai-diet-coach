@@ -14,7 +14,6 @@ class ActivityLevelScreen extends StatefulWidget {
 }
 
 class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
-  final _store = onboardingStore;
   String? _selectedLevel;
 
   final List<Map<String, dynamic>> _levels = [
@@ -47,8 +46,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
 
   void _onContinue() {
     if (_selectedLevel != null) {
-      final apiValue = AppConstants.activityLevelMap[_selectedLevel!];
-      _store.updateUser(activityLevel: apiValue?.toString());
+      onboardingStore.updateUser(activityLevel: _selectedLevel);
       context.push('/onboarding/goal');
     }
   }
@@ -62,7 +60,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 5, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 5, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(

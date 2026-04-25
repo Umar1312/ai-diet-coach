@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -14,7 +14,6 @@ class GenderScreen extends StatefulWidget {
 }
 
 class _GenderScreenState extends State<GenderScreen> {
-  final _store = OnboardingStore();
   String? _selectedGender;
 
   @override
@@ -26,7 +25,7 @@ class _GenderScreenState extends State<GenderScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 1, totalSteps: 8),
+        title: const OnboardingProgressBar(step: 1, totalSteps: 9),
       ),
       body: SafeArea(
         child: Padding(
@@ -67,7 +66,7 @@ class _GenderScreenState extends State<GenderScreen> {
                 text: 'Continue',
                 onPressed: _selectedGender != null
                     ? () {
-                        _store.updateUser(gender: _selectedGender);
+                        onboardingStore.updateUser(gender: _selectedGender);
                         context.push('/onboarding/age');
                       }
                     : null,

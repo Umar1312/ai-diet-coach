@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:diet_coach_ai/presentation/screens/onboarding/welcome_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/gender_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/age_screen.dart';
@@ -13,14 +14,23 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/calc_result_screen
 import 'package:diet_coach_ai/presentation/screens/onboarding/loading_setup_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permission_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
+
+import 'package:diet_coach_ai/presentation/screens/home/home_shell.dart';
 import 'package:diet_coach_ai/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/pantry/pantry_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
+
 import 'package:diet_coach_ai/features/log_meal/camera_screen.dart';
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
-import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final _homeNavKey = GlobalKey<NavigatorState>();
+  static final _pantryNavKey = GlobalKey<NavigatorState>();
+  static final _planNavKey = GlobalKey<NavigatorState>();
+  static final _profileNavKey = GlobalKey<NavigatorState>();
 
   static GoRouter get router => GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -76,12 +86,52 @@ class AppRouter {
         path: '/onboarding/paywall',
         builder: (context, state) => const PaywallScreen(),
       ),
-      // Main app
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const DashboardScreen(),
+
+      // Main app — persistent 4-tab shell
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: _homeNavKey,
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _pantryNavKey,
+            routes: [
+              GoRoute(
+                path: '/pantry',
+                builder: (context, state) => const PantryScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _planNavKey,
+            routes: [
+              GoRoute(
+                path: '/plan',
+                builder: (context, state) => const PlanScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _profileNavKey,
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
-      // Meal logging
+
+      // Meal logging (outside shell, push on top)
       GoRoute(
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
@@ -105,10 +155,6 @@ class AppRouter {
       GoRoute(
         path: '/history',
         builder: (context, state) => const MealHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );

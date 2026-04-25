@@ -1,4 +1,4 @@
-package com.example.diet_coach_ai
+package com.flex.diet.ai
 
 import io.flutter.embedding.android.FlutterActivity
 

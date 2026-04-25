@@ -22,7 +22,7 @@ class PaywallScreen extends StatelessWidget {
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   icon: const Icon(Icons.close, size: 24),
-                  onPressed: () => context.go('/dashboard'),
+                  onPressed: () => context.go('/home'),
                 ),
               ),
               const SizedBox(height: 8),
@@ -169,7 +169,7 @@ class PaywallScreen extends StatelessWidget {
               const Spacer(),
               PrimaryButton(
                 text: 'Try Now',
-                onPressed: () => context.go('/dashboard'),
+                onPressed: () => context.go('/home'),
               ),
               const SizedBox(height: 16),
               Text(

@@ -1,4 +1,6 @@
 import 'package:mobx/mobx.dart';
+import '../core/constants/app_constants.dart';
+import '../core/di/providers.dart';
 import '../shared/models/user_setup_request.dart';
 
 part 'onboarding_store.g.dart';
@@ -36,6 +38,9 @@ abstract class _OnboardingStore with Store {
   @observable
   String loadingStatus = 'Calculating your macros...';
 
+  @observable
+  UserSetupResponse? setupResponse;
+
   @action
   void updateUser({
     double? age,
@@ -62,37 +67,29 @@ abstract class _OnboardingStore with Store {
 
   UserSetupRequest toApiRequest() {
     return UserSetupRequest(
-      name: 'User',
-      gender: gender ?? 'male',
+      gender: (gender ?? 'male').toLowerCase(),
       age: (age?.toInt()) ?? 25,
       heightCm: height ?? 175,
       weightKg: weight ?? 70,
-      activityLevel: int.tryParse(activityLevel ?? '3') ?? 3,
-      goal: goal ?? 'lose',
+      activityLevel: AppConstants.activityLevelMap[activityLevel] ?? 'moderate',
+      goal: AppConstants.goalMap[goal] ?? 'lose_weight',
       targetWeightKg: targetWeight ?? 65,
       dietaryRestrictions: dietaryRestrictions,
     );
   }
 
   @action
-  Future<void> calculatePlan() async {
-    loadingProgress = 0.0;
+  Future<UserSetupResponse> calculatePlan() async {
+    loadingProgress = 0.3;
+    loadingStatus = 'Creating your profile...';
 
-    final steps = [
-      'Calculating your BMR...',
-      'Estimating your metabolic age...',
-      'Analyzing activity level...',
-      'Optimizing macro ratios...',
-      'Creating your personalized plan...',
-    ];
+    final request = toApiRequest();
+    final response = await apiService.setupUser(request);
 
-    for (int i = 0; i < steps.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      loadingStatus = steps[i];
-      loadingProgress = (i + 1) / steps.length;
-    }
-
+    setupResponse = response;
     loadingProgress = 1.0;
+    loadingStatus = 'Done!';
+    return response;
   }
 
   @action
@@ -107,5 +104,6 @@ abstract class _OnboardingStore with Store {
     dietaryRestrictions = [];
     loadingProgress = 0.0;
     loadingStatus = 'Calculating your macros...';
+    setupResponse = null;
   }
 }

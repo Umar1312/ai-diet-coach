@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../stores/onboarding_store.dart';
+import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -15,7 +15,6 @@ class DietaryRestrictionsScreen extends StatefulWidget {
 }
 
 class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
-  final _store = OnboardingStore();
   final Set<String> _selected = {};
 
   @override
@@ -74,13 +73,13 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  _store.updateDietaryRestrictions(_selected.toList());
-                  context.push('/onboarding/result');
+                  onboardingStore.updateDietaryRestrictions(_selected.toList());
+                  context.push('/onboarding/loading');
                 },
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => context.push('/onboarding/result'),
+                onPressed: () => context.push('/onboarding/loading'),
                 child: const Text('Skip for now'),
               ),
               const SizedBox(height: 16),

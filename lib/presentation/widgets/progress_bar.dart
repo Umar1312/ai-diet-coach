@@ -19,7 +19,7 @@ class ProgressBar extends StatelessWidget {
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: AppColors.ringTrack,
         borderRadius: BorderRadius.circular(height / 2),
       ),
       child: FractionallySizedBox(
