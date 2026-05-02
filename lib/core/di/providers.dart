@@ -175,6 +175,24 @@ class ApiService {
     });
   }
 
+  Future<CravingResponse> requestCraving(
+    String cravingText, {
+    List<String> tags = const [],
+    bool preferPantry = false,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/recommendations/craving',
+        data: CravingRequest(
+          cravingText: cravingText,
+          tags: tags,
+          preferPantry: preferPantry,
+        ).toJson(),
+      );
+      return CravingResponse.fromJson(response.data);
+    });
+  }
+
   Future<PantryListResponse> fetchPantry() async {
     return _wrap(() async {
       final response = await _dio.get('/pantry');

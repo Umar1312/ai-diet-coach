@@ -13,6 +13,7 @@ import 'stores/onboarding_store.dart';
 import 'stores/dashboard_store.dart';
 import 'stores/pantry_suggestions_store.dart';
 import 'features/log_meal/stores/text_log_store.dart';
+import 'features/craving/stores/craving_store.dart';
 
 final authStore = AuthStore();
 final onboardingStore = OnboardingStore();
@@ -21,6 +22,7 @@ final textLogStore = TextLogStore();
 final pantrySuggestionsStore = PantrySuggestionsStore(
   dashboardStore: dashboardStore,
 );
+final cravingStore = CravingStore();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -6,7 +6,9 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/main.dart' show dashboardStore, cravingStore;
+import 'package:diet_coach_ai/features/craving/widgets/craving_fab.dart';
+import 'package:diet_coach_ai/features/craving/craving_sheet.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
 class DashboardScreen extends StatelessWidget {
@@ -16,6 +18,18 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: CravingFAB(
+        onTap: () {
+          cravingStore.reset();
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (_) => const CravingSheet(),
+          );
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

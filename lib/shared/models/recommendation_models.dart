@@ -24,3 +24,34 @@ class QuickActionResponse {
         ),
       );
 }
+
+class CravingRequest {
+  final String cravingText;
+  final List<String> tags;
+  final bool? preferPantry;
+
+  const CravingRequest({
+    required this.cravingText,
+    required this.tags,
+    this.preferPantry,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'craving_text': cravingText,
+    'tags': tags,
+    if (preferPantry != null) 'prefer_pantry': preferPantry,
+  };
+}
+
+class CravingResponse {
+  final NextMealRecommendation nextMeal;
+
+  const CravingResponse({required this.nextMeal});
+
+  factory CravingResponse.fromJson(Map<String, dynamic> json) =>
+      CravingResponse(
+        nextMeal: NextMealRecommendation.fromJson(
+          json['next_meal'] as Map<String, dynamic>,
+        ),
+      );
+}
