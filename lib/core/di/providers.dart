@@ -236,6 +236,13 @@ class ApiService {
     });
   }
 
+  Future<PantryStarterPackResponse> fetchStarterPack() async {
+    return _wrap(() async {
+      final response = await _dio.get('/pantry/starter-pack');
+      return PantryStarterPackResponse.fromJson(response.data);
+    });
+  }
+
   Future<DailyPlan> fetchPlan() async {
     return _wrap(() async {
       final response = await _dio.get('/plan');

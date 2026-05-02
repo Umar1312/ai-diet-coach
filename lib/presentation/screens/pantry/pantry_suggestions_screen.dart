@@ -19,12 +19,30 @@ class PantrySuggestionsScreen extends StatefulWidget {
 
 class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
   late final PantrySuggestionsStore _store;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _store = pantrySuggestionsStore;
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     _store.loadSuggestions();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 250) {
+      _store.loadMore();
+    }
   }
 
   @override
@@ -40,22 +58,35 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
                 const _Header(),
                 if (_store.errorMessage.value.isNotEmpty) _buildErrorBanner(),
                 Expanded(
-                  child: _store.isLoading.value
+                  child: _store.isLoading.value && _store.suggestions.isEmpty
                       ? _buildLoading()
                       : _store.suggestions.isEmpty
                       ? _buildEmpty()
                       : ListView.separated(
+                          controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 28),
-                          itemCount: _store.suggestions.length,
+                          itemCount:
+                              _store.suggestions.length +
+                              (_store.isLoadingMore.value ? 1 : 0) +
+                              (_store.hasMore && !_store.isLoadingMore.value
+                                  ? 1
+                                  : 0),
                           separatorBuilder: (_, _) =>
                               const Divider(height: 1, color: AppColors.border),
                           itemBuilder: (context, index) {
-                            final uiItem = _store.suggestions[index];
-                            return _SuggestionTile(
-                              key: ValueKey(uiItem.id),
-                              store: _store,
-                              uiItem: uiItem,
-                            );
+                            if (index < _store.suggestions.length) {
+                              final uiItem = _store.suggestions[index];
+                              return _SuggestionTile(
+                                key: ValueKey(uiItem.id),
+                                store: _store,
+                                uiItem: uiItem,
+                              );
+                            }
+                            if (_store.isLoadingMore.value &&
+                                index == _store.suggestions.length) {
+                              return _buildLoadMoreIndicator();
+                            }
+                            return _buildLoadMoreButton();
                           },
                         ),
                 ),
@@ -103,6 +134,49 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
       child: Padding(
         padding: EdgeInsets.all(32),
         child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreIndicator() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _store.loadMore();
+        },
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'Load more suggestions',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
       ),
     );
   }

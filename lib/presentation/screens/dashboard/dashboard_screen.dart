@@ -45,9 +45,9 @@ class DashboardScreen extends StatelessWidget {
             ),
             slivers: [
               const SliverToBoxAdapter(child: _Greeting()),
-              const SliverToBoxAdapter(child: SizedBox(height: 48)),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
               const SliverToBoxAdapter(child: _CalorieHero()),
-              const SliverToBoxAdapter(child: SizedBox(height: 56)),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
               const SliverToBoxAdapter(child: _NextMeal()),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
               const SliverToBoxAdapter(child: _BigLogButton()),
@@ -166,26 +166,26 @@ class _CalorieHero extends StatelessWidget {
 
         final rings = [
           _RingData(
-            radius: 142,
-            strokeWidth: 14,
+            radius: 82,
+            strokeWidth: 10,
             progress: store.caloriesProgress.value.clamp(0.0, 1.0),
             color: AppColors.calories,
           ),
           _RingData(
-            radius: 117,
-            strokeWidth: 13,
+            radius: 68,
+            strokeWidth: 9,
             progress: store.proteinProgress.value.clamp(0.0, 1.0),
             color: AppColors.protein,
           ),
           _RingData(
-            radius: 92,
-            strokeWidth: 13,
+            radius: 54,
+            strokeWidth: 9,
             progress: store.carbsProgress.value.clamp(0.0, 1.0),
             color: AppColors.carbs,
           ),
           _RingData(
-            radius: 67,
-            strokeWidth: 11,
+            radius: 40,
+            strokeWidth: 7,
             progress: store.fatsProgress.value.clamp(0.0, 1.0),
             color: AppColors.fats,
           ),
@@ -196,13 +196,13 @@ class _CalorieHero extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(
-                width: 306,
-                height: 306,
+                width: 184,
+                height: 184,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     CustomPaint(
-                      size: const Size(306, 306),
+                      size: const Size(184, 184),
                       painter: _MacroRingsPainter(rings: rings),
                     ),
                     Column(
@@ -211,18 +211,18 @@ class _CalorieHero extends StatelessWidget {
                         Text(
                           '$calLeft',
                           style: const TextStyle(
-                            fontSize: 44,
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
-                            letterSpacing: -1.5,
+                            letterSpacing: -1.2,
                             height: 1,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         const Text(
                           'cal left',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                             letterSpacing: -0.2,
@@ -233,7 +233,7 @@ class _CalorieHero extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -386,6 +386,7 @@ class _NextMeal extends StatelessWidget {
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -400,7 +401,10 @@ class _NextMeal extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(meal.emoji, style: const TextStyle(fontSize: 40)),
+                        Text(
+                          meal.emoji,
+                          style: const TextStyle(fontSize: 40, height: -0.09),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -413,13 +417,13 @@ class _NextMeal extends StatelessWidget {
                         height: 1.4,
                       ),
                     ),
-                    if (meal.usedPantryItems.isNotEmpty) ...[
+                    /* if (meal.usedPantryItems.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       _PantryReasoning(
                         items: meal.usedPantryItems,
                         reasoning: meal.pantryReasoning,
                       ),
-                    ],
+                    ], */
                     const SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,

@@ -196,3 +196,81 @@ class PantrySuggestionsResponse {
         pageSize: json['page_size'] as int,
       );
 }
+
+// ── Starter Pack Models ───────────────────────────────────────────────────
+
+class PantryStarterItem {
+  final String name;
+  final String emoji;
+  final String? quantityHint;
+  final bool isHighProtein;
+  final int calories;
+  final int proteinG;
+  final int carbsG;
+  final int fatsG;
+  final String? servingSize;
+  final String category;
+  final List<String> tags;
+
+  const PantryStarterItem({
+    required this.name,
+    required this.emoji,
+    this.quantityHint,
+    required this.isHighProtein,
+    required this.calories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatsG,
+    this.servingSize,
+    required this.category,
+    required this.tags,
+  });
+
+  factory PantryStarterItem.fromJson(Map<String, dynamic> json) =>
+      PantryStarterItem(
+        name: json['name'] as String,
+        emoji: json['emoji'] as String,
+        quantityHint: json['quantity_hint'] as String?,
+        isHighProtein: json['is_high_protein'] as bool,
+        calories: json['calories'] as int,
+        proteinG: json['protein_g'] as int,
+        carbsG: json['carbs_g'] as int,
+        fatsG: json['fats_g'] as int,
+        servingSize: json['serving_size'] as String?,
+        category: json['category'] as String,
+        tags: (json['tags'] as List).map((e) => e as String).toList(),
+      );
+
+  PantryCreateRequest toCreateRequest() => PantryCreateRequest(
+    name: name,
+    emoji: emoji,
+    quantityHint: quantityHint,
+    isHighProtein: isHighProtein,
+    calories: calories,
+    proteinG: proteinG,
+    carbsG: carbsG,
+    fatsG: fatsG,
+    servingSize: servingSize,
+  );
+}
+
+class PantryStarterPackResponse {
+  final String country;
+  final String countryName;
+  final List<PantryStarterItem> items;
+
+  const PantryStarterPackResponse({
+    required this.country,
+    required this.countryName,
+    required this.items,
+  });
+
+  factory PantryStarterPackResponse.fromJson(Map<String, dynamic> json) =>
+      PantryStarterPackResponse(
+        country: json['country'] as String,
+        countryName: json['country_name'] as String,
+        items: (json['items'] as List)
+            .map((e) => PantryStarterItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}

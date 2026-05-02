@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/main.dart' show pantryStore;
 import 'package:diet_coach_ai/shared/models/home_models.dart';
 
 class PantryScreen extends StatefulWidget {
@@ -18,7 +18,61 @@ class _PantryScreenState extends State<PantryScreen> {
   @override
   void initState() {
     super.initState();
-    dashboardStore.loadPantry();
+    pantryStore.loadPantry();
+  }
+
+  void _showDeleteDialog(PantryItem item) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Remove item?',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Remove "${item.name}" from your pantry?',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await pantryStore.deleteItem(item.name);
+            },
+            child: const Text(
+              'Remove',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -29,14 +83,15 @@ class _PantryScreenState extends State<PantryScreen> {
         bottom: false,
         child: Observer(
           builder: (_) {
-            final items = dashboardStore.pantry;
-            final isLoading = dashboardStore.isLoadingPantry.value;
+            final items = pantryStore.items;
+            final isLoading = pantryStore.isLoading.value;
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(child: _Header()),
-                const SliverToBoxAdapter(child: _PantryHint()),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                if (items.isNotEmpty)
+                  const SliverToBoxAdapter(child: _PantryHint()),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
                 if (isLoading)
                   const SliverToBoxAdapter(
                     child: Center(
@@ -47,23 +102,17 @@ class _PantryScreenState extends State<PantryScreen> {
                     ),
                   )
                 else if (items.isEmpty)
-                  const SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Text(
-                          'Your pantry is empty',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ),
+                  SliverToBoxAdapter(
+                    child: _EmptyState(
+                      onAddStaples: () {
+                        HapticFeedback.mediumImpact();
+                        context.push('/pantry/onboarding');
+                      },
                     ),
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -73,7 +122,10 @@ class _PantryScreenState extends State<PantryScreen> {
                             childAspectRatio: 1.15,
                           ),
                       delegate: SliverChildBuilderDelegate(
-                        (_, i) => _PantryTile(item: items[i]),
+                        (_, i) => GestureDetector(
+                          onLongPress: () => _showDeleteDialog(items[i]),
+                          child: _PantryTile(item: items[i]),
+                        ),
                         childCount: items.length,
                       ),
                     ),
@@ -83,9 +135,35 @@ class _PantryScreenState extends State<PantryScreen> {
           },
         ),
       ),
+      floatingActionButton: Observer(
+        builder: (_) {
+          if (pantryStore.items.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: FloatingActionButton(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                context.push('/pantry/onboarding');
+              },
+              backgroundColor: AppColors.textPrimary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: AppColors.textOnPrimary,
+                size: 28,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
+
+// ── Header ────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
   const _Header();
@@ -93,7 +171,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,10 +181,11 @@ class _Header extends StatelessWidget {
                 child: Text(
                   'Your pantry',
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 32,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.6,
+                    letterSpacing: -1.0,
+                    height: 1.1,
                   ),
                 ),
               ),
@@ -116,26 +195,26 @@ class _Header extends StatelessWidget {
                   context.push('/pantry/suggestions');
                 },
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.surface,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.add_rounded,
-                    color: AppColors.primary,
+                    color: AppColors.textPrimary,
                     size: 22,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           const Text(
             'Recommendations stay grounded in what you actually have',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textTertiary,
               height: 1.35,
@@ -147,18 +226,19 @@ class _Header extends StatelessWidget {
   }
 }
 
+// ── Pantry Hint ───────────────────────────────────────────────────────────
+
 class _PantryHint extends StatelessWidget {
   const _PantryHint();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      margin: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -166,7 +246,7 @@ class _PantryHint extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -194,8 +274,105 @@ class _PantryHint extends StatelessWidget {
   }
 }
 
+// ── Empty State ───────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onAddStaples;
+
+  const _EmptyState({required this.onAddStaples});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 48),
+      child: Column(
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(32),
+            ),
+            alignment: Alignment.center,
+            child: const Text('🍲', style: TextStyle(fontSize: 56)),
+          ),
+          const SizedBox(height: 32),
+          const Text(
+            "Let's stock your kitchen",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.6,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Add the staples you usually have at home so we can recommend meals you can actually cook.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: onAddStaples,
+            child: Container(
+              width: double.infinity,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Add staples',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textOnPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              context.push('/pantry/suggestions');
+            },
+            child: Container(
+              width: double.infinity,
+              height: 48,
+              alignment: Alignment.center,
+              child: const Text(
+                'Browse suggestions',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Pantry Tile ───────────────────────────────────────────────────────────
+
 class _PantryTile extends StatelessWidget {
   final PantryItem item;
+
   const _PantryTile({required this.item});
 
   @override
@@ -205,7 +382,6 @@ class _PantryTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,13 +415,14 @@ class _PantryTile extends StatelessWidget {
           const Spacer(),
           Text(
             item.name,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
               letterSpacing: -0.2,
+              height: 1.2,
             ),
           ),
           if (item.quantityHint != null) ...[

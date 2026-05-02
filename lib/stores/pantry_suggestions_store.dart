@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mobx/mobx.dart';
 import '../core/di/providers.dart';
 import '../shared/models/pantry_models.dart';
-import 'dashboard_store.dart';
+import '../features/pantry/stores/pantry_store.dart';
 
 /// A suggestion item enriched with a local id so the UI can track per-item state.
 class SuggestionUiItem {
@@ -14,15 +15,20 @@ class SuggestionUiItem {
 
 /// MobX store WITHOUT codegen for the pantry suggestions screen.
 class PantrySuggestionsStore {
-  final DashboardStore dashboardStore;
+  final PantryStore pantryStore;
 
-  PantrySuggestionsStore({required this.dashboardStore});
+  PantrySuggestionsStore({required this.pantryStore});
 
   final suggestions = ObservableList<SuggestionUiItem>();
   final isLoading = Observable<bool>(false);
+  final isLoadingMore = Observable<bool>(false);
   final errorMessage = Observable<String>('');
   final addingIds = ObservableSet<String>();
   final removingIds = ObservableSet<String>();
+
+  int _currentPage = 1;
+  static const int _pageSize = 15;
+  bool _reachedEnd = false;
 
   int _idCounter = 0;
 
@@ -31,35 +37,87 @@ class PantrySuggestionsStore {
     return 'suggestion_$_idCounter';
   }
 
-  Future<void> loadSuggestions() async {
-    runInAction(() {
-      isLoading.value = true;
-      errorMessage.value = '';
-    });
+  bool get hasMore => !_reachedEnd && !isLoadingMore.value;
+
+  Future<void> loadSuggestions({bool append = false}) async {
+    if (isLoadingMore.value || isLoading.value) {
+      debugPrint(
+        '[PantrySuggestions] blocked: loading=${isLoading.value}, loadingMore=${isLoadingMore.value}',
+      );
+      return;
+    }
+
+    if (append && _reachedEnd) {
+      debugPrint('[PantrySuggestions] blocked: reached end');
+      return;
+    }
+
+    if (append) {
+      runInAction(() => isLoadingMore.value = true);
+    } else {
+      runInAction(() {
+        isLoading.value = true;
+        errorMessage.value = '';
+      });
+      _currentPage = 1;
+      _reachedEnd = false;
+    }
+
+    debugPrint(
+      '[PantrySuggestions] fetching page=$_currentPage, append=$append',
+    );
+
     try {
       final response = await apiService.fetchPantrySuggestions(
-        page: 1,
-        pageSize: 50,
+        page: _currentPage,
+        pageSize: _pageSize,
       );
+
+      debugPrint(
+        '[PantrySuggestions] received ${response.items.length} items, total=${response.total}',
+      );
+
       runInAction(() {
-        suggestions
-          ..clear()
-          ..addAll(
-            response.items.map(
-              (item) => SuggestionUiItem(id: _generateId(), item: item),
-            ),
+        final newItems = response.items
+            .map((item) => SuggestionUiItem(id: _generateId(), item: item))
+            .toList();
+
+        if (newItems.isEmpty) {
+          _reachedEnd = true;
+          debugPrint('[PantrySuggestions] reached end (empty page)');
+        } else {
+          if (append) {
+            suggestions.addAll(newItems);
+          } else {
+            suggestions
+              ..clear()
+              ..addAll(newItems);
+          }
+          _currentPage++;
+          debugPrint(
+            '[PantrySuggestions] appended, next page=$_currentPage, total stored=${suggestions.length}',
           );
+        }
       });
     } on ApiException catch (e) {
+      debugPrint('[PantrySuggestions] API error: ${e.message}');
       runInAction(() => errorMessage.value = e.message);
     } catch (e) {
+      debugPrint('[PantrySuggestions] error: $e');
       runInAction(
         () => errorMessage.value =
             'Failed to load suggestions. Please try again.',
       );
     } finally {
-      runInAction(() => isLoading.value = false);
+      runInAction(() {
+        isLoading.value = false;
+        isLoadingMore.value = false;
+      });
     }
+  }
+
+  Future<void> loadMore() async {
+    await loadSuggestions(append: true);
   }
 
   Future<void> addItem(String id) async {
@@ -112,7 +170,7 @@ class PantrySuggestionsStore {
       suggestions.removeWhere((s) => s.id == id);
     });
     // Refresh pantry so the newly added item appears on the pantry tab.
-    dashboardStore.loadPantry();
+    pantryStore.loadPantry();
   }
 
   void clearError() {
