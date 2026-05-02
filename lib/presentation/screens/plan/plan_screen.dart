@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/shared/models/home_models.dart';
+import 'package:diet_coach_ai/stores/dashboard_store.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
@@ -32,17 +33,6 @@ class _PlanScreenState extends State<PlanScreen> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(child: _Header()),
-                SliverToBoxAdapter(child: _MacroBudget(store: store)),
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                const SliverToBoxAdapter(child: _SectionLabel('Flex plan')),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      for (final slot in store.flexPlan) _PlanRow(slot: slot),
-                    ],
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
                 const SliverToBoxAdapter(child: _SectionLabel('Today so far')),
                 SliverToBoxAdapter(
                   child: Column(
@@ -53,6 +43,19 @@ class _PlanScreenState extends State<PlanScreen> {
                           calories: log.meal.calories,
                           protein: log.meal.proteinG,
                         ),
+                    ],
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverToBoxAdapter(child: _UpNextStrip(store: store)),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverToBoxAdapter(child: _MacroBudget(store: store)),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                const SliverToBoxAdapter(child: _SectionLabel('Flex plan')),
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      for (final slot in store.flexPlan) _PlanRow(slot: slot),
                     ],
                   ),
                 ),
@@ -101,7 +104,7 @@ class _Header extends StatelessWidget {
 }
 
 class _MacroBudget extends StatelessWidget {
-  final dynamic store;
+  final DashboardStore store;
   const _MacroBudget({required this.store});
 
   @override
@@ -129,32 +132,32 @@ class _MacroBudget extends StatelessWidget {
           const SizedBox(height: 12),
           _MacroBar(
             label: 'Calories',
-            consumed: store.consumedCalories,
-            target: store.targetCalories,
+            consumed: store.consumedCalories.value,
+            target: store.targetCalories.value,
             unit: 'kcal',
             color: AppColors.calories,
           ),
           const SizedBox(height: 10),
           _MacroBar(
             label: 'Protein',
-            consumed: store.consumedProtein,
-            target: store.targetProtein,
+            consumed: store.consumedProtein.value,
+            target: store.targetProtein.value,
             unit: 'g',
             color: AppColors.protein,
           ),
           const SizedBox(height: 10),
           _MacroBar(
             label: 'Carbs',
-            consumed: store.consumedCarbs,
-            target: store.targetCarbs,
+            consumed: store.consumedCarbs.value,
+            target: store.targetCarbs.value,
             unit: 'g',
             color: AppColors.carbs,
           ),
           const SizedBox(height: 10),
           _MacroBar(
             label: 'Fats',
-            consumed: store.consumedFats,
-            target: store.targetFats,
+            consumed: store.consumedFats.value,
+            target: store.targetFats.value,
             unit: 'g',
             color: AppColors.fats,
           ),
@@ -328,6 +331,183 @@ class _PlanRow extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpNextStrip extends StatelessWidget {
+  final DashboardStore store;
+  const _UpNextStrip({required this.store});
+
+  @override
+  Widget build(BuildContext context) {
+    final slots = store.flexPlan;
+    if (slots.isEmpty) return const SizedBox.shrink();
+
+    int upNextIndex = -1;
+    for (int i = 0; i < slots.length; i++) {
+      if (slots[i].isOpen && !slots[i].isDone) {
+        upNextIndex = i;
+        break;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel('Up next'),
+        const SizedBox(height: 4),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              for (int i = 0; i < slots.length; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                _UpNextCard(
+                  slot: slots[i],
+                  isUpNext: i == upNextIndex,
+                  nextMeal: i == upNextIndex ? store.nextMeal.value : null,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UpNextCard extends StatelessWidget {
+  final FlexPlanSlot slot;
+  final bool isUpNext;
+  final NextMealRecommendation? nextMeal;
+
+  const _UpNextCard({
+    required this.slot,
+    required this.isUpNext,
+    this.nextMeal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 148,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isUpNext ? AppColors.surface : AppColors.background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isUpNext ? AppColors.primary : AppColors.border,
+          width: isUpNext ? 1.5 : 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: slot.isDone
+                  ? AppColors.success.withValues(alpha: 0.1)
+                  : isUpNext
+                  ? AppColors.primary
+                  : AppColors.surface2,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: slot.isDone
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: AppColors.success,
+                      size: 20,
+                    )
+                  : Icon(
+                      slot.icon,
+                      color: isUpNext
+                          ? AppColors.textOnPrimary
+                          : AppColors.textSecondary,
+                      size: 20,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            slot.label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: slot.isDone
+                  ? AppColors.textTertiary
+                  : AppColors.textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (isUpNext && nextMeal != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${nextMeal!.emoji} ${nextMeal!.name}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${nextMeal!.calories} kcal  ·  ${nextMeal!.prepMinutes} min',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              slot.hint,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: slot.isDone
+                    ? AppColors.textTertiary
+                    : AppColors.textSecondary,
+                height: 1.3,
+              ),
+            ),
+          if (slot.isOptional) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'optional',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textTertiary,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

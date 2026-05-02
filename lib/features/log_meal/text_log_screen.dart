@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show textLogStore;
+import 'package:diet_coach_ai/main.dart' show dashboardStore, textLogStore;
 
 class TextLogScreen extends StatefulWidget {
   const TextLogScreen({super.key});
@@ -119,6 +119,50 @@ class _TextLogScreenState extends State<TextLogScreen> {
                 onChanged: _onDescriptionChanged,
               ),
               const SizedBox(height: 20),
+              Observer(
+                builder: (_) {
+                  final pantryItems = dashboardStore.pantry;
+                  if (pantryItems.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your pantry',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: pantryItems.map((item) {
+                          return Observer(
+                            builder: (_) {
+                              final isSelected = textLogStore
+                                  .selectedPantryItemIds
+                                  .contains(item.name);
+                              return _PantryChip(
+                                label: '${item.emoji} ${item.name}',
+                                isSelected: isSelected,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  _insertQuickChip(item.name);
+                                  textLogStore.togglePantryItem(item.name);
+                                },
+                              );
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
+              ),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -301,6 +345,49 @@ class _TextInput extends StatelessWidget {
           filled: false,
         ),
         onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Pantry Chip
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PantryChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PantryChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.protein.withValues(alpha: 0.10)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.protein : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? AppColors.protein : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

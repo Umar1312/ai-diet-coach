@@ -20,11 +20,20 @@ class TextLogRequest {
   final String description;
   final String? context;
 
-  const TextLogRequest({required this.description, this.context});
+  /// IDs of pantry items the user explicitly tapped while composing the log.
+  final List<String>? pantryItemIds;
+
+  const TextLogRequest({
+    required this.description,
+    this.context,
+    this.pantryItemIds,
+  });
 
   Map<String, dynamic> toJson() => {
     'description': description,
     if (context != null) 'context': context,
+    if (pantryItemIds != null && pantryItemIds!.isNotEmpty)
+      'pantry_item_ids': pantryItemIds,
   };
 }
 

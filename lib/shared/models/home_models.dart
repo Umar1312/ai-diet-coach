@@ -67,6 +67,12 @@ class NextMealRecommendation {
   final int fatsG;
   final String emoji;
 
+  /// Pantry items used in this recommendation, if any.
+  final List<String> usedPantryItems;
+
+  /// Explicit reasoning about why pantry items were used.
+  final String? pantryReasoning;
+
   const NextMealRecommendation({
     required this.name,
     required this.whyItFits,
@@ -76,6 +82,8 @@ class NextMealRecommendation {
     required this.carbsG,
     required this.fatsG,
     required this.emoji,
+    this.usedPantryItems = const [],
+    this.pantryReasoning,
   });
 
   factory NextMealRecommendation.fromJson(Map<String, dynamic> json) =>
@@ -88,6 +96,12 @@ class NextMealRecommendation {
         carbsG: json['carbs_g'] as int,
         fatsG: json['fats_g'] as int,
         emoji: json['emoji'] as String,
+        usedPantryItems:
+            (json['used_pantry_items'] as List?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
+        pantryReasoning: json['pantry_reasoning'] as String?,
       );
 }
 

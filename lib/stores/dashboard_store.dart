@@ -128,7 +128,10 @@ class DashboardStore {
       hasError.value = false;
     });
     try {
-      final plan = await apiService.fetchDashboard();
+      await loadPantry();
+      final plan = await apiService.fetchDashboard(
+        preferPantry: pantry.isNotEmpty,
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -174,7 +177,10 @@ class DashboardStore {
 
   Future<void> swapNextMeal() async {
     final current = nextMeal.value?.name ?? '';
-    final response = await apiService.swapMeal(current);
+    final response = await apiService.swapMeal(
+      current,
+      preferPantry: pantry.isNotEmpty,
+    );
     runInAction(() => nextMeal.value = response.nextMeal);
   }
 
@@ -184,7 +190,10 @@ class DashboardStore {
   }
 
   Future<void> quickAction(String action) async {
-    final response = await apiService.quickAction(action);
+    final response = await apiService.quickAction(
+      action,
+      preferPantry: pantry.isNotEmpty,
+    );
     runInAction(() => nextMeal.value = response.nextMeal);
   }
 

@@ -86,12 +86,13 @@ class PantrySuggestionsStore {
 
       HapticFeedback.lightImpact();
 
-      runInAction(() => addingIds.remove(id));
-
       // Let the tick sit for a beat before sliding the item away.
       await Future.delayed(const Duration(milliseconds: 400));
 
-      runInAction(() => removingIds.add(id));
+      runInAction(() {
+        addingIds.remove(id);
+        removingIds.add(id);
+      });
     } on ApiException catch (e) {
       runInAction(() {
         addingIds.remove(id);

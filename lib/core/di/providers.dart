@@ -59,9 +59,12 @@ class ApiService {
     });
   }
 
-  Future<DailyPlan> fetchDashboard() async {
+  Future<DailyPlan> fetchDashboard({bool preferPantry = false}) async {
     return _wrap(() async {
-      final response = await _dio.get('/dashboard/state');
+      final response = await _dio.get(
+        '/dashboard/state',
+        queryParameters: {if (preferPantry) 'prefer_pantry': 'true'},
+      );
       return DailyPlan.fromJson(response.data);
     });
   }
@@ -87,13 +90,18 @@ class ApiService {
     });
   }
 
-  Future<MealLogResponse> logText(String description, {String? context}) async {
+  Future<MealLogResponse> logText(
+    String description, {
+    String? context,
+    List<String>? pantryItemIds,
+  }) async {
     return _wrap(() async {
       final response = await _dio.post(
         '/log/text',
         data: TextLogRequest(
           description: description,
           context: context,
+          pantryItemIds: pantryItemIds,
         ).toJson(),
       );
       return MealLogResponse.fromJson(response.data);
@@ -136,21 +144,32 @@ class ApiService {
     });
   }
 
-  Future<SwapResponse> swapMeal(String currentMealName) async {
+  Future<SwapResponse> swapMeal(
+    String currentMealName, {
+    bool preferPantry = false,
+    String? reason,
+  }) async {
     return _wrap(() async {
       final response = await _dio.post(
         '/recommendations/swap',
-        data: {'current_meal_name': currentMealName, 'reason': 'user_swap'},
+        data: {
+          'current_meal_name': currentMealName,
+          'reason': reason ?? 'user_swap',
+          if (preferPantry) 'prefer_pantry': true,
+        },
       );
       return SwapResponse.fromJson(response.data);
     });
   }
 
-  Future<QuickActionResponse> quickAction(String action) async {
+  Future<QuickActionResponse> quickAction(
+    String action, {
+    bool preferPantry = false,
+  }) async {
     return _wrap(() async {
       final response = await _dio.post(
         '/recommendations/quick-action',
-        data: {'action': action},
+        data: {'action': action, if (preferPantry) 'prefer_pantry': true},
       );
       return QuickActionResponse.fromJson(response.data);
     });

@@ -11,6 +11,9 @@ class TextLogStore {
   final isSubmitting = Observable<bool>(false);
   final errorMessage = Observable<String?>(null);
 
+  /// Pantry item IDs the user explicitly tapped while composing the log.
+  final selectedPantryItemIds = ObservableList<String>();
+
   // ── Computed ────────────────────────────────────────────────────────────
 
   late final canSubmit = Computed<bool>(
@@ -36,7 +39,12 @@ class TextLogStore {
     });
 
     try {
-      final response = await apiService.logText(text);
+      final response = await apiService.logText(
+        text,
+        pantryItemIds: selectedPantryItemIds.isEmpty
+            ? null
+            : selectedPantryItemIds.toList(),
+      );
       dashboardStore.applyPlan(response.updatedPlan);
     } on ApiException catch (e) {
       runInAction(() => errorMessage.value = e.message);
@@ -49,11 +57,22 @@ class TextLogStore {
     }
   }
 
+  void togglePantryItem(String itemId) {
+    runInAction(() {
+      if (selectedPantryItemIds.contains(itemId)) {
+        selectedPantryItemIds.remove(itemId);
+      } else {
+        selectedPantryItemIds.add(itemId);
+      }
+    });
+  }
+
   void clear() {
     runInAction(() {
       description.value = '';
       isSubmitting.value = false;
       errorMessage.value = null;
+      selectedPantryItemIds.clear();
     });
   }
 }
