@@ -71,19 +71,18 @@ class PantryStore {
     }
   }
 
-  Future<void> deleteItem(String name) async {
-    // We need the backend id to delete. Since PantryItem UI model doesn't
-    // store id, we keep a hidden mapping or reload after delete.
-    // For now, we reload the full pantry to get ids, then delete by name.
+  Future<void> deleteItem(String id) async {
     try {
-      final response = await apiService.fetchPantry();
-      final target = response.items.firstWhere(
-        (r) => r.name == name,
-        orElse: () => throw StateError('Item not found'),
-      );
-      await apiService.deletePantryItem(target.id);
+      await apiService.deletePantryItem(id);
       HapticFeedback.lightImpact();
       await loadPantry();
+      // Refresh dashboard so AI recalculates without the deleted item.
+      if (dashboardStore != null) {
+        final plan = await apiService.fetchDashboard(
+          preferPantry: items.isNotEmpty,
+        );
+        dashboardStore!.applyPlan(plan);
+      }
     } on ApiException catch (e) {
       runInAction(() => errorMessage.value = e.message);
     } catch (e) {

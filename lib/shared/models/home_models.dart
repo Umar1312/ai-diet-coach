@@ -150,12 +150,14 @@ class FlexPlanSlot {
 
 /// A pantry item the user already has at home.
 class PantryItem {
+  final String id;
   final String name;
   final String emoji;
   final String? quantityHint; // "400g left", "expires in 2d"
   final bool isHighProtein;
 
   const PantryItem({
+    required this.id,
     required this.name,
     required this.emoji,
     this.quantityHint,
@@ -163,6 +165,7 @@ class PantryItem {
   });
 
   factory PantryItem.fromResponse(PantryItemResponse response) => PantryItem(
+    id: response.id,
     name: response.name,
     emoji: response.emoji,
     quantityHint: response.quantityHint,

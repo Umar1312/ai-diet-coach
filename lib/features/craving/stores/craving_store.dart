@@ -133,7 +133,7 @@ class CravingStore {
     }
   }
 
-  Future<MealLogResponse?> logChosen() async {
+  Future<MealLogResponse?> logChosen({String? slot}) async {
     final meal = result.value;
     if (meal == null) return null;
 
@@ -146,6 +146,7 @@ class CravingStore {
           proteinG: meal.proteinG,
           carbsG: meal.carbsG,
           fatsG: meal.fatsG,
+          slot: slot,
         ),
       );
     } finally {

@@ -29,7 +29,7 @@ class TextLogStore {
     });
   }
 
-  Future<void> submit() async {
+  Future<void> submit({String? slot}) async {
     final text = description.value.trim();
     if (text.isEmpty || isSubmitting.value) return;
 
@@ -44,6 +44,7 @@ class TextLogStore {
         pantryItemIds: selectedPantryItemIds.isEmpty
             ? null
             : selectedPantryItemIds.toList(),
+        slot: slot,
       );
       dashboardStore.applyPlan(response.updatedPlan);
     } on ApiException catch (e) {

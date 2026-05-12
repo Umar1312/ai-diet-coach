@@ -6,14 +6,19 @@ import 'package:lottie/lottie.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../main.dart' show dashboardStore, cravingStore;
 import '../../../shared/models/home_models.dart';
+import '../../../shared/models/planned_meal.dart';
+import '../../../presentation/widgets/proposal_sheet.dart';
+import '../../../presentation/widgets/slot_picker.dart';
 import 'stores/craving_store.dart';
 import 'widgets/streaming_text_lines.dart';
 
-/// Bottom sheet that walks the user through craving → AI thinking → snack reveal.
+/// Bottom sheet that helps the user satisfy a craving while staying
+/// connected to their proactive day plan.
+///
+/// Flow: Prompt → Thinking → Reveal → Slot Picker → Proposal (if off-plan)
 class CravingSheet extends StatelessWidget {
   const CravingSheet({super.key});
 
-  // Placeholder Lottie URL — swap with your preferred sparkle/AI animation.
   static const String _lottieUrl =
       'https://assets2.lottiefiles.com/packages/lf20_usmfx6bp.json';
 
@@ -36,7 +41,7 @@ class CravingSheet extends StatelessWidget {
       ),
       child: Container(
         decoration: const BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         padding: const EdgeInsets.fromLTRB(28, 16, 28, 40),
@@ -44,7 +49,7 @@ class CravingSheet extends StatelessWidget {
           top: false,
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.82,
+              maxHeight: MediaQuery.of(context).size.height * 0.88,
             ),
             child: Observer(
               builder: (_) {
@@ -105,47 +110,74 @@ class _PromptView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _GrabHandle(),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
         const Text(
           'What are you craving?',
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
             color: AppColors.textPrimary,
+            height: 1.1,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Observer(
           builder: (_) {
             final cal = dashboardStore.caloriesLeft.value;
             final protein = dashboardStore.proteinLeft.value;
-            final lowCal = cal <= 50;
+            final planned = dashboardStore.plannedMeals;
+            final nextOpen = planned
+                .where((m) => m.status == PlannedMealStatus.planned)
+                .firstOrNull;
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  lowCal
-                      ? "You've nearly hit your goal — we'll suggest something small and light."
-                      : '$cal cal · ${protein}g protein left',
-                  style: TextStyle(
+                  '$cal cal · ${protein}g protein left',
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: lowCal
-                        ? AppColors.textSecondary
-                        : AppColors.textSecondary,
+                    color: AppColors.textSecondary,
                     height: 1.4,
                   ),
                 ),
-                if (lowCal) ...[
+                if (nextOpen != null) ...[
                   const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.protein,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Next up: ${nextOpen.meal.emoji} ${nextOpen.meal.name} (${_slotLabel(nextOpen.slot)})',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (cal <= 50) ...[
+                  const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surface2,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Row(
@@ -173,11 +205,11 @@ class _PromptView extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         _CravingInput(),
         const SizedBox(height: 16),
         _TagChips(tags: tags),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         Observer(
           builder: (_) {
             final canSubmit = cravingStore.canSubmit.value;
@@ -214,6 +246,23 @@ class _PromptView extends StatelessWidget {
       ],
     );
   }
+
+  String _slotLabel(String slot) {
+    switch (slot) {
+      case 'breakfast':
+        return 'Breakfast';
+      case 'lunch':
+        return 'Lunch';
+      case 'dinner':
+        return 'Dinner';
+      case 'snack':
+        return 'Snack';
+      case 'late':
+        return 'Late';
+      default:
+        return slot;
+    }
+  }
 }
 
 class _CravingInput extends StatefulWidget {
@@ -240,7 +289,7 @@ class _CravingInputState extends State<_CravingInput> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -303,9 +352,7 @@ class _TagChips extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.textPrimary
-                      : AppColors.surface2,
+                  color: isSelected ? AppColors.textPrimary : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
@@ -370,7 +417,6 @@ class _ThinkingView extends StatelessWidget {
   }
 }
 
-/// Beautiful fallback when Lottie fails to load.
 class _FallbackOrb extends StatefulWidget {
   const _FallbackOrb();
 
@@ -457,7 +503,6 @@ class _RevealView extends StatelessWidget {
     final meal = cravingStore.result.value;
     if (meal == null) return const SizedBox.shrink();
 
-    // Haptic on reveal
     WidgetsBinding.instance.addPostFrameCallback((_) {
       HapticFeedback.lightImpact();
     });
@@ -467,8 +512,8 @@ class _RevealView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const _GrabHandle(),
-        const SizedBox(height: 24),
-        Text(meal.emoji, style: const TextStyle(fontSize: 60)),
+        const SizedBox(height: 20),
+        Text(meal.emoji, style: const TextStyle(fontSize: 56)),
         const SizedBox(height: 12),
         Text(
           meal.name,
@@ -489,14 +534,14 @@ class _RevealView extends StatelessWidget {
               fontSize: 15,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
-              height: 1.4,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(height: 20),
         _MacroPills(meal: meal),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         if (meal.usedPantryItems.isNotEmpty)
           _PantryBadge(
             items: meal.usedPantryItems,
@@ -506,107 +551,139 @@ class _RevealView extends StatelessWidget {
         Observer(
           builder: (_) {
             final isLogging = cravingStore.isLogging.value;
-            return GestureDetector(
-              onTap: isLogging
-                  ? null
-                  : () async {
-                      HapticFeedback.mediumImpact();
-                      final response = await cravingStore.logChosen();
-                      if (response != null) {
-                        dashboardStore.applyPlan(response.updatedPlan);
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        _showLoggedSnack(context);
-                      }
-                    },
-              child: Container(
-                width: double.infinity,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.textPrimary,
-                  borderRadius: BorderRadius.circular(20),
+            return Column(
+              children: [
+                GestureDetector(
+                  onTap: isLogging ? null : () => _handleLogIt(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppColors.textPrimary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: isLogging
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Log It',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: isLogging
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Log it',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: -0.3,
-                        ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: isLogging
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          cravingStore.tryAgain(
+                            preferPantry: dashboardStore.pantry.isNotEmpty,
+                          );
+                        },
+                  child: Container(
+                    width: double.infinity,
+                    height: 52,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Try another',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
                       ),
-              ),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            cravingStore.tryAgain(
-              preferPantry: dashboardStore.pantry.isNotEmpty,
-            );
-          },
-          child: Container(
-            width: double.infinity,
-            height: 56,
-            alignment: Alignment.center,
-            child: const Text(
-              'Try another',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
         ),
       ],
     );
   }
 
+  Future<void> _handleLogIt(BuildContext context) async {
+    HapticFeedback.mediumImpact();
+
+    // Ask which slot this craving belongs to
+    final slot = await showSlotPicker(context);
+    if (!context.mounted) return;
+
+    final response = await cravingStore.logChosen(slot: slot);
+    if (response != null) {
+      dashboardStore.applyPlan(response.updatedPlan);
+    }
+
+    if (!context.mounted) return;
+
+    // If off-plan, the backend returns a pending proposal
+    if (dashboardStore.pendingProposal.value != null) {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        builder: (_) => const ProposalSheet(),
+      );
+    } else {
+      Navigator.pop(context);
+      _showLoggedSnack(context);
+    }
+  }
+
   void _showLoggedSnack(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        backgroundColor: AppColors.textPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
-        content: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: AppColors.success,
-              size: 20,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'Logged!',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          backgroundColor: AppColors.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          duration: const Duration(seconds: 2),
+          content: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: AppColors.success,
+                size: 20,
               ),
-            ),
-          ],
+              SizedBox(width: 10),
+              Text(
+                'Logged!',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Macro Pills
+// ═══════════════════════════════════════════════════════════════════════════
 
 class _MacroPills extends StatelessWidget {
   final NextMealRecommendation meal;
@@ -630,53 +707,48 @@ class _MacroPills extends StatelessWidget {
       _PillData(label: '${meal.fatsG}g', unit: 'F', color: AppColors.fats),
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: items.asMap().entries.map((entry) {
-        final i = entry.key;
-        final item = entry.value;
-        return Row(
-          children: [
-            if (i > 0) const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                borderRadius: BorderRadius.circular(14),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: items.map((item) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: item.color,
+                  shape: BoxShape.circle,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: item.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    item.label,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    item.unit,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 6),
+              Text(
+                item.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 3),
+              Text(
+                item.unit,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );
@@ -690,6 +762,10 @@ class _PillData {
   _PillData({required this.label, required this.unit, required this.color});
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Pantry Badge
+// ═══════════════════════════════════════════════════════════════════════════
+
 class _PantryBadge extends StatelessWidget {
   final List<String> items;
   final String? reasoning;
@@ -701,7 +777,7 @@ class _PantryBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(

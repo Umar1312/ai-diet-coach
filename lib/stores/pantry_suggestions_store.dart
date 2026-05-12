@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mobx/mobx.dart';
@@ -25,10 +27,12 @@ class PantrySuggestionsStore {
   final errorMessage = Observable<String>('');
   final addingIds = ObservableSet<String>();
   final removingIds = ObservableSet<String>();
+  final searchQuery = Observable<String>('');
 
   int _currentPage = 1;
   static const int _pageSize = 15;
   bool _reachedEnd = false;
+  Timer? _debounceTimer;
 
   int _idCounter = 0;
 
@@ -38,6 +42,25 @@ class PantrySuggestionsStore {
   }
 
   bool get hasMore => !_reachedEnd && !isLoadingMore.value;
+
+  void setSearchQuery(String value) {
+    runInAction(() => searchQuery.value = value);
+
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _currentPage = 1;
+      _reachedEnd = false;
+      loadSuggestions();
+    });
+  }
+
+  void clearSearch() {
+    _debounceTimer?.cancel();
+    runInAction(() => searchQuery.value = '');
+    _currentPage = 1;
+    _reachedEnd = false;
+    loadSuggestions();
+  }
 
   Future<void> loadSuggestions({bool append = false}) async {
     if (isLoadingMore.value || isLoading.value) {
@@ -63,14 +86,19 @@ class PantrySuggestionsStore {
       _reachedEnd = false;
     }
 
+    final effectiveQuery = searchQuery.value.trim().isEmpty
+        ? null
+        : searchQuery.value.trim();
+
     debugPrint(
-      '[PantrySuggestions] fetching page=$_currentPage, append=$append',
+      '[PantrySuggestions] fetching page=$_currentPage, append=$append, q=$effectiveQuery',
     );
 
     try {
       final response = await apiService.fetchPantrySuggestions(
         page: _currentPage,
         pageSize: _pageSize,
+        q: effectiveQuery,
       );
 
       debugPrint(
@@ -175,5 +203,9 @@ class PantrySuggestionsStore {
 
   void clearError() {
     runInAction(() => errorMessage.value = '');
+  }
+
+  void dispose() {
+    _debounceTimer?.cancel();
   }
 }

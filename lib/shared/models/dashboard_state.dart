@@ -1,5 +1,6 @@
 import 'meal_log_item.dart';
 import 'home_models.dart';
+import 'planned_meal.dart';
 
 enum AICardState {
   onTrack('on_track'),
@@ -25,7 +26,8 @@ class DailyPlan {
   final MacroTargets targets;
   final MacroTargets consumed;
   final List<MealLogItem> meals;
-  final List<FlexPlanSlot> flexPlan;
+  final List<PlannedMeal> plannedMeals;
+  final ProposedPlan? pendingProposal;
   final NextMealRecommendation? nextMeal;
   final RecalibrationStatus? recalibration;
   final DayStatus dayStatus;
@@ -39,7 +41,8 @@ class DailyPlan {
     required this.targets,
     required this.consumed,
     required this.meals,
-    required this.flexPlan,
+    required this.plannedMeals,
+    this.pendingProposal,
     this.nextMeal,
     this.recalibration,
     required this.dayStatus,
@@ -56,9 +59,16 @@ class DailyPlan {
     meals: (json['meals'] as List)
         .map((e) => MealLogItem.fromJson(e as Map<String, dynamic>))
         .toList(),
-    flexPlan: (json['flex_plan'] as List)
-        .map((e) => FlexPlanSlot.fromJson(e as Map<String, dynamic>))
-        .toList(),
+    plannedMeals:
+        (json['planned_meals'] as List?)
+            ?.map((e) => PlannedMeal.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
+    pendingProposal: json['pending_proposal'] == null
+        ? null
+        : ProposedPlan.fromJson(
+            json['pending_proposal'] as Map<String, dynamic>,
+          ),
     nextMeal: json['next_meal'] == null
         ? null
         : NextMealRecommendation.fromJson(
@@ -69,7 +79,9 @@ class DailyPlan {
         : RecalibrationStatus.fromJson(
             json['recalibration'] as Map<String, dynamic>,
           ),
-    dayStatus: DayStatusParsing.fromString(json['day_status'] as String),
+    dayStatus: DayStatusParsing.fromString(
+      json['day_status'] as String? ?? 'on_track',
+    ),
     aiCardText: json['ai_card_text'] as String,
     aiCardState: AICardState.fromString(json['ai_card_state'] as String),
     generatedAt: json['generated_at'] as String,

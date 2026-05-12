@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobx/mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 
 /// Shell for the main app tabs. Wraps Home / Pantry / Plan / Profile
 /// with a persistent bottom nav. Child comes from go_router's
 /// StatefulShellRoute branch.
-class HomeShell extends StatelessWidget {
+class HomeShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   const HomeShell({super.key, required this.navigationShell});
 
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
   static const _tabs = <_TabItem>[
     _TabItem(label: 'Home', icon: Icons.home_rounded),
     _TabItem(label: 'Pantry', icon: Icons.kitchen_rounded),
@@ -18,11 +26,48 @@ class HomeShell extends StatelessWidget {
     _TabItem(label: 'Profile', icon: Icons.person_rounded),
   ];
 
+  ReactionDisposer? _proposalReaction;
+
   void _onTap(int index) {
     HapticFeedback.selectionClick();
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _proposalReaction = reaction((_) => dashboardStore.pendingProposal.value, (
+      proposal,
+    ) {
+      if (proposal != null && mounted) {
+        _showProposalSheet();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _proposalReaction?.call();
+    super.dispose();
+  }
+
+  void _showProposalSheet() {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    // Avoid stacking multiple proposal sheets
+    if (navigator.canPop()) {
+      // Heuristic: if there's already a bottom sheet open, don't stack another
+      // In practice, the sheet is modal and blocks interaction, so this is rare.
+    }
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => const ProposalSheet(),
     );
   }
 
@@ -30,9 +75,9 @@ class HomeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: _BottomNavBar(
-        currentIndex: navigationShell.currentIndex,
+        currentIndex: widget.navigationShell.currentIndex,
         tabs: _tabs,
         onTap: _onTap,
       ),

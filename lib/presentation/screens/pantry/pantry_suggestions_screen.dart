@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -20,6 +21,7 @@ class PantrySuggestionsScreen extends StatefulWidget {
 class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
   late final PantrySuggestionsStore _store;
   late final ScrollController _scrollController;
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
     _store = pantrySuggestionsStore;
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+    _searchController = TextEditingController();
     _store.loadSuggestions();
   }
 
@@ -34,6 +37,7 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -56,7 +60,13 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
             return Column(
               children: [
                 const _Header(),
+                _SearchBar(controller: _searchController, store: _store),
                 if (_store.errorMessage.value.isNotEmpty) _buildErrorBanner(),
+                if (_store.isLoading.value && _store.suggestions.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  ),
                 Expanded(
                   child: _store.isLoading.value && _store.suggestions.isEmpty
                       ? _buildLoading()
@@ -182,6 +192,7 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
   }
 
   Widget _buildEmpty() {
+    final hasQuery = _store.searchQuery.value.trim().isNotEmpty;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -192,9 +203,11 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
             color: AppColors.textTertiary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No suggestions available',
-            style: TextStyle(
+          Text(
+            hasQuery
+                ? 'No suggestions found for "${_store.searchQuery.value.trim()}"'
+                : 'No suggestions available',
+            style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -242,6 +255,92 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final PantrySuggestionsStore store;
+
+  const _SearchBar({required this.controller, required this.store});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 12, 28, 8),
+      child: Observer(
+        builder: (_) {
+          return TextField(
+            controller: controller,
+            onChanged: store.setSearchQuery,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.surface,
+              hintText: 'Search meals...',
+              hintStyle: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textTertiary,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 18,
+              ),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(left: 16, right: 8),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textTertiary,
+                  size: 22,
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
+              suffixIcon: store.searchQuery.value.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        controller.clear();
+                        store.clearSearch();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.only(right: 16, left: 8),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textTertiary,
+                          size: 20,
+                        ),
+                      ),
+                    )
+                  : null,
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

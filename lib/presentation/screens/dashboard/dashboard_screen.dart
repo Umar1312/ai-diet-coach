@@ -9,6 +9,8 @@ import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, cravingStore;
 import 'package:diet_coach_ai/features/craving/widgets/craving_fab.dart';
 import 'package:diet_coach_ai/features/craving/craving_sheet.dart';
+import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
+import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
 class DashboardScreen extends StatelessWidget {
@@ -429,10 +431,24 @@ class _NextMeal extends StatelessWidget {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           HapticFeedback.mediumImpact();
-                          store.acceptNextMeal();
-                          _showAcceptedSnack(context);
+                          final slot = await showSlotPicker(context);
+                          if (!context.mounted) return;
+                          await store.acceptNextMeal(slot: slot);
+                          if (!context.mounted) return;
+                          if (dashboardStore.pendingProposal.value != null) {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              isScrollControlled: true,
+                              isDismissible: false,
+                              enableDrag: false,
+                              builder: (_) => const ProposalSheet(),
+                            );
+                          } else {
+                            _showAcceptedSnack(context);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -505,93 +521,6 @@ class _NextMeal extends StatelessWidget {
           duration: const Duration(seconds: 2),
         ),
       );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Pantry Reasoning
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _PantryReasoning extends StatelessWidget {
-  final List<String> items;
-  final String? reasoning;
-
-  const _PantryReasoning({required this.items, this.reasoning});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.kitchen_rounded,
-                color: AppColors.protein,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Uses what you have',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: items
-                .map(
-                  (item) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          if (reasoning != null && reasoning!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              reasoning!,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 }
 

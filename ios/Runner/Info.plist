@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to take photos of your meals and menus so the AI can estimate macros and recommend dishes that fit your plan.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library so you can select food photos to log meals.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app may access the microphone when recording video of your meals.</string>
 </dict>
 </plist>

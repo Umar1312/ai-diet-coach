@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
@@ -48,7 +49,14 @@ class ApiService {
     try {
       return await call();
     } on DioException catch (e) {
-      throw parseApiError(e);
+      final err = parseApiError(e);
+      debugPrint(
+        '🚨 API ERROR [${e.response?.statusCode}] ${e.requestOptions.method} ${e.requestOptions.path}\n'
+        '   code: ${err.code}\n'
+        '   message: ${err.message}\n'
+        '   response: ${e.response?.data}',
+      );
+      throw err;
     }
   }
 
@@ -79,12 +87,18 @@ class ApiService {
     });
   }
 
-  Future<MealLogResponse> logVision(String imagePath, {String? context}) async {
+  Future<MealLogResponse> logVision(
+    String imagePath, {
+    String? context,
+    String? slot,
+  }) async {
     return _wrap(() async {
-      final formData = FormData.fromMap({
+      final map = <String, dynamic>{
         'image': await MultipartFile.fromFile(imagePath, filename: 'meal.jpg'),
-        if (context != null) 'context': context,
-      });
+      };
+      if (context != null) map['context'] = context;
+      if (slot != null) map['slot'] = slot;
+      final formData = FormData.fromMap(map);
       final response = await _dio.post('/log/vision', data: formData);
       return MealLogResponse.fromJson(response.data);
     });
@@ -94,6 +108,7 @@ class ApiService {
     String description, {
     String? context,
     List<String>? pantryItemIds,
+    String? slot,
   }) async {
     return _wrap(() async {
       final response = await _dio.post(
@@ -102,6 +117,7 @@ class ApiService {
           description: description,
           context: context,
           pantryItemIds: pantryItemIds,
+          slot: slot,
         ).toJson(),
       );
       return MealLogResponse.fromJson(response.data);
@@ -203,11 +219,19 @@ class ApiService {
   Future<PantrySuggestionsResponse> fetchPantrySuggestions({
     int page = 1,
     int pageSize = 10,
+    String? q,
   }) async {
     return _wrap(() async {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'page_size': pageSize,
+      };
+      if (q != null && q.trim().isNotEmpty) {
+        queryParams['q'] = q.trim();
+      }
       final response = await _dio.get(
         '/pantry/suggestions',
-        queryParameters: {'page': page, 'page_size': pageSize},
+        queryParameters: queryParams,
       );
       return PantrySuggestionsResponse.fromJson(response.data);
     });
@@ -243,6 +267,54 @@ class ApiService {
     });
   }
 
+  // ── Day Plan (v2.1 proactive daily menu) ────────────────────────────────
+
+  Future<DailyPlan> fetchDayPlan() async {
+    return _wrap(() async {
+      final response = await _dio.get('/day-plan');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> regenerateDayPlan() async {
+    return _wrap(() async {
+      final response = await _dio.post('/day-plan/regenerate');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> swapSlot(int order, {List<String>? excludeNames}) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$order/swap',
+        data: {
+          'slot_order': order,
+          if (excludeNames != null && excludeNames.isNotEmpty)
+            'exclude_names': excludeNames,
+        },
+      );
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> acceptProposal() async {
+    return _wrap(() async {
+      final response = await _dio.post('/day-plan/proposal/accept');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> rejectProposal({bool regenerate = true}) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/proposal/reject',
+        data: {'regenerate': regenerate},
+      );
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  // Legacy plan endpoint (still used for backward compatibility)
   Future<DailyPlan> fetchPlan() async {
     return _wrap(() async {
       final response = await _dio.get('/plan');

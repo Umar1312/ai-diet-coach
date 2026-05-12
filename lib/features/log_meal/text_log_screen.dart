@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, textLogStore;
+import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
+import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 class TextLogScreen extends StatefulWidget {
   const TextLogScreen({super.key});
@@ -44,11 +46,29 @@ class _TextLogScreenState extends State<TextLogScreen> {
 
   Future<void> _submit() async {
     HapticFeedback.mediumImpact();
-    await textLogStore.submit();
+
+    // Ask user which slot this meal belongs to
+    final slot = await showSlotPicker(context);
+    if (!mounted) return;
+
+    await textLogStore.submit(slot: slot);
 
     if (mounted && textLogStore.errorMessage.value == null) {
       _showLoggedSnack(context);
-      context.go('/home');
+
+      // If there's a pending proposal from an off-plan log, show it
+      if (dashboardStore.pendingProposal.value != null) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          isDismissible: false,
+          enableDrag: false,
+          builder: (_) => const ProposalSheet(),
+        );
+      } else {
+        context.go('/home');
+      }
     }
   }
 

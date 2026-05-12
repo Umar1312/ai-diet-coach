@@ -19,14 +19,14 @@ class MealLogResponse {
 class TextLogRequest {
   final String description;
   final String? context;
-
-  /// IDs of pantry items the user explicitly tapped while composing the log.
   final List<String>? pantryItemIds;
+  final String? slot;
 
   const TextLogRequest({
     required this.description,
     this.context,
     this.pantryItemIds,
+    this.slot,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +34,7 @@ class TextLogRequest {
     if (context != null) 'context': context,
     if (pantryItemIds != null && pantryItemIds!.isNotEmpty)
       'pantry_item_ids': pantryItemIds,
+    if (slot != null) 'slot': slot,
   };
 }
 
@@ -44,6 +45,7 @@ class ManualLogRequest {
   final int carbsG;
   final int fatsG;
   final String source;
+  final String? slot;
 
   const ManualLogRequest({
     required this.foodName,
@@ -52,6 +54,7 @@ class ManualLogRequest {
     required this.carbsG,
     required this.fatsG,
     required this.source,
+    this.slot,
   });
 
   Map<String, dynamic> toJson() => {
@@ -61,6 +64,7 @@ class ManualLogRequest {
     'carbs_g': carbsG,
     'fats_g': fatsG,
     'source': source,
+    if (slot != null) 'slot': slot,
   };
 }
 
@@ -94,6 +98,7 @@ class LogRecommendationRequest {
   final int proteinG;
   final int carbsG;
   final int fatsG;
+  final String? slot;
 
   const LogRecommendationRequest({
     required this.foodName,
@@ -101,6 +106,7 @@ class LogRecommendationRequest {
     required this.proteinG,
     required this.carbsG,
     required this.fatsG,
+    this.slot,
   });
 
   Map<String, dynamic> toJson() => {
@@ -109,5 +115,6 @@ class LogRecommendationRequest {
     'protein_g': proteinG,
     'carbs_g': carbsG,
     'fats_g': fatsG,
+    if (slot != null) 'slot': slot,
   };
 }

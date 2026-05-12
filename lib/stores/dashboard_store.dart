@@ -6,6 +6,7 @@ import '../../shared/models/home_models.dart';
 import '../../shared/models/meal.dart';
 import '../../shared/models/meal_log_item.dart';
 import '../../shared/models/meal_log_response.dart';
+import '../../shared/models/planned_meal.dart';
 
 /// MobX store WITHOUT codegen.
 /// All observables/computed are declared manually via Observable()/Computed().
@@ -28,7 +29,7 @@ class DashboardStore {
 
   final todayMeals = ObservableList<MealLogItem>();
 
-  // ── Legacy AI coach fields ──────────────────────────────────────────────
+  // ── AI coach fields ─────────────────────────────────────────────────────
 
   final aiCardText = Observable<String>('');
   final aiCardState = Observable<AICardState>(AICardState.onTrack);
@@ -39,13 +40,17 @@ class DashboardStore {
   final dayStatus = Observable<DayStatus>(DayStatus.onTrack);
   final nextMeal = Observable<NextMealRecommendation?>(null);
   final recalibration = Observable<RecalibrationStatus?>(null);
-  final flexPlan = ObservableList<FlexPlanSlot>();
+  final plannedMeals = ObservableList<PlannedMeal>();
+  final pendingProposal = Observable<ProposedPlan?>(null);
   final pantry = ObservableList<PantryItem>();
 
   final isLoadingPantry = Observable<bool>(false);
   final isLoading = Observable<bool>(false);
   final hasError = Observable<bool>(false);
   final errorMessage = Observable<String>('');
+
+  final isGeneratingPlan = Observable<bool>(false);
+  final isSwappingSlot = Observable<int?>(null);
 
   // ── Computed ────────────────────────────────────────────────────────────
 
@@ -116,9 +121,10 @@ class DashboardStore {
       dayStatus.value = plan.dayStatus;
       nextMeal.value = plan.nextMeal;
       recalibration.value = plan.recalibration;
-      flexPlan
+      plannedMeals
         ..clear()
-        ..addAll(plan.flexPlan);
+        ..addAll(plan.plannedMeals);
+      pendingProposal.value = plan.pendingProposal;
     });
   }
 
@@ -145,7 +151,11 @@ class DashboardStore {
     }
   }
 
-  Future<void> addMeal(Meal meal, {String source = 'manual'}) async {
+  Future<void> addMeal(
+    Meal meal, {
+    String source = 'text',
+    String? slot,
+  }) async {
     final response = await apiService.logManual(
       ManualLogRequest(
         foodName: meal.name,
@@ -154,12 +164,13 @@ class DashboardStore {
         carbsG: meal.carbsG,
         fatsG: meal.fatsG,
         source: source,
+        slot: slot,
       ),
     );
     applyPlan(response.updatedPlan);
   }
 
-  Future<void> acceptNextMeal() async {
+  Future<void> acceptNextMeal({String? slot}) async {
     final meal = nextMeal.value;
     if (meal == null) return;
     final response = await apiService.logManual(
@@ -170,6 +181,7 @@ class DashboardStore {
         carbsG: meal.carbsG,
         fatsG: meal.fatsG,
         source: 'recommendation',
+        slot: slot,
       ),
     );
     applyPlan(response.updatedPlan);
@@ -213,6 +225,100 @@ class DashboardStore {
     }
   }
 
+  // ── Day Plan (v2.1) ─────────────────────────────────────────────────────
+
+  Future<void> fetchDayPlan() async {
+    runInAction(() => isGeneratingPlan.value = true);
+    try {
+      final plan = await apiService.fetchDayPlan();
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to load day plan';
+      });
+    } finally {
+      runInAction(() => isGeneratingPlan.value = false);
+    }
+  }
+
+  Future<void> regenerateDayPlan() async {
+    runInAction(() => isGeneratingPlan.value = true);
+    try {
+      final plan = await apiService.regenerateDayPlan();
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to regenerate day plan';
+      });
+    } finally {
+      runInAction(() => isGeneratingPlan.value = false);
+    }
+  }
+
+  Future<void> swapSlot(int order) async {
+    runInAction(() => isSwappingSlot.value = order);
+    try {
+      final plan = await apiService.swapSlot(order);
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to swap meal';
+      });
+    } finally {
+      runInAction(() => isSwappingSlot.value = null);
+    }
+  }
+
+  Future<void> acceptProposal() async {
+    try {
+      final plan = await apiService.acceptProposal();
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to accept proposal';
+      });
+      rethrow;
+    }
+  }
+
+  Future<void> rejectAndRegenerateProposal() async {
+    runInAction(() => isGeneratingPlan.value = true);
+    try {
+      final plan = await apiService.rejectProposal(regenerate: true);
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to regenerate proposal';
+      });
+    } finally {
+      runInAction(() => isGeneratingPlan.value = false);
+    }
+  }
+
+  Future<void> dismissProposal() async {
+    try {
+      final plan = await apiService.rejectProposal(regenerate: false);
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to dismiss proposal';
+      });
+      rethrow;
+    }
+  }
+
   void reset() {
     runInAction(() {
       consumedCalories.value = 0;
@@ -226,7 +332,8 @@ class DashboardStore {
       dayStatus.value = DayStatus.onTrack;
       nextMeal.value = null;
       recalibration.value = null;
-      flexPlan.clear();
+      plannedMeals.clear();
+      pendingProposal.value = null;
       pantry.clear();
     });
   }

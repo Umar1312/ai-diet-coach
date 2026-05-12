@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show pantryStore;
+import 'package:diet_coach_ai/main.dart' show pantryStore, dashboardStore;
 import 'package:diet_coach_ai/shared/models/home_models.dart';
 
 class PantryScreen extends StatefulWidget {
@@ -21,8 +21,28 @@ class _PantryScreenState extends State<PantryScreen> {
     pantryStore.loadPantry();
   }
 
+  bool _isItemInUse(PantryItem item) {
+    final nextMeal = dashboardStore.nextMeal.value;
+    if (nextMeal != null &&
+        nextMeal.usedPantryItems.any(
+          (n) => n.toLowerCase() == item.name.toLowerCase(),
+        )) {
+      return true;
+    }
+    // Also flag if a logged meal today shares the same name (loose heuristic).
+    final todayNames = dashboardStore.todayMeals
+        .map((m) => m.meal.name.toLowerCase())
+        .toList();
+    if (todayNames.any((n) => n.contains(item.name.toLowerCase()))) {
+      return true;
+    }
+    return false;
+  }
+
   void _showDeleteDialog(PantryItem item) {
     HapticFeedback.mediumImpact();
+    final inUse = _isItemInUse(item);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -36,13 +56,50 @@ class _PantryScreenState extends State<PantryScreen> {
             color: AppColors.textPrimary,
           ),
         ),
-        content: Text(
-          'Remove "${item.name}" from your pantry?',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Remove "${item.name}" from your pantry?',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            if (inUse) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: AppColors.warning,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'This item is used in today\'s plan. Removing it will update future recommendations but won\'t change your logged macros.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.warning,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           TextButton(
@@ -59,7 +116,7 @@ class _PantryScreenState extends State<PantryScreen> {
           TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
-              await pantryStore.deleteItem(item.name);
+              await pantryStore.deleteItem(item.id);
             },
             child: const Text(
               'Remove',
@@ -122,9 +179,9 @@ class _PantryScreenState extends State<PantryScreen> {
                             childAspectRatio: 1.15,
                           ),
                       delegate: SliverChildBuilderDelegate(
-                        (_, i) => GestureDetector(
-                          onLongPress: () => _showDeleteDialog(items[i]),
-                          child: _PantryTile(item: items[i]),
+                        (_, i) => _PantryTile(
+                          item: items[i],
+                          onDelete: () => _showDeleteDialog(items[i]),
                         ),
                         childCount: items.length,
                       ),
@@ -372,8 +429,9 @@ class _EmptyState extends StatelessWidget {
 
 class _PantryTile extends StatelessWidget {
   final PantryItem item;
+  final VoidCallback onDelete;
 
-  const _PantryTile({required this.item});
+  const _PantryTile({required this.item, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -410,6 +468,26 @@ class _PantryTile extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onDelete();
+                },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ),
             ],
           ),
           const Spacer(),
