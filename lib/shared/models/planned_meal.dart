@@ -23,6 +23,7 @@ class PlannedMeal {
   final Meal meal;
   final PlannedMealStatus status;
   final String? loggedMealId;
+  final bool isOptional;
 
   const PlannedMeal({
     required this.slot,
@@ -30,6 +31,7 @@ class PlannedMeal {
     required this.meal,
     required this.status,
     this.loggedMealId,
+    this.isOptional = false,
   });
 
   factory PlannedMeal.fromJson(Map<String, dynamic> json) => PlannedMeal(
@@ -38,6 +40,7 @@ class PlannedMeal {
     meal: Meal.fromJson(json['meal'] as Map<String, dynamic>),
     status: PlannedMealStatus.fromString(json['status'] as String),
     loggedMealId: json['logged_meal_id'] as String?,
+    isOptional: json['is_optional'] as bool? ?? false,
   );
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +49,7 @@ class PlannedMeal {
     'meal': meal.toJson(),
     'status': status.value,
     if (loggedMealId != null) 'logged_meal_id': loggedMealId,
+    'is_optional': isOptional,
   };
 }
 

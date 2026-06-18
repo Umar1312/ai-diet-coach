@@ -20,6 +20,7 @@ import 'package:diet_coach_ai/presentation/screens/dashboard/dashboard_screen.da
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
+import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 
 import 'package:diet_coach_ai/features/log_meal/camera_screen.dart';
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
@@ -153,6 +154,10 @@ class AppRouter {
       GoRoute(
         path: '/log/text',
         builder: (context, state) => const TextLogScreen(),
+      ),
+      GoRoute(
+        path: '/plan/customize',
+        builder: (context, state) => const CustomizeDayScreen(),
       ),
       GoRoute(
         path: '/history',

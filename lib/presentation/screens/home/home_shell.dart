@@ -5,7 +5,8 @@ import 'package:mobx/mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
-import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
+import 'package:diet_coach_ai/features/missed_meals/missed_meals_screen.dart';
+import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
 /// Shell for the main app tabs. Wraps Home / Pantry / Plan / Profile
 /// with a persistent bottom nav. Child comes from go_router's
@@ -26,7 +27,8 @@ class _HomeShellState extends State<HomeShell> {
     _TabItem(label: 'Profile', icon: Icons.person_rounded),
   ];
 
-  ReactionDisposer? _proposalReaction;
+  ReactionDisposer? _missedMealsReaction;
+  bool _hasShownMissedMealsToday = false;
 
   void _onTap(int index) {
     HapticFeedback.selectionClick();
@@ -39,35 +41,71 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _proposalReaction = reaction((_) => dashboardStore.pendingProposal.value, (
-      proposal,
+    // Show missed meals when dashboard finishes loading
+    _missedMealsReaction = reaction((_) => dashboardStore.isLoading.value, (
+      isLoading,
     ) {
-      if (proposal != null && mounted) {
-        _showProposalSheet();
+      if (!isLoading && mounted && !_hasShownMissedMealsToday) {
+        _checkAndShowMissedMeals();
       }
     });
   }
 
   @override
   void dispose() {
-    _proposalReaction?.call();
+    _missedMealsReaction?.call();
     super.dispose();
   }
 
-  void _showProposalSheet() {
-    final navigator = Navigator.of(context, rootNavigator: true);
-    // Avoid stacking multiple proposal sheets
-    if (navigator.canPop()) {
-      // Heuristic: if there's already a bottom sheet open, don't stack another
-      // In practice, the sheet is modal and blocks interaction, so this is rare.
+  void _checkAndShowMissedMeals() {
+    final missed = _getMissedMeals();
+    if (missed.isNotEmpty) {
+      _hasShownMissedMealsToday = true;
+      _showMissedMealsScreen(missed);
     }
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (_) => const ProposalSheet(),
+  }
+
+  List<PlannedMeal> _getMissedMeals() {
+    final hour = DateTime.now().hour;
+    const slotEndTimes = {
+      'breakfast': 11,
+      'lunch': 15,
+      'snack': 17,
+      'dinner': 21,
+      'late': 23,
+    };
+
+    return dashboardStore.plannedMeals.where((meal) {
+      if (meal.status != PlannedMealStatus.planned) return false;
+      if (meal.isOptional) return false;
+      final endHour = slotEndTimes[meal.slot.toLowerCase()];
+      if (endHour == null) return false;
+      return hour > endHour;
+    }).toList();
+  }
+
+  void _showMissedMealsScreen(List<PlannedMeal> missed) {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => MissedMealsScreen(
+          missedMeals: missed,
+          onLogMeal: (meal) async {
+            await dashboardStore.addMeal(
+              meal.meal,
+              source: 'recommendation',
+              slot: meal.slot,
+            );
+          },
+          onSkipMeal: (meal) async {
+            await dashboardStore.skipSlot(meal.order);
+          },
+          onDone: () {
+            if (Navigator.of(context, rootNavigator: true).canPop()) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+          },
+        ),
+      ),
     );
   }
 

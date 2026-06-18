@@ -259,6 +259,22 @@ class DashboardStore {
     }
   }
 
+  Future<void> skipSlot(int order) async {
+    runInAction(() => isSwappingSlot.value = order);
+    try {
+      final plan = await apiService.skipSlot(order);
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to skip meal';
+      });
+    } finally {
+      runInAction(() => isSwappingSlot.value = null);
+    }
+  }
+
   Future<void> swapSlot(int order) async {
     runInAction(() => isSwappingSlot.value = order);
     try {

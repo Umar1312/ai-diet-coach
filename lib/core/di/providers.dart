@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
+import 'package:diet_coach_ai/features/customize_day/models/custom_day_plan_request.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
@@ -279,6 +280,23 @@ class ApiService {
   Future<DailyPlan> regenerateDayPlan() async {
     return _wrap(() async {
       final response = await _dio.post('/day-plan/regenerate');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> saveCustomDayPlan(CustomDayPlanRequest request) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/custom',
+        data: request.toJson(),
+      );
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> skipSlot(int order) async {
+    return _wrap(() async {
+      final response = await _dio.post('/day-plan/slots/$order/skip');
       return DailyPlan.fromJson(response.data);
     });
   }

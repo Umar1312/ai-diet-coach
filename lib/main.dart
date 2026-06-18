@@ -15,6 +15,7 @@ import 'stores/pantry_suggestions_store.dart';
 import 'features/log_meal/stores/text_log_store.dart';
 import 'features/craving/stores/craving_store.dart';
 import 'features/pantry/stores/pantry_store.dart';
+import 'features/customize_day/stores/customize_day_store.dart';
 
 final authStore = AuthStore();
 final onboardingStore = OnboardingStore();
@@ -23,6 +24,7 @@ final pantryStore = PantryStore(dashboardStore: dashboardStore);
 final textLogStore = TextLogStore();
 final pantrySuggestionsStore = PantrySuggestionsStore(pantryStore: pantryStore);
 final cravingStore = CravingStore();
+final customizeDayStore = CustomizeDayStore();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
