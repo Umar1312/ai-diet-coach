@@ -26,7 +26,7 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 8, totalSteps: 9),
+        title: const OnboardingProgressBar(step: 8, totalSteps: 10),
       ),
       body: SafeArea(
         child: Padding(
@@ -74,12 +74,12 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
                 text: 'Continue',
                 onPressed: () {
                   onboardingStore.updateDietaryRestrictions(_selected.toList());
-                  context.push('/onboarding/loading');
+                  context.push('/onboarding/food-location');
                 },
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => context.push('/onboarding/loading'),
+                onPressed: () => context.push('/onboarding/food-location'),
                 child: const Text('Skip for now'),
               ),
               const SizedBox(height: 16),

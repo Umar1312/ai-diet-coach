@@ -147,6 +147,42 @@ mixin _$OnboardingStore on _OnboardingStore, Store {
     });
   }
 
+  late final _$countryAtom = Atom(
+    name: '_OnboardingStore.country',
+    context: context,
+  );
+
+  @override
+  String? get country {
+    _$countryAtom.reportRead();
+    return super.country;
+  }
+
+  @override
+  set country(String? value) {
+    _$countryAtom.reportWrite(value, super.country, () {
+      super.country = value;
+    });
+  }
+
+  late final _$preferredCuisinesAtom = Atom(
+    name: '_OnboardingStore.preferredCuisines',
+    context: context,
+  );
+
+  @override
+  List<String> get preferredCuisines {
+    _$preferredCuisinesAtom.reportRead();
+    return super.preferredCuisines;
+  }
+
+  @override
+  set preferredCuisines(List<String> value) {
+    _$preferredCuisinesAtom.reportWrite(value, super.preferredCuisines, () {
+      super.preferredCuisines = value;
+    });
+  }
+
   late final _$loadingProgressAtom = Atom(
     name: '_OnboardingStore.loadingProgress',
     context: context,
@@ -245,6 +281,30 @@ mixin _$OnboardingStore on _OnboardingStore, Store {
   }
 
   @override
+  void setCountry(String? value) {
+    final _$actionInfo = _$_OnboardingStoreActionController.startAction(
+      name: '_OnboardingStore.setCountry',
+    );
+    try {
+      return super.setCountry(value);
+    } finally {
+      _$_OnboardingStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setPreferredCuisines(List<String> values) {
+    final _$actionInfo = _$_OnboardingStoreActionController.startAction(
+      name: '_OnboardingStore.setPreferredCuisines',
+    );
+    try {
+      return super.setPreferredCuisines(values);
+    } finally {
+      _$_OnboardingStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void updateDietaryRestrictions(List<String> restrictions) {
     final _$actionInfo = _$_OnboardingStoreActionController.startAction(
       name: '_OnboardingStore.updateDietaryRestrictions',
@@ -279,6 +339,8 @@ activityLevel: ${activityLevel},
 goal: ${goal},
 targetWeight: ${targetWeight},
 dietaryRestrictions: ${dietaryRestrictions},
+country: ${country},
+preferredCuisines: ${preferredCuisines},
 loadingProgress: ${loadingProgress},
 loadingStatus: ${loadingStatus},
 setupResponse: ${setupResponse}

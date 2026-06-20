@@ -10,7 +10,9 @@ import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 /// Bottom sheet for picking a meal for a day-plan slot.
 /// Searches the common-meal / pantry-suggestions database; backend uses LLM
 /// to create new suggestions when a query has no direct matches.
-Future<PantrySuggestionItem?> showSlotMealPickerSheet(BuildContext context) async {
+Future<PantrySuggestionItem?> showSlotMealPickerSheet(
+  BuildContext context,
+) async {
   return showModalBottomSheet<PantrySuggestionItem?>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -59,7 +61,9 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final pos = _scrollController.position;
-    if (pos.pixels >= pos.maxScrollExtent - 250 && !_isLoadingMore && _hasMore) {
+    if (pos.pixels >= pos.maxScrollExtent - 250 &&
+        !_isLoadingMore &&
+        _hasMore) {
       _loadMore();
     }
   }
@@ -224,20 +228,19 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
                     minWidth: 40,
                     minHeight: 40,
                   ),
-                  suffixIcon:
-                      _searchController.text.isNotEmpty
-                          ? GestureDetector(
-                            onTap: _clearSearch,
-                            child: const Padding(
-                              padding: EdgeInsets.only(right: 16, left: 8),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: AppColors.textTertiary,
-                                size: 20,
-                              ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? GestureDetector(
+                          onTap: _clearSearch,
+                          child: const Padding(
+                            padding: EdgeInsets.only(right: 16, left: 8),
+                            child: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
                             ),
-                          )
-                          : null,
+                          ),
+                        )
+                      : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide.none,
@@ -274,13 +277,9 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
                     horizontal: 28,
                     vertical: 12,
                   ),
-                  itemCount:
-                      _suggestions.length +
-                      (_isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, _) => const Divider(
-                    height: 1,
-                    color: AppColors.border,
-                  ),
+                  itemCount: _suggestions.length + (_isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, _) =>
+                      const Divider(height: 1, color: AppColors.border),
                   itemBuilder: (context, index) {
                     if (index == _suggestions.length) {
                       return const Padding(
@@ -374,9 +373,15 @@ class _SuggestionTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _DotValue(color: AppColors.protein, value: '${item.proteinG}g'),
+                      _DotValue(
+                        color: AppColors.protein,
+                        value: '${item.proteinG}g',
+                      ),
                       const SizedBox(width: 12),
-                      _DotValue(color: AppColors.carbs, value: '${item.carbsG}g'),
+                      _DotValue(
+                        color: AppColors.carbs,
+                        value: '${item.carbsG}g',
+                      ),
                       const SizedBox(width: 12),
                       _DotValue(color: AppColors.fats, value: '${item.fatsG}g'),
                     ],

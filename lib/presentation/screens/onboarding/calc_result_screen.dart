@@ -20,7 +20,7 @@ class CalcResultScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 9, totalSteps: 9),
+        title: const OnboardingProgressBar(step: 10, totalSteps: 10),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -72,7 +72,7 @@ class CalcResultScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 PrimaryButton(
                   text: "Let's get started!",
-                  onPressed: () => context.push('/onboarding/notifications'),
+                  onPressed: () => context.push('/onboarding/pantry'),
                 ),
                 const SizedBox(height: 16),
               ],

@@ -43,7 +43,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 6, totalSteps: 9),
+        title: const OnboardingProgressBar(step: 6, totalSteps: 10),
       ),
       body: SafeArea(
         child: Padding(

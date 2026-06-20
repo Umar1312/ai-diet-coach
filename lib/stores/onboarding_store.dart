@@ -36,6 +36,9 @@ abstract class _OnboardingStore with Store {
   String? country;
 
   @observable
+  List<String> preferredCuisines = [];
+
+  @observable
   double loadingProgress = 0.0;
 
   @observable
@@ -69,6 +72,11 @@ abstract class _OnboardingStore with Store {
   }
 
   @action
+  void setPreferredCuisines(List<String> values) {
+    preferredCuisines = values;
+  }
+
+  @action
   void updateDietaryRestrictions(List<String> restrictions) {
     dietaryRestrictions = restrictions;
   }
@@ -84,6 +92,7 @@ abstract class _OnboardingStore with Store {
       targetWeightKg: targetWeight ?? 65,
       dietaryRestrictions: dietaryRestrictions,
       country: country,
+      preferredCuisines: preferredCuisines,
     );
   }
 
@@ -112,6 +121,7 @@ abstract class _OnboardingStore with Store {
     targetWeight = null;
     dietaryRestrictions = [];
     country = null;
+    preferredCuisines = [];
     loadingProgress = 0.0;
     loadingStatus = 'Calculating your macros...';
     setupResponse = null;

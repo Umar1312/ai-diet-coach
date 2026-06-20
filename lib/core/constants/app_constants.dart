@@ -13,7 +13,7 @@ class AppConstants {
   static const String devBearerToken = '';
 
   // Onboarding
-  static const int onboardingSteps = 9;
+  static const int onboardingSteps = 10;
 
   // Macro Defaults
   static const double defaultCalories = 2000;

@@ -13,6 +13,7 @@ class UserSetupRequest {
   final List<String> dietaryRestrictions;
   final String timezone;
   final String? country;
+  final List<String> preferredCuisines;
 
   const UserSetupRequest({
     required this.gender,
@@ -25,6 +26,7 @@ class UserSetupRequest {
     required this.dietaryRestrictions,
     this.timezone = 'UTC',
     this.country,
+    this.preferredCuisines = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +40,7 @@ class UserSetupRequest {
     'dietary_restrictions': dietaryRestrictions,
     'timezone': timezone,
     if (country != null) 'country': country,
+    'preferred_cuisines': preferredCuisines,
   };
 }
 
@@ -92,6 +95,7 @@ class UserProfile {
   final List<String> dietaryRestrictions;
   final String timezone;
   final String? country;
+  final List<String> preferredCuisines;
 
   const UserProfile({
     required this.gender,
@@ -104,6 +108,7 @@ class UserProfile {
     required this.dietaryRestrictions,
     required this.timezone,
     this.country,
+    this.preferredCuisines = const [],
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -119,5 +124,9 @@ class UserProfile {
         .toList(),
     timezone: json['timezone'] as String,
     country: json['country'] as String?,
+    preferredCuisines:
+        (json['preferred_cuisines'] as List<dynamic>? ?? const [])
+            .map((value) => value as String)
+            .toList(),
   );
 }

@@ -305,21 +305,19 @@ class _SlotCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color:
-                        hasMeal
-                            ? AppColors.primary.withValues(alpha: 0.08)
-                            : AppColors.surface,
+                    color: hasMeal
+                        ? AppColors.primary.withValues(alpha: 0.08)
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child:
-                        hasMeal
-                            ? Text(meal.emoji, style: const TextStyle(fontSize: 24))
-                            : const Icon(
-                              Icons.add_rounded,
-                              color: AppColors.textTertiary,
-                              size: 24,
-                            ),
+                    child: hasMeal
+                        ? Text(meal.emoji, style: const TextStyle(fontSize: 24))
+                        : const Icon(
+                            Icons.add_rounded,
+                            color: AppColors.textTertiary,
+                            size: 24,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -343,10 +341,9 @@ class _SlotCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
-                          color:
-                              hasMeal
-                                  ? AppColors.textPrimary
-                                  : AppColors.textTertiary,
+                          color: hasMeal
+                              ? AppColors.textPrimary
+                              : AppColors.textTertiary,
                           letterSpacing: -0.3,
                         ),
                       ),
@@ -454,17 +451,17 @@ class _BottomBar extends StatelessWidget {
                     ),
                   ),
                 GestureDetector(
-                  onTap:
-                      canSave && !isSaving
-                          ? () async {
-                            HapticFeedback.mediumImpact();
-                            await customizeDayStore.save();
-                            if (context.mounted &&
-                                (customizeDayStore.errorMessage.value?.isEmpty ?? true)) {
-                              context.go('/plan');
-                            }
+                  onTap: canSave && !isSaving
+                      ? () async {
+                          HapticFeedback.mediumImpact();
+                          await customizeDayStore.save();
+                          if (context.mounted &&
+                              (customizeDayStore.errorMessage.value?.isEmpty ??
+                                  true)) {
+                            context.go('/plan');
                           }
-                          : null,
+                        }
+                      : null,
                   child: Container(
                     width: double.infinity,
                     height: 64,
@@ -473,27 +470,26 @@ class _BottomBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
-                    child:
-                        isSaving
-                            ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                            : const Text(
-                              'Save Custom Day',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: -0.3,
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
                             ),
+                          )
+                        : const Text(
+                            'Save Custom Day',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
                   ),
                 ),
               ],

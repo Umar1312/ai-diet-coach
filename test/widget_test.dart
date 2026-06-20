@@ -1,30 +1,49 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:diet_coach_ai/main.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
+import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('pantry onboarding intro fits a compact phone', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 667));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(const MaterialApp(home: PantryIntroScreen()));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('Meet your\nsmart pantry'), findsOneWidget);
+    expect(find.text('Set up my pantry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('food location onboarding fits a compact phone', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 667));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(const MaterialApp(home: FoodLocationScreen()));
+
+    expect(find.text('What food feels\nlike home?'), findsOneWidget);
+    expect(find.text('Your favorites'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('setup request sends canonical food preferences', () {
+    const request = UserSetupRequest(
+      gender: 'male',
+      age: 28,
+      heightCm: 175,
+      weightKg: 78,
+      activityLevel: 'moderate',
+      goal: 'lose_weight',
+      targetWeightKg: 72,
+      dietaryRestrictions: [],
+      country: 'IN',
+      preferredCuisines: ['Mughlai', 'North Indian'],
+    );
+
+    expect(request.toJson()['country'], 'IN');
+    expect(request.toJson()['preferred_cuisines'], ['Mughlai', 'North Indian']);
   });
 }

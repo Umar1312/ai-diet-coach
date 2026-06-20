@@ -34,35 +34,33 @@ class CustomizeDayStore {
   );
 
   late final caloriesProgress = Computed<double>(
-    () =>
-        dashboardStore.targetCalories.value > 0
-            ? (totalCalories.value / dashboardStore.targetCalories.value)
-                .clamp(0.0, 1.0)
-            : 0.0,
+    () => dashboardStore.targetCalories.value > 0
+        ? (totalCalories.value / dashboardStore.targetCalories.value).clamp(
+            0.0,
+            1.0,
+          )
+        : 0.0,
   );
 
   late final proteinProgress = Computed<double>(
-    () =>
-        dashboardStore.targetProtein.value > 0
-            ? (totalProtein.value / dashboardStore.targetProtein.value)
-                .clamp(0.0, 1.0)
-            : 0.0,
+    () => dashboardStore.targetProtein.value > 0
+        ? (totalProtein.value / dashboardStore.targetProtein.value).clamp(
+            0.0,
+            1.0,
+          )
+        : 0.0,
   );
 
   late final carbsProgress = Computed<double>(
-    () =>
-        dashboardStore.targetCarbs.value > 0
-            ? (totalCarbs.value / dashboardStore.targetCarbs.value)
-                .clamp(0.0, 1.0)
-            : 0.0,
+    () => dashboardStore.targetCarbs.value > 0
+        ? (totalCarbs.value / dashboardStore.targetCarbs.value).clamp(0.0, 1.0)
+        : 0.0,
   );
 
   late final fatsProgress = Computed<double>(
-    () =>
-        dashboardStore.targetFats.value > 0
-            ? (totalFats.value / dashboardStore.targetFats.value)
-                .clamp(0.0, 1.0)
-            : 0.0,
+    () => dashboardStore.targetFats.value > 0
+        ? (totalFats.value / dashboardStore.targetFats.value).clamp(0.0, 1.0)
+        : 0.0,
   );
 
   late final canSave = Computed<bool>(
@@ -135,21 +133,20 @@ class CustomizeDayStore {
 
     try {
       final request = CustomDayPlanRequest(
-        meals:
-            filledMeals.entries.map((e) {
-              final order = e.key;
-              final meal = e.value;
-              return CustomPlannedMeal(
-                slot: _slots[order],
-                order: order,
-                name: meal.name,
-                emoji: meal.emoji,
-                calories: meal.calories,
-                proteinG: meal.proteinG,
-                carbsG: meal.carbsG,
-                fatsG: meal.fatsG,
-              );
-            }).toList(),
+        meals: filledMeals.entries.map((e) {
+          final order = e.key;
+          final meal = e.value;
+          return CustomPlannedMeal(
+            slot: _slots[order],
+            order: order,
+            name: meal.name,
+            emoji: meal.emoji,
+            calories: meal.calories,
+            proteinG: meal.proteinG,
+            carbsG: meal.carbsG,
+            fatsG: meal.fatsG,
+          );
+        }).toList(),
       );
 
       final plan = await apiService.saveCustomDayPlan(request);

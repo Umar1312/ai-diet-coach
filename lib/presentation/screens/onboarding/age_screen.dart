@@ -25,7 +25,7 @@ class _AgeScreenState extends State<AgeScreen> {
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const OnboardingProgressBar(step: 2, totalSteps: 9),
+        title: const OnboardingProgressBar(step: 2, totalSteps: 10),
       ),
       body: SafeArea(
         child: Padding(

@@ -366,6 +366,7 @@ class ProfilePatchRequest {
   final List<String>? dietaryRestrictions;
   final String? timezone;
   final String? country;
+  final List<String>? preferredCuisines;
 
   const ProfilePatchRequest({
     this.gender,
@@ -378,6 +379,7 @@ class ProfilePatchRequest {
     this.dietaryRestrictions,
     this.timezone,
     this.country,
+    this.preferredCuisines,
   });
 
   Map<String, dynamic> toJson() => {
@@ -392,6 +394,7 @@ class ProfilePatchRequest {
       'dietary_restrictions': dietaryRestrictions,
     if (timezone != null) 'timezone': timezone,
     if (country != null) 'country': country,
+    if (preferredCuisines != null) 'preferred_cuisines': preferredCuisines,
   };
 }
 

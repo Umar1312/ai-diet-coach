@@ -14,6 +14,8 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/calc_result_screen
 import 'package:diet_coach_ai/presentation/screens/onboarding/loading_setup_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permission_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
 
 import 'package:diet_coach_ai/presentation/screens/home/home_shell.dart';
 import 'package:diet_coach_ai/presentation/screens/dashboard/dashboard_screen.dart';
@@ -37,7 +39,7 @@ class AppRouter {
 
   static final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/home',
+    initialLocation: '/',
     routes: [
       // Onboarding
       GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
@@ -74,6 +76,10 @@ class AppRouter {
         builder: (context, state) => const DietaryRestrictionsScreen(),
       ),
       GoRoute(
+        path: '/onboarding/food-location',
+        builder: (context, state) => const FoodLocationScreen(),
+      ),
+      GoRoute(
         path: '/onboarding/result',
         builder: (context, state) => const CalcResultScreen(),
       ),
@@ -84,6 +90,10 @@ class AppRouter {
       GoRoute(
         path: '/onboarding/notifications',
         builder: (context, state) => const NotificationPermissionScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/pantry',
+        builder: (context, state) => const PantryIntroScreen(),
       ),
       GoRoute(
         path: '/onboarding/paywall',
@@ -169,7 +179,9 @@ class AppRouter {
       ),
       GoRoute(
         path: '/pantry/onboarding',
-        builder: (context, state) => const PantryOnboardingScreen(),
+        builder: (context, state) => PantryOnboardingScreen(
+          isOnboarding: state.uri.queryParameters['source'] == 'onboarding',
+        ),
       ),
     ],
   );

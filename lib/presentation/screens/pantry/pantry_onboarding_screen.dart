@@ -9,7 +9,9 @@ import 'package:diet_coach_ai/features/pantry/stores/pantry_store.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 
 class PantryOnboardingScreen extends StatefulWidget {
-  const PantryOnboardingScreen({super.key});
+  final bool isOnboarding;
+
+  const PantryOnboardingScreen({super.key, this.isOnboarding = false});
 
   @override
   State<PantryOnboardingScreen> createState() => _PantryOnboardingScreenState();
@@ -147,14 +149,27 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
                           HapticFeedback.mediumImpact();
                           await _store.addSelectedStarters();
                           if (mounted) {
-                            context.pop();
-                            _showSuccessSnackBar(count);
+                            if (widget.isOnboarding) {
+                              context.go('/onboarding/notifications');
+                            } else {
+                              context.pop();
+                              _showSuccessSnackBar(count);
+                            }
                           }
                         },
                   isLoading: isAdding,
                 ),
                 const SizedBox(height: 12),
-                _TextButton(label: 'Skip for now', onTap: () => context.pop()),
+                _TextButton(
+                  label: 'Skip for now',
+                  onTap: () {
+                    if (widget.isOnboarding) {
+                      context.go('/onboarding/notifications');
+                    } else {
+                      context.pop();
+                    }
+                  },
+                ),
               ],
             ),
           ),
