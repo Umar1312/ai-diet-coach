@@ -41,6 +41,9 @@ dependencies:
   # Auth
   firebase_auth: ^6.4.0
   firebase_core: ^4.7.0
+  sign_in_with_apple: ^6.1.4
+  google_sign_in: ^6.2.2
+  crypto: ^3.0.5
 
   # Permissions
   permission_handler: ^11.3.1

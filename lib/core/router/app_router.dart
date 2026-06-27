@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobx/mobx.dart';
 
+import 'package:diet_coach_ai/features/auth/login_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/welcome_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/gender_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/age_screen.dart';
@@ -30,6 +32,9 @@ import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.d
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_suggestions_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_onboarding_screen.dart';
 
+import 'package:diet_coach_ai/main.dart';
+import 'package:diet_coach_ai/stores/auth_store.dart';
+
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _homeNavKey = GlobalKey<NavigatorState>();
@@ -40,7 +45,41 @@ class AppRouter {
   static final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: _AuthRefreshNotifier(),
+    redirect: (context, state) {
+      final status = authStore.status.value;
+      final location = state.matchedLocation;
+      final isLoginRoute = location == '/login';
+      final isWelcomeRoute = location == '/';
+      final isOnboardingFlow = location.startsWith('/onboarding');
+
+      // While auth state is unknown, stay put.
+      if (status == AuthStatus.unknown) return null;
+
+      // Unauthenticated -> force to login (unless already there).
+      if (status == AuthStatus.unauthenticated) {
+        return isLoginRoute ? null : '/login';
+      }
+
+      // Authenticated but onboarding incomplete -> allow onboarding flow +
+      // welcome; block main app + login.
+      if (status == AuthStatus.needsOnboarding) {
+        if (isOnboardingFlow || isWelcomeRoute) return null;
+        return '/';
+      }
+
+      // Fully authenticated -> block login + welcome only. Allow /onboarding/*
+      // so the user can finish the post-setup flow (pantry, paywall, etc.).
+      if (status == AuthStatus.authenticated &&
+          (isLoginRoute || isWelcomeRoute)) {
+        return '/home';
+      }
+
+      return null;
+    },
     routes: [
+      // Auth
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Onboarding
       GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
       GoRoute(
@@ -187,4 +226,12 @@ class AppRouter {
   );
 
   static GoRouter get router => _router;
+}
+
+/// Bridges MobX observable [AuthStore.status] to go_router's
+/// [refreshListenable] so the redirect runs whenever auth state changes.
+class _AuthRefreshNotifier extends ChangeNotifier {
+  _AuthRefreshNotifier() {
+    reaction((_) => authStore.status.value, (_) => notifyListeners());
+  }
 }

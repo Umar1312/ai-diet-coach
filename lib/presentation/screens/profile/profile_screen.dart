@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/di/providers.dart';
+import 'package:diet_coach_ai/main.dart';
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -198,8 +199,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          context.go('/');
+                        onPressed: () async {
+                          await authStore.signOut();
+                          if (context.mounted) {
+                            context.go('/login');
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.warning,

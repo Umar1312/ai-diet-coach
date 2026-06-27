@@ -31,6 +31,10 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
   Future<void> _startCalculation() async {
     try {
       await onboardingStore.calculatePlan();
+      // Profile + targets are now persisted on the backend, so flip auth
+      // status to authenticated. The user still flows through the remaining
+      // post-setup screens (result, pantry, notifications, paywall).
+      authStore.markOnboardingComplete();
     } catch (e) {
       if (mounted) {
         setState(() {

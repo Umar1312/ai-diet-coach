@@ -7,6 +7,7 @@ import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/shared/models/recommendation_models.dart';
+import 'package:diet_coach_ai/shared/models/session_response.dart';
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 final dio = Dio(
@@ -43,6 +44,10 @@ class ApiService {
   }
 
   void setAuthToken(String token) {
+    if (token.trim().isEmpty) {
+      _dio.options.headers.remove('Authorization');
+      return;
+    }
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
@@ -344,6 +349,13 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.get('/users/me');
       return User.fromJson(response.data);
+    });
+  }
+
+  Future<SessionResponse> fetchSession() async {
+    return _wrap(() async {
+      final response = await _dio.get('/auth/session');
+      return SessionResponse.fromJson(response.data);
     });
   }
 
