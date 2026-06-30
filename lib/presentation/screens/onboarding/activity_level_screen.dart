@@ -77,7 +77,7 @@ class _ActivityLevelScreenState extends State<ActivityLevelScreen> {
               Expanded(
                 child: ListView.separated(
                   itemCount: _levels.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final level = _levels[index];
                     final isSelected = _selectedLevel == level['title'];

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show customizeDayStore, dashboardStore;
+import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'widgets/slot_meal_picker_sheet.dart';
 
 class CustomizeDayScreen extends StatefulWidget {
@@ -100,7 +101,7 @@ class _Header extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Build your own 5-slot plan.',
+                  'Build each course from one or more items.',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -284,103 +285,140 @@ class _SlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (_) {
-        final meal = customizeDayStore.meals[order];
-        final hasMeal = meal != null;
+        final slotMeals = customizeDayStore.meals[order];
+        final hasMeals = slotMeals.isNotEmpty;
+        final calories = slotMeals.fold<int>(
+          0,
+          (sum, meal) => sum + meal.calories,
+        );
+        final protein = slotMeals.fold<int>(
+          0,
+          (sum, meal) => sum + meal.proteinG,
+        );
+        final carbs = slotMeals.fold<int>(0, (sum, meal) => sum + meal.carbsG);
+        final fats = slotMeals.fold<int>(0, (sum, meal) => sum + meal.fatsG);
 
         return GestureDetector(
           onTap: () => _onTap(context),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: hasMeal ? AppColors.surface : AppColors.background,
+              color: hasMeals ? AppColors.surface : AppColors.background,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: hasMeal ? AppColors.border : AppColors.surface,
+                color: hasMeals ? AppColors.border : AppColors.surface,
                 width: 0.5,
               ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: hasMeal
-                        ? AppColors.primary.withValues(alpha: 0.08)
-                        : AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: hasMeal
-                        ? Text(meal.emoji, style: const TextStyle(fontSize: 24))
-                        : const Icon(
-                            Icons.add_rounded,
-                            color: AppColors.textTertiary,
-                            size: 24,
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _slotLabel,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        hasMeal ? meal.name : 'Add meal',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: hasMeal
-                              ? AppColors.textPrimary
-                              : AppColors.textTertiary,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      if (hasMeal) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          '${meal.calories} cal · ${meal.proteinG}g P · ${meal.carbsG}g C · ${meal.fatsG}g F',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (hasMeal)
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      customizeDayStore.clearSlot(order);
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.surface2,
-                        borderRadius: BorderRadius.circular(10),
+                        color: hasMeals
+                            ? AppColors.primary.withValues(alpha: 0.08)
+                            : AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        color: AppColors.textTertiary,
-                        size: 18,
+                      child: Center(
+                        child: hasMeals
+                            ? Text(
+                                slotMeals.length == 1
+                                    ? slotMeals.first.emoji
+                                    : '🍽️',
+                                style: const TextStyle(fontSize: 24),
+                              )
+                            : const Icon(
+                                Icons.add_rounded,
+                                color: AppColors.textTertiary,
+                                size: 24,
+                              ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _slotLabel,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            hasMeals
+                                ? '${slotMeals.length} item${slotMeals.length == 1 ? '' : 's'}'
+                                : 'Add meal',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: hasMeals
+                                  ? AppColors.textPrimary
+                                  : AppColors.textTertiary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          if (hasMeals) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              '$calories cal · ${protein}g P · ${carbs}g C · ${fats}g F',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (hasMeals)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          customizeDayStore.clearSlot(order);
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface2,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textTertiary,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (hasMeals) ...[
+                  const SizedBox(height: 14),
+                  for (var i = 0; i < slotMeals.length; i++) ...[
+                    _SlotMealRow(
+                      meal: slotMeals[i],
+                      onRemove: () {
+                        HapticFeedback.selectionClick();
+                        customizeDayStore.removeMeal(order, i);
+                      },
+                    ),
+                    if (i != slotMeals.length - 1) const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 14),
+                  _AddItemButton(onTap: () => _onTap(context)),
+                ],
               ],
             ),
           ),
@@ -395,6 +433,106 @@ class _SlotCard extends StatelessWidget {
     if (result != null && context.mounted) {
       customizeDayStore.setMealFromPantry(order, result);
     }
+  }
+}
+
+class _SlotMealRow extends StatelessWidget {
+  final Meal meal;
+  final VoidCallback onRemove;
+
+  const _SlotMealRow({required this.meal, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(meal.emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                meal.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${meal.calories} cal · ${meal.proteinG}g P · ${meal.carbsG}g C · ${meal.fatsG}g F',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: onRemove,
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.close_rounded,
+              color: AppColors.textTertiary,
+              size: 17,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddItemButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AddItemButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_rounded, color: AppColors.textPrimary, size: 20),
+            SizedBox(width: 6),
+            Text(
+              'Add item',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

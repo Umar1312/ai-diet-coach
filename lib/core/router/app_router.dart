@@ -18,6 +18,7 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permi
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/splash/splash_screen.dart';
 
 import 'package:diet_coach_ai/presentation/screens/home/home_shell.dart';
 import 'package:diet_coach_ai/presentation/screens/dashboard/dashboard_screen.dart';
@@ -26,7 +27,6 @@ import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 
-import 'package:diet_coach_ai/features/log_meal/camera_screen.dart';
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_suggestions_screen.dart';
@@ -44,17 +44,20 @@ class AppRouter {
 
   static final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     refreshListenable: _AuthRefreshNotifier(),
     redirect: (context, state) {
       final status = authStore.status.value;
       final location = state.matchedLocation;
+      final isSplashRoute = location == '/splash';
       final isLoginRoute = location == '/login';
       final isWelcomeRoute = location == '/';
       final isOnboardingFlow = location.startsWith('/onboarding');
 
-      // While auth state is unknown, stay put.
-      if (status == AuthStatus.unknown) return null;
+      // While auth state is unknown, keep the neutral splash on screen.
+      if (status == AuthStatus.unknown) {
+        return isSplashRoute ? null : '/splash';
+      }
 
       // Unauthenticated -> force to login (unless already there).
       if (status == AuthStatus.unauthenticated) {
@@ -68,16 +71,29 @@ class AppRouter {
         return '/';
       }
 
+      if (status == AuthStatus.needsSubscription) {
+        if (isOnboardingFlow) return null;
+        return '/onboarding/paywall';
+      }
+
       // Fully authenticated -> block login + welcome only. Allow /onboarding/*
       // so the user can finish the post-setup flow (pantry, paywall, etc.).
       if (status == AuthStatus.authenticated &&
-          (isLoginRoute || isWelcomeRoute)) {
+          (isLoginRoute ||
+              isSplashRoute ||
+              isWelcomeRoute ||
+              location == '/onboarding/paywall')) {
         return '/home';
       }
 
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
       // Auth
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Onboarding
@@ -184,22 +200,6 @@ class AppRouter {
       ),
 
       // Meal logging (outside shell, push on top)
-      GoRoute(
-        path: '/camera',
-        builder: (context, state) => const CameraScreen(),
-      ),
-      GoRoute(
-        path: '/camera/menu',
-        builder: (context, state) => const CameraScreen(isMenuMode: true),
-      ),
-      GoRoute(
-        path: '/camera/confirm',
-        builder: (context, state) => const CameraScreen(),
-      ),
-      GoRoute(
-        path: '/camera/menu-results',
-        builder: (context, state) => const CameraScreen(),
-      ),
       GoRoute(
         path: '/log/text',
         builder: (context, state) => const TextLogScreen(),

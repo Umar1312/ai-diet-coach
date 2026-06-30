@@ -26,6 +26,8 @@ final apiService = ApiService(
       : null,
 );
 
+typedef AuthTokenProvider = Future<String?> Function({bool forceRefresh});
+
 class ApiException implements Exception {
   final String code;
   final String message;
@@ -36,11 +38,19 @@ class ApiException implements Exception {
 
 class ApiService {
   final Dio _dio;
+  AuthTokenProvider? _authTokenProvider;
+  Future<void>? _authTokenRefresh;
+  int _authTokenProviderVersion = 0;
 
   ApiService(this._dio, {String? devToken}) {
     if (devToken != null && devToken.isNotEmpty) {
       setAuthToken(devToken);
     }
+  }
+
+  void setAuthTokenProvider(AuthTokenProvider? provider) {
+    _authTokenProvider = provider;
+    _authTokenProviderVersion++;
   }
 
   void setAuthToken(String token) {
@@ -51,10 +61,56 @@ class ApiService {
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
+  Future<void> _refreshAuthToken({bool forceRefresh = false}) {
+    final provider = _authTokenProvider;
+    if (provider == null) return Future.value();
+
+    final existingRefresh = _authTokenRefresh;
+    if (existingRefresh != null) {
+      if (!forceRefresh) return existingRefresh;
+      return existingRefresh.then((_) => _refreshAuthToken(forceRefresh: true));
+    }
+
+    final refresh = () async {
+      final providerVersion = _authTokenProviderVersion;
+      final token = await provider(forceRefresh: forceRefresh);
+      if (_authTokenProviderVersion == providerVersion) {
+        setAuthToken(token ?? '');
+      }
+    }();
+    _authTokenRefresh = refresh;
+    return refresh.whenComplete(() {
+      if (identical(_authTokenRefresh, refresh)) {
+        _authTokenRefresh = null;
+      }
+    });
+  }
+
+  bool _shouldRetryWithFreshToken(DioException e) {
+    return _authTokenProvider != null && e.response?.statusCode == 401;
+  }
+
   Future<T> _wrap<T>(Future<T> Function() call) async {
     try {
+      await _refreshAuthToken();
       return await call();
     } on DioException catch (e) {
+      if (_shouldRetryWithFreshToken(e)) {
+        try {
+          await _refreshAuthToken(forceRefresh: true);
+          return await call();
+        } on DioException catch (retryError) {
+          final err = parseApiError(retryError);
+          debugPrint(
+            '🚨 API ERROR [${retryError.response?.statusCode}] ${retryError.requestOptions.method} ${retryError.requestOptions.path}\n'
+            '   code: ${err.code}\n'
+            '   message: ${err.message}\n'
+            '   response: ${retryError.response?.data}',
+          );
+          throw err;
+        }
+      }
+
       final err = parseApiError(e);
       debugPrint(
         '🚨 API ERROR [${e.response?.statusCode}] ${e.requestOptions.method} ${e.requestOptions.path}\n'

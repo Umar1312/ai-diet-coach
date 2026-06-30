@@ -11,26 +11,34 @@ const _slots = ['breakfast', 'lunch', 'dinner', 'snack', 'late'];
 class CustomizeDayStore {
   // ── Observables ─────────────────────────────────────────────────────────
 
-  final meals = ObservableList<Meal?>();
+  final meals = ObservableList<ObservableList<Meal>>();
   final isSaving = Observable<bool>(false);
   final errorMessage = Observable<String?>('');
 
   // ── Computed ────────────────────────────────────────────────────────────
 
   late final totalCalories = Computed<int>(
-    () => meals.whereType<Meal>().fold(0, (sum, m) => sum + m.calories),
+    () => meals
+        .expand((slotMeals) => slotMeals)
+        .fold(0, (sum, m) => sum + m.calories),
   );
 
   late final totalProtein = Computed<int>(
-    () => meals.whereType<Meal>().fold(0, (sum, m) => sum + m.proteinG),
+    () => meals
+        .expand((slotMeals) => slotMeals)
+        .fold(0, (sum, m) => sum + m.proteinG),
   );
 
   late final totalCarbs = Computed<int>(
-    () => meals.whereType<Meal>().fold(0, (sum, m) => sum + m.carbsG),
+    () => meals
+        .expand((slotMeals) => slotMeals)
+        .fold(0, (sum, m) => sum + m.carbsG),
   );
 
   late final totalFats = Computed<int>(
-    () => meals.whereType<Meal>().fold(0, (sum, m) => sum + m.fatsG),
+    () => meals
+        .expand((slotMeals) => slotMeals)
+        .fold(0, (sum, m) => sum + m.fatsG),
   );
 
   late final caloriesProgress = Computed<double>(
@@ -64,7 +72,7 @@ class CustomizeDayStore {
   );
 
   late final canSave = Computed<bool>(
-    () => meals.whereType<Meal>().isNotEmpty && !isSaving.value,
+    () => meals.any((slotMeals) => slotMeals.isNotEmpty) && !isSaving.value,
   );
 
   // ── Actions ─────────────────────────────────────────────────────────────
@@ -72,20 +80,20 @@ class CustomizeDayStore {
   CustomizeDayStore() {
     // Start with 5 blank slots.
     runInAction(() {
-      meals.addAll(List<Meal?>.filled(5, null));
+      meals.addAll(List.generate(5, (_) => ObservableList<Meal>()));
     });
   }
 
-  void setMeal(int order, Meal meal) {
+  void addMeal(int order, Meal meal) {
     runInAction(() {
       if (order >= 0 && order < meals.length) {
-        meals[order] = meal;
+        meals[order].add(meal);
       }
     });
   }
 
   void setMealFromPantry(int order, PantrySuggestionItem item) {
-    setMeal(
+    addMeal(
       order,
       Meal(
         name: item.name,
@@ -98,10 +106,21 @@ class CustomizeDayStore {
     );
   }
 
+  void removeMeal(int order, int mealIndex) {
+    runInAction(() {
+      if (order >= 0 && order < meals.length) {
+        final slotMeals = meals[order];
+        if (mealIndex >= 0 && mealIndex < slotMeals.length) {
+          slotMeals.removeAt(mealIndex);
+        }
+      }
+    });
+  }
+
   void clearSlot(int order) {
     runInAction(() {
       if (order >= 0 && order < meals.length) {
-        meals[order] = null;
+        meals[order].clear();
       }
     });
   }
@@ -109,7 +128,7 @@ class CustomizeDayStore {
   void reset() {
     runInAction(() {
       for (var i = 0; i < meals.length; i++) {
-        meals[i] = null;
+        meals[i].clear();
       }
       errorMessage.value = '';
     });
@@ -118,9 +137,9 @@ class CustomizeDayStore {
   Future<void> save() async {
     final filledMeals = <int, Meal>{};
     for (var i = 0; i < meals.length; i++) {
-      final meal = meals[i];
-      if (meal != null) {
-        filledMeals[i] = meal;
+      final slotMeals = meals[i];
+      if (slotMeals.isNotEmpty) {
+        filledMeals[i] = _combineSlotMeals(slotMeals);
       }
     }
 
@@ -159,5 +178,20 @@ class CustomizeDayStore {
     } finally {
       runInAction(() => isSaving.value = false);
     }
+  }
+
+  Meal _combineSlotMeals(List<Meal> slotMeals) {
+    final names = slotMeals.map((meal) => meal.name).toList();
+    final joinedName = names.join(' + ');
+    return Meal(
+      name: joinedName.length <= 200
+          ? joinedName
+          : '${joinedName.substring(0, 197)}...',
+      emoji: slotMeals.length == 1 ? slotMeals.first.emoji : '🍽️',
+      calories: slotMeals.fold(0, (sum, meal) => sum + meal.calories),
+      proteinG: slotMeals.fold(0, (sum, meal) => sum + meal.proteinG),
+      carbsG: slotMeals.fold(0, (sum, meal) => sum + meal.carbsG),
+      fatsG: slotMeals.fold(0, (sum, meal) => sum + meal.fatsG),
+    );
   }
 }

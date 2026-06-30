@@ -9,12 +9,26 @@ import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, cravingStore;
 import 'package:diet_coach_ai/features/craving/widgets/craving_fab.dart';
 import 'package:diet_coach_ai/features/craving/craving_sheet.dart';
+import 'package:diet_coach_ai/features/customize_day/widgets/generate_day_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (!dashboardStore.hasLoaded.value && !dashboardStore.isLoading.value) {
+      dashboardStore.refresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +178,13 @@ class _CalorieHero extends StatelessWidget {
     return Observer(
       builder: (_) {
         final store = dashboardStore;
+        if (!store.hasLoaded.value && store.isLoading.value) {
+          return const _CalorieLoadingCard();
+        }
+        if (!store.hasLoaded.value && store.hasError.value) {
+          return _DashboardErrorCard(message: store.errorMessage.value);
+        }
+
         final calLeft = store.caloriesLeft.value.clamp(-9999, 9999);
 
         final rings = [
@@ -358,6 +379,14 @@ class _NextMeal extends StatelessWidget {
     return Observer(
       builder: (_) {
         final store = dashboardStore;
+        if (!store.hasLoaded.value) {
+          return const SizedBox.shrink();
+        }
+        final hasDayPlan = store.plannedMeals.isNotEmpty;
+        if (!hasDayPlan) {
+          return _NoPlanCard(isLoading: store.isGeneratingPlan.value);
+        }
+
         final meal = store.nextMeal.value;
         if (meal == null) return const SizedBox.shrink();
 
@@ -524,6 +553,234 @@ class _NextMeal extends StatelessWidget {
   }
 }
 
+class _NoPlanCard extends StatelessWidget {
+  final bool isLoading;
+
+  const _NoPlanCard({required this.isLoading});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today_rounded,
+                    color: AppColors.textPrimary,
+                    size: 24,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Today',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'No plan yet',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.8,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Create a simple day plan before picking your next meal.',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 28),
+            GestureDetector(
+              onTap: isLoading
+                  ? null
+                  : () {
+                      HapticFeedback.mediumImpact();
+                      showGenerateDaySheet(context);
+                    },
+              child: Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isLoading ? AppColors.border : AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Center(
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: AppColors.textTertiary,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              color: AppColors.textOnPrimary,
+                              size: 21,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Create plan',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textOnPrimary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CalorieLoadingCard extends StatelessWidget {
+  const _CalorieLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+      child: Center(
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: CircularProgressIndicator(
+            color: AppColors.textPrimary,
+            strokeWidth: 3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardErrorCard extends StatelessWidget {
+  final String message;
+
+  const _DashboardErrorCard({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.error,
+              size: 24,
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Could not load today',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message.isEmpty ? 'Pull to retry or try again now.' : message,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 18),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                dashboardStore.refresh();
+              },
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textOnPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Big Log Button
 // ═══════════════════════════════════════════════════════════════════════════
@@ -538,7 +795,7 @@ class _BigLogButton extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.mediumImpact();
-          _showLogOptions(context);
+          context.push('/log/text');
         },
         child: Container(
           width: double.infinity,
@@ -563,114 +820,6 @@ class _BigLogButton extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showLogOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        padding: const EdgeInsets.fromLTRB(28, 16, 28, 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              'Log a meal',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'How do you want to log?',
-              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 28),
-            _LogOption(
-              icon: Icons.camera_alt_rounded,
-              label: 'Take a photo',
-              color: AppColors.primary,
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/camera');
-              },
-            ),
-            const SizedBox(height: 12),
-            _LogOption(
-              icon: Icons.edit_note_rounded,
-              label: 'Type it in',
-              color: AppColors.textPrimary,
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/log/text');
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LogOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _LogOption({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: AppColors.textTertiary,
-              size: 16,
-            ),
-          ],
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../shared/models/user_setup_request.dart';
 
 part 'onboarding_store.g.dart';
 
+// ignore: library_private_types_in_public_api
 class OnboardingStore = _OnboardingStore with _$OnboardingStore;
 
 abstract class _OnboardingStore with Store {

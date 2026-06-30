@@ -1,11 +1,87 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../widgets/primary_button.dart';
 
-class PaywallScreen extends StatelessWidget {
+import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/constants/app_constants.dart';
+import 'package:diet_coach_ai/main.dart' show authStore, revenueCatService;
+
+class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
+
+  @override
+  State<PaywallScreen> createState() => _PaywallScreenState();
+}
+
+class _PaywallScreenState extends State<PaywallScreen> {
+  var _isLoading = false;
+  String? _message;
+
+  Future<void> _openPaywall() async {
+    HapticFeedback.mediumImpact();
+    if (!revenueCatService.isConfigured) {
+      setState(() {
+        _message = kDebugMode
+            ? 'RevenueCat keys are not set. Add them to .env before release.'
+            : 'Purchases are unavailable right now. Please try again later.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _message = null;
+    });
+
+    try {
+      await revenueCatService.presentPaywallIfNeeded();
+      final active = await revenueCatService.hasActiveEntitlement();
+      if (!mounted) return;
+      if (active) {
+        authStore.markSubscriptionActive();
+        context.go('/home');
+      } else {
+        setState(() => _message = 'No active plan yet.');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = 'Unable to open paywall. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    HapticFeedback.selectionClick();
+    if (!revenueCatService.isConfigured) {
+      setState(() => _message = 'RevenueCat is not configured.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _message = null;
+    });
+
+    try {
+      final active = await revenueCatService.restorePurchases();
+      if (!mounted) return;
+      if (active) {
+        authStore.markSubscriptionActive();
+        context.go('/home');
+      } else {
+        setState(() => _message = 'No purchases found to restore.');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = 'Restore failed. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,199 +89,148 @@ class PaywallScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close, size: 24),
-                  onPressed: () => context.go('/home'),
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textPrimary,
+                    size: 22,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'We want you to try\n${AppConstants.appName} for free.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge,
+              const SizedBox(height: 48),
+              const Text(
+                'Unlock your plan',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -1.2,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Personalized targets, simple day plans, pantry-aware meals, and adaptive replanning.',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1.45,
+                ),
               ),
               const SizedBox(height: 32),
-              Container(
-                width: 200,
-                height: 400,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: AppColors.border, width: 8),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 36,
-                        color: AppColors.surface,
-                        child: Center(
-                          child: Container(
-                            width: 80,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: AppColors.textPrimary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          color: AppColors.background,
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.local_fire_department,
-                                    size: 20,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    AppConstants.appName,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Today',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Text(
-                                      '2,191',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Calories',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _MiniMacro(
-                                      label: 'Carbs',
-                                      value: '240g',
-                                      color: AppColors.carbs,
-                                    ),
-                                    _MiniMacro(
-                                      label: 'Protein',
-                                      value: '170g',
-                                      color: AppColors.protein,
-                                    ),
-                                    _MiniMacro(
-                                      label: 'Fats',
-                                      value: '60g',
-                                      color: AppColors.fats,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const _FeatureRow(
+                icon: Icons.track_changes_rounded,
+                label: 'Accurate calorie and macro targets',
               ),
-              const SizedBox(height: 24),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'No Payment Due Now',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              const _FeatureRow(
+                icon: Icons.calendar_today_rounded,
+                label: 'Daily plans that fit normal weekdays',
               ),
+              const _FeatureRow(
+                icon: Icons.kitchen_rounded,
+                label: 'Recommendations from food you already have',
+              ),
+              if (_message != null) ...[
+                const SizedBox(height: 24),
+                _MessageBanner(message: _message!),
+              ],
               const Spacer(),
-              PrimaryButton(
-                text: 'Try Now',
-                onPressed: () => context.go('/home'),
+              GestureDetector(
+                onTap: _isLoading ? null : _openPaywall,
+                child: Container(
+                  width: double.infinity,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: _isLoading
+                        ? AppColors.border
+                        : AppColors.textPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  alignment: Alignment.center,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: AppColors.textOnPrimary,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textOnPrimary,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: _isLoading ? null : _restore,
+                child: const SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: Center(
+                    child: Text(
+                      'Restore purchase',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (kDebugMode && !revenueCatService.isConfigured)
+                GestureDetector(
+                  onTap: () {
+                    authStore.markSubscriptionActive();
+                    context.go('/home');
+                  },
+                  child: const SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: Center(
+                      child: Text(
+                        'Continue in debug',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  '${AppConstants.yearlyPrice}/year (${AppConstants.monthlyPrice}/mo)',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Already purchased? Restore',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${AppConstants.yearlyPrice}/year (${AppConstants.monthlyPrice}/mo)',
-                style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('Terms', style: TextStyle(fontSize: 12)),
-                  ),
-                  const Text(
-                    ' • ',
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Privacy',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -214,37 +239,68 @@ class PaywallScreen extends StatelessWidget {
   }
 }
 
-class _MiniMacro extends StatelessWidget {
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final String value;
-  final Color color;
 
-  const _MiniMacro({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _FeatureRow({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppColors.textPrimary, size: 21),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageBanner extends StatelessWidget {
+  final String message;
+
+  const _MessageBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.error,
+          height: 1.4,
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
-        ),
-      ],
+      ),
     );
   }
 }

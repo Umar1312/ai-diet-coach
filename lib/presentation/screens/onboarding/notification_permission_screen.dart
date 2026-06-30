@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
   const NotificationPermissionScreen({super.key});
+
+  Future<void> _requestNotifications(BuildContext context) async {
+    await Permission.notification.request();
+    if (context.mounted) context.push('/onboarding/paywall');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +111,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                           ),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => context.push('/onboarding/paywall'),
+                              onTap: () => _requestNotifications(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,

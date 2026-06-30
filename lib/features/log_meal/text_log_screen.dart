@@ -164,14 +164,14 @@ class _TextLogScreenState extends State<TextLogScreen> {
                             builder: (_) {
                               final isSelected = textLogStore
                                   .selectedPantryItemIds
-                                  .contains(item.name);
+                                  .contains(item.id);
                               return _PantryChip(
                                 label: '${item.emoji} ${item.name}',
                                 isSelected: isSelected,
                                 onTap: () {
                                   HapticFeedback.selectionClick();
                                   _insertQuickChip(item.name);
-                                  textLogStore.togglePantryItem(item.name);
+                                  textLogStore.togglePantryItem(item.id);
                                 },
                               );
                             },

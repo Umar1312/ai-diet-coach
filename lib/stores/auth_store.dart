@@ -9,9 +9,17 @@ import 'package:mobx/mobx.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/di/providers.dart';
+import '../../core/services/revenuecat_service.dart';
+import '../../shared/models/session_response.dart';
 
 /// Authentication status used by the router to decide where to route.
-enum AuthStatus { unknown, unauthenticated, needsOnboarding, authenticated }
+enum AuthStatus {
+  unknown,
+  unauthenticated,
+  needsOnboarding,
+  needsSubscription,
+  authenticated,
+}
 
 /// Manual MobX store (no codegen) for the full Firebase auth lifecycle.
 ///
@@ -21,6 +29,10 @@ enum AuthStatus { unknown, unauthenticated, needsOnboarding, authenticated }
 /// After a successful Firebase sign-in the store fetches /auth/session from
 /// the backend to learn whether the user has already finished onboarding.
 class AuthStore {
+  final RevenueCatService? revenueCatService;
+
+  AuthStore({this.revenueCatService});
+
   // ── Observables ────────────────────────────────────────────────────────
 
   final status = Observable<AuthStatus>(AuthStatus.unknown);
@@ -43,12 +55,14 @@ class AuthStore {
   /// stream so sign-in / sign-out events drive [status].
   void init() {
     _sub?.cancel();
+    _useFirebaseTokenProvider();
     _sub = FirebaseAuth.instance.idTokenChanges().listen(_onAuthChanged);
   }
 
   /// Dev-mode bypass: skip Firebase, set a backend token directly and resolve
   /// onboarding status from /auth/session.
   Future<void> setDevToken(String token) async {
+    apiService.setAuthTokenProvider(null);
     apiService.setAuthToken(token);
     await _syncSession();
   }
@@ -84,16 +98,21 @@ class AuthStore {
     }
   }
 
-  Future<void> _syncSession() async {
+  Future<SessionResponse> _syncSession() async {
     try {
       final session = await apiService.fetchSession();
+      await revenueCatService?.identify(session.uid);
+      final hasSubscriptionAccess = await _hasSubscriptionAccess();
       runInAction(() {
         isProfileComplete.value = session.profileComplete;
         status.value = session.profileComplete
-            ? AuthStatus.authenticated
+            ? hasSubscriptionAccess
+                  ? AuthStatus.authenticated
+                  : AuthStatus.needsSubscription
             : AuthStatus.needsOnboarding;
         errorMessage.value = null;
       });
+      return session;
     } catch (e) {
       debugPrint('AuthStore: session sync failed -> $e');
       runInAction(() {
@@ -102,6 +121,7 @@ class AuthStore {
             : 'Unable to reach the server. Please try again.';
         status.value = AuthStatus.needsOnboarding;
       });
+      rethrow;
     }
   }
 
@@ -192,6 +212,7 @@ class AuthStore {
     try {
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
+      await revenueCatService?.logOut();
       apiService.setAuthToken('');
       runInAction(() {
         firebaseUser.value = null;
@@ -211,7 +232,15 @@ class AuthStore {
   void markOnboardingComplete() {
     runInAction(() {
       isProfileComplete.value = true;
-      status.value = AuthStatus.authenticated;
+      status.value = AuthStatus.needsSubscription;
+    });
+  }
+
+  void markSubscriptionActive() {
+    runInAction(() {
+      if (isProfileComplete.value) {
+        status.value = AuthStatus.authenticated;
+      }
     });
   }
 
@@ -236,6 +265,30 @@ class AuthStore {
       length,
       (_) => charset[random.nextInt(charset.length)],
     ).join();
+  }
+
+  Future<bool> _hasSubscriptionAccess() async {
+    if (revenueCatService == null || !revenueCatService!.isConfigured) {
+      return kDebugMode;
+    }
+    try {
+      return await revenueCatService!.hasActiveEntitlement();
+    } catch (e) {
+      debugPrint('AuthStore: entitlement check failed -> $e');
+      return false;
+    }
+  }
+
+  Future<String?> _currentFirebaseIdToken({bool forceRefresh = false}) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    firebaseUser.value = user;
+    return user.getIdToken(forceRefresh);
+  }
+
+  void _useFirebaseTokenProvider() {
+    apiService.setAuthTokenProvider(_currentFirebaseIdToken);
   }
 
   String _firebaseErrorMessage(FirebaseAuthException e) {

@@ -91,6 +91,7 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
         q: query.isEmpty ? null : query,
       );
 
+      if (!mounted) return;
       setState(() {
         if (append) {
           _suggestions.addAll(response.items);
@@ -107,14 +108,18 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
         }
       });
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.message);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Failed to load suggestions.');
     } finally {
-      setState(() {
-        _isLoading = false;
-        _isLoadingMore = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -123,6 +128,7 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
   }
 
   void _onSearchTextChanged() {
+    if (!mounted) return;
     setState(() {});
   }
 

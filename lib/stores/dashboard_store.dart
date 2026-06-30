@@ -11,10 +11,6 @@ import '../../shared/models/planned_meal.dart';
 /// MobX store WITHOUT codegen.
 /// All observables/computed are declared manually via Observable()/Computed().
 class DashboardStore {
-  DashboardStore() {
-    refresh();
-  }
-
   // ── Core daily numbers ──────────────────────────────────────────────────
 
   final consumedCalories = Observable<int>(0);
@@ -46,6 +42,7 @@ class DashboardStore {
 
   final isLoadingPantry = Observable<bool>(false);
   final isLoading = Observable<bool>(false);
+  final hasLoaded = Observable<bool>(false);
   final hasError = Observable<bool>(false);
   final errorMessage = Observable<String>('');
 
@@ -125,6 +122,9 @@ class DashboardStore {
         ..clear()
         ..addAll(plan.plannedMeals);
       pendingProposal.value = plan.pendingProposal;
+      hasLoaded.value = true;
+      hasError.value = false;
+      errorMessage.value = '';
     });
   }
 
@@ -351,6 +351,9 @@ class DashboardStore {
       plannedMeals.clear();
       pendingProposal.value = null;
       pantry.clear();
+      hasLoaded.value = false;
+      hasError.value = false;
+      errorMessage.value = '';
     });
   }
 }
