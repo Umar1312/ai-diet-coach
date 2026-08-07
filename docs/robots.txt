@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://umar1312.github.io/ai-diet-coach/sitemap.xml
