@@ -37,7 +37,7 @@ class CalcResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Your plan\nis ready!',
+                  'Your targets\nare ready!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
@@ -62,7 +62,7 @@ class CalcResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'We\'re calculating your personalized macros...',
+                  'Next, we\'ll turn them into a practical daily meal plan.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

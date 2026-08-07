@@ -19,7 +19,7 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
     {'label': 'Carbs', 'checked': false},
     {'label': 'Protein', 'checked': false},
     {'label': 'Fats', 'checked': false},
-    {'label': 'Health Score', 'checked': false},
+    {'label': 'Food preferences', 'checked': false},
   ];
 
   @override

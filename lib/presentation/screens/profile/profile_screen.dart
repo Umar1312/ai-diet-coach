@@ -6,7 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/core/di/providers.dart';
-import 'package:diet_coach_ai/main.dart' show authStore, profileStore;
+import 'package:diet_coach_ai/main.dart'
+    show authStore, profileStore, subscriptionStore;
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -74,6 +75,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
     }
+  }
+
+  Future<void> _manageSubscription() async {
+    HapticFeedback.selectionClick();
+    subscriptionStore.clearError();
+    await subscriptionStore.manageSubscription();
+    if (!mounted) return;
+    final message = subscriptionStore.errorMessage.value;
+    if (message == null || message.isEmpty) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          backgroundColor: AppColors.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Text(message),
+        ),
+      );
   }
 
   @override
@@ -249,6 +272,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _Section(
+                      title: 'Subscription',
+                      children: [
+                        _ProfileCard(
+                          icon: Icons.workspace_premium_rounded,
+                          title: 'AI Diet Buddy Pro',
+                          value: subscriptionStore.displayStatus,
+                          onTap: _manageSubscription,
                         ),
                       ],
                     ),

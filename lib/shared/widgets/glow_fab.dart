@@ -3,16 +3,10 @@ import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 
 class GlowFAB extends StatefulWidget {
-  final VoidCallback onCameraTap;
   final VoidCallback onVoiceTap;
   final VoidCallback onTextTap;
 
-  const GlowFAB({
-    super.key,
-    required this.onCameraTap,
-    required this.onVoiceTap,
-    required this.onTextTap,
-  });
+  const GlowFAB({super.key, required this.onVoiceTap, required this.onTextTap});
 
   @override
   State<GlowFAB> createState() => _GlowFABState();
@@ -55,7 +49,7 @@ class _GlowFABState extends State<GlowFAB> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 56 + 160.0,
+      width: 56 + 108.0,
       height: 56,
       child: Stack(
         alignment: Alignment.centerLeft,
@@ -63,20 +57,13 @@ class _GlowFABState extends State<GlowFAB> with SingleTickerProviderStateMixin {
           if (_isOpen) ...[
             _buildOption(
               index: 0,
-              label: 'Camera',
-              icon: Icons.camera_alt,
-              color: AppColors.calories,
-              onTap: widget.onCameraTap,
-            ),
-            _buildOption(
-              index: 1,
               label: 'Voice',
               icon: Icons.mic,
               color: AppColors.protein,
               onTap: widget.onVoiceTap,
             ),
             _buildOption(
-              index: 2,
+              index: 1,
               label: 'Text',
               icon: Icons.edit_note,
               color: AppColors.carbs,

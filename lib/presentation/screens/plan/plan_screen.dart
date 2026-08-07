@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/features/customize_day/widgets/generate_day_sheet.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
@@ -230,7 +229,7 @@ class _GenerateDayPrompt extends StatelessWidget {
           GestureDetector(
             onTap: () {
               HapticFeedback.mediumImpact();
-              showGenerateDaySheet(context);
+              dashboardStore.fetchDayPlan();
             },
             child: Container(
               width: double.infinity,

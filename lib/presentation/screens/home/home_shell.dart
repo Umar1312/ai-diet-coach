@@ -1,111 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobx/mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore;
-import 'package:diet_coach_ai/features/missed_meals/missed_meals_screen.dart';
-import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
-/// Shell for the main app tabs. Wraps Home / Pantry / Plan / Profile
+/// Shell for the main app tabs. Wraps Home / Pantry / Plan
 /// with a persistent bottom nav. Child comes from go_router's
 /// StatefulShellRoute branch.
-class HomeShell extends StatefulWidget {
+class HomeShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   const HomeShell({super.key, required this.navigationShell});
 
-  @override
-  State<HomeShell> createState() => _HomeShellState();
-}
-
-class _HomeShellState extends State<HomeShell> {
   static const _tabs = <_TabItem>[
     _TabItem(label: 'Home', icon: Icons.home_rounded),
     _TabItem(label: 'Pantry', icon: Icons.kitchen_rounded),
     _TabItem(label: 'Plan', icon: Icons.calendar_today_rounded),
-    _TabItem(label: 'Profile', icon: Icons.person_rounded),
   ];
-
-  ReactionDisposer? _missedMealsReaction;
-  bool _hasShownMissedMealsToday = false;
 
   void _onTap(int index) {
     HapticFeedback.selectionClick();
-    widget.navigationShell.goBranch(
+    navigationShell.goBranch(
       index,
-      initialLocation: index == widget.navigationShell.currentIndex,
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // Show missed meals when dashboard finishes loading
-    _missedMealsReaction = reaction((_) => dashboardStore.isLoading.value, (
-      isLoading,
-    ) {
-      if (!isLoading && mounted && !_hasShownMissedMealsToday) {
-        _checkAndShowMissedMeals();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _missedMealsReaction?.call();
-    super.dispose();
-  }
-
-  void _checkAndShowMissedMeals() {
-    final missed = _getMissedMeals();
-    if (missed.isNotEmpty) {
-      _hasShownMissedMealsToday = true;
-      _showMissedMealsScreen(missed);
-    }
-  }
-
-  List<PlannedMeal> _getMissedMeals() {
-    final hour = DateTime.now().hour;
-    const slotEndTimes = {
-      'breakfast': 11,
-      'lunch': 15,
-      'snack': 17,
-      'dinner': 21,
-      'late': 23,
-    };
-
-    return dashboardStore.plannedMeals.where((meal) {
-      if (meal.status != PlannedMealStatus.planned) return false;
-      if (meal.isOptional) return false;
-      final endHour = slotEndTimes[meal.slot.toLowerCase()];
-      if (endHour == null) return false;
-      return hour > endHour;
-    }).toList();
-  }
-
-  void _showMissedMealsScreen(List<PlannedMeal> missed) {
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (_) => MissedMealsScreen(
-          missedMeals: missed,
-          onLogMeal: (meal) async {
-            await dashboardStore.addMeal(
-              meal.meal,
-              source: 'recommendation',
-              slot: meal.slot,
-            );
-          },
-          onSkipMeal: (meal) async {
-            await dashboardStore.skipSlot(meal.order);
-          },
-          onDone: () {
-            if (Navigator.of(context, rootNavigator: true).canPop()) {
-              Navigator.of(context, rootNavigator: true).pop();
-            }
-          },
-        ),
-      ),
+      initialLocation: index == navigationShell.currentIndex,
     );
   }
 
@@ -113,9 +29,9 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: widget.navigationShell,
+      body: navigationShell,
       bottomNavigationBar: _BottomNavBar(
-        currentIndex: widget.navigationShell.currentIndex,
+        currentIndex: navigationShell.currentIndex,
         tabs: _tabs,
         onTap: _onTap,
       ),

@@ -6,10 +6,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore, cravingStore;
-import 'package:diet_coach_ai/features/craving/widgets/craving_fab.dart';
-import 'package:diet_coach_ai/features/craving/craving_sheet.dart';
-import 'package:diet_coach_ai/features/customize_day/widgets/generate_day_sheet.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
@@ -34,18 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: CravingFAB(
-        onTap: () {
-          cravingStore.reset();
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (_) => const CravingSheet(),
-          );
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -637,7 +622,7 @@ class _NoPlanCard extends StatelessWidget {
                   ? null
                   : () {
                       HapticFeedback.mediumImpact();
-                      showGenerateDaySheet(context);
+                      dashboardStore.fetchDayPlan();
                     },
               child: Container(
                 width: double.infinity,

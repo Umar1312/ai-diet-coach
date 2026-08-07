@@ -8,6 +8,7 @@ import 'core/constants/app_constants.dart';
 import 'core/constants/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/revenuecat_service.dart';
+import 'core/di/providers.dart';
 import 'stores/auth_store.dart';
 import 'stores/onboarding_store.dart';
 import 'stores/dashboard_store.dart';
@@ -17,9 +18,14 @@ import 'features/log_meal/stores/text_log_store.dart';
 import 'features/craving/stores/craving_store.dart';
 import 'features/pantry/stores/pantry_store.dart';
 import 'features/customize_day/stores/customize_day_store.dart';
+import 'features/subscription/stores/subscription_store.dart';
 
 final revenueCatService = RevenueCatService();
-final authStore = AuthStore(revenueCatService: revenueCatService);
+final subscriptionStore = SubscriptionStore(
+  revenueCatService: revenueCatService,
+  apiService: apiService,
+);
+final authStore = AuthStore(subscriptionStore: subscriptionStore);
 final onboardingStore = OnboardingStore();
 final dashboardStore = DashboardStore();
 final profileStore = ProfileStore(dashboardStore: dashboardStore);
@@ -33,7 +39,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load();
-  await revenueCatService.configure();
+  await subscriptionStore.initialize();
 
   final useDevAuth = kDebugMode && AppConstants.devBearerToken.isNotEmpty;
 

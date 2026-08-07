@@ -3,11 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/features/customize_day/models/custom_day_plan_request.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
+import 'package:diet_coach_ai/shared/models/food_item.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/shared/models/recommendation_models.dart';
 import 'package:diet_coach_ai/shared/models/session_response.dart';
+import 'package:diet_coach_ai/shared/models/subscription_status.dart';
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 final dio = Dio(
@@ -299,6 +301,30 @@ class ApiService {
     });
   }
 
+  Future<FoodSearchResponse> searchFoods({
+    required String q,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.get(
+        '/foods/search',
+        queryParameters: {'q': q.trim(), 'page': page, 'page_size': pageSize},
+      );
+      return FoodSearchResponse.fromJson(response.data);
+    });
+  }
+
+  Future<FoodItem> estimateFood(String query) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/foods/estimate',
+        data: {'query': query.trim()},
+      );
+      return FoodItem.fromJson(response.data);
+    });
+  }
+
   Future<PantryItemResponse> addPantryItem(PantryCreateRequest request) async {
     return _wrap(() async {
       final response = await _dio.post('/pantry', data: request.toJson());
@@ -415,6 +441,20 @@ class ApiService {
     });
   }
 
+  Future<SubscriptionStatus> fetchSubscriptionStatus() async {
+    return _wrap(() async {
+      final response = await _dio.get('/subscriptions/me');
+      return SubscriptionStatus.fromJson(response.data);
+    });
+  }
+
+  Future<SubscriptionStatus> syncSubscriptionStatus() async {
+    return _wrap(() async {
+      final response = await _dio.post('/subscriptions/me/sync');
+      return SubscriptionStatus.fromJson(response.data);
+    });
+  }
+
   Future<User> updateProfile(ProfilePatchRequest request) async {
     return _wrap(() async {
       final response = await _dio.patch('/users/me', data: request.toJson());
@@ -469,9 +509,14 @@ class ProfilePatchRequest {
 /// Parses a DioException into a user-friendly ApiException with the API error code.
 ApiException parseApiError(DioException e) {
   final data = e.response?.data;
-  // Backend wraps errors in {"error": {"code": "...", "message": "..."}}
-  final errorObj = (data is Map<String, dynamic>)
-      ? data['error'] as Map<String, dynamic>?
+  // FastAPI HTTPException responses wrap the app error inside `detail`, while
+  // the generic exception handler returns the same error at the top level.
+  final detail = data is Map<String, dynamic>
+      ? data['detail'] as Map<String, dynamic>?
+      : null;
+  final errorObj = data is Map<String, dynamic>
+      ? (data['error'] as Map<String, dynamic>? ??
+            detail?['error'] as Map<String, dynamic>?)
       : null;
   final code = errorObj?['code'] as String?;
   final serverMessage = errorObj?['message'] as String?;
@@ -499,6 +544,12 @@ ApiException parseApiError(DioException e) {
       return ApiException(
         code: 'rate_limited',
         message: 'Too many requests. Please slow down.',
+        statusCode: e.response?.statusCode,
+      );
+    case 'subscription_required':
+      return ApiException(
+        code: 'subscription_required',
+        message: serverMessage ?? 'An active subscription is required.',
         statusCode: e.response?.statusCode,
       );
     case 'analysis_failed':

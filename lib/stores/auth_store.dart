@@ -9,7 +9,7 @@ import 'package:mobx/mobx.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/di/providers.dart';
-import '../../core/services/revenuecat_service.dart';
+import '../../features/subscription/stores/subscription_store.dart';
 import '../../shared/models/session_response.dart';
 
 /// Authentication status used by the router to decide where to route.
@@ -29,9 +29,21 @@ enum AuthStatus {
 /// After a successful Firebase sign-in the store fetches /auth/session from
 /// the backend to learn whether the user has already finished onboarding.
 class AuthStore {
-  final RevenueCatService? revenueCatService;
+  final SubscriptionStore subscriptionStore;
 
-  AuthStore({this.revenueCatService});
+  AuthStore({required this.subscriptionStore}) {
+    _subscriptionReaction = reaction<bool>(
+      (_) => subscriptionStore.hasAccess.value,
+      (hasAccess) {
+        if (!isProfileComplete.value) return;
+        runInAction(() {
+          status.value = hasAccess
+              ? AuthStatus.authenticated
+              : AuthStatus.needsSubscription;
+        });
+      },
+    );
+  }
 
   // ── Observables ────────────────────────────────────────────────────────
 
@@ -50,6 +62,7 @@ class AuthStore {
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
   StreamSubscription<User?>? _sub;
+  late final ReactionDisposer _subscriptionReaction;
 
   /// Call AFTER Firebase.initializeApp() succeeds. Binds the authStateChanges
   /// stream so sign-in / sign-out events drive [status].
@@ -101,8 +114,9 @@ class AuthStore {
   Future<SessionResponse> _syncSession() async {
     try {
       final session = await apiService.fetchSession();
-      await revenueCatService?.identify(session.uid);
-      final hasSubscriptionAccess = await _hasSubscriptionAccess();
+      final hasSubscriptionAccess = await subscriptionStore.identify(
+        session.uid,
+      );
       runInAction(() {
         isProfileComplete.value = session.profileComplete;
         status.value = session.profileComplete
@@ -210,9 +224,9 @@ class AuthStore {
       errorMessage.value = null;
     });
     try {
+      await subscriptionStore.logOut();
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
-      await revenueCatService?.logOut();
       apiService.setAuthToken('');
       runInAction(() {
         firebaseUser.value = null;
@@ -232,13 +246,15 @@ class AuthStore {
   void markOnboardingComplete() {
     runInAction(() {
       isProfileComplete.value = true;
-      status.value = AuthStatus.needsSubscription;
+      status.value = subscriptionStore.hasAccess.value
+          ? AuthStatus.authenticated
+          : AuthStatus.needsSubscription;
     });
   }
 
   void markSubscriptionActive() {
     runInAction(() {
-      if (isProfileComplete.value) {
+      if (isProfileComplete.value && subscriptionStore.hasAccess.value) {
         status.value = AuthStatus.authenticated;
       }
     });
@@ -257,6 +273,11 @@ class AuthStore {
     runInAction(() => errorMessage.value = null);
   }
 
+  Future<void> dispose() async {
+    await _sub?.cancel();
+    _subscriptionReaction();
+  }
+
   String _generateNonce([int length = 32]) {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
@@ -265,18 +286,6 @@ class AuthStore {
       length,
       (_) => charset[random.nextInt(charset.length)],
     ).join();
-  }
-
-  Future<bool> _hasSubscriptionAccess() async {
-    if (revenueCatService == null || !revenueCatService!.isConfigured) {
-      return kDebugMode;
-    }
-    try {
-      return await revenueCatService!.hasActiveEntitlement();
-    } catch (e) {
-      debugPrint('AuthStore: entitlement check failed -> $e');
-      return false;
-    }
   }
 
   Future<String?> _currentFirebaseIdToken({bool forceRefresh = false}) async {

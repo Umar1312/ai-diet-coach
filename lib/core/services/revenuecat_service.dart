@@ -1,71 +1,155 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 
-class RevenueCatService {
-  bool _isConfigured = false;
+abstract interface class RevenueCatClient {
+  bool get isConfigured;
+  Future<bool> configure();
+  void listen(CustomerInfoUpdateListener listener);
+  Future<CustomerInfo> identify(String appUserId);
+  Future<CustomerInfo> refreshCustomerInfo();
+  Future<void> logOut();
+  Future<PaywallResult> presentPaywallIfNeeded();
+  Future<CustomerInfo> restorePurchases();
+  Future<void> presentCustomerCenter();
+  void dispose();
+}
 
+class RevenueCatService implements RevenueCatClient {
+  bool _isConfigured = false;
+  CustomerInfoUpdateListener? _customerInfoListener;
+
+  @override
   bool get isConfigured => _isConfigured;
 
-  Future<void> configure() async {
-    final apiKey = _platformApiKey;
-    if (apiKey.isEmpty || _isConfigured) return;
+  bool get isSupportedPlatform =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
-    if (kDebugMode) {
-      await Purchases.setLogLevel(LogLevel.debug);
+  @override
+  Future<bool> configure() async {
+    if (_isConfigured) return true;
+    if (!isSupportedPlatform) return false;
+
+    final apiKey = _apiKey;
+    if (apiKey.isEmpty) return false;
+    if (!apiKey.startsWith('appl_') && !apiKey.startsWith('test_')) {
+      throw const RevenueCatConfigurationException(
+        'The iOS RevenueCat public SDK key must start with appl_ or test_.',
+      );
     }
 
+    await Purchases.setLogLevel(kReleaseMode ? LogLevel.info : LogLevel.debug);
     await Purchases.configure(PurchasesConfiguration(apiKey));
     _isConfigured = true;
+    return true;
   }
 
-  Future<void> identify(String appUserId) async {
-    if (!_isConfigured || appUserId.isEmpty) return;
-    await Purchases.logIn(appUserId);
+  @override
+  void listen(CustomerInfoUpdateListener listener) {
+    if (!_isConfigured) return;
+    final previous = _customerInfoListener;
+    if (previous != null) {
+      Purchases.removeCustomerInfoUpdateListener(previous);
+    }
+    _customerInfoListener = listener;
+    Purchases.addCustomerInfoUpdateListener(listener);
   }
 
+  @override
+  Future<CustomerInfo> identify(String appUserId) async {
+    _requireConfigured();
+    if (appUserId.trim().isEmpty) {
+      throw const RevenueCatConfigurationException(
+        'RevenueCat requires a non-empty App User ID.',
+      );
+    }
+    final result = await Purchases.logIn(appUserId);
+    return result.customerInfo;
+  }
+
+  @override
+  Future<CustomerInfo> refreshCustomerInfo() async {
+    _requireConfigured();
+    await Purchases.invalidateCustomerInfoCache();
+    return Purchases.getCustomerInfo();
+  }
+
+  @override
   Future<void> logOut() async {
     if (!_isConfigured) return;
+    final info = await Purchases.getCustomerInfo();
+    if (info.originalAppUserId.startsWith(r'$RCAnonymousID:')) return;
     await Purchases.logOut();
   }
 
-  Future<bool> hasActiveEntitlement() async {
-    if (!_isConfigured) return false;
-    final info = await Purchases.getCustomerInfo();
-    return info.entitlements.active.containsKey(
-      AppConstants.revenueCatEntitlementId,
-    );
-  }
-
-  Future<bool> restorePurchases() async {
-    if (!_isConfigured) return false;
-    await Purchases.restorePurchases();
-    return hasActiveEntitlement();
-  }
-
-  Future<dynamic> presentPaywall() async {
-    if (!_isConfigured) return null;
-    return RevenueCatUI.presentPaywall();
-  }
-
-  Future<dynamic> presentPaywallIfNeeded() async {
-    if (!_isConfigured) return null;
+  @override
+  Future<PaywallResult> presentPaywallIfNeeded() async {
+    _requireConfigured();
+    final offering = await _defaultOffering();
     return RevenueCatUI.presentPaywallIfNeeded(
       AppConstants.revenueCatEntitlementId,
+      offering: offering,
+      displayCloseButton: false,
     );
   }
 
-  String get _platformApiKey {
-    if (Platform.isIOS || Platform.isMacOS) {
-      return AppConstants.revenueCatIosApiKey.trim();
-    }
-    if (Platform.isAndroid) {
-      return AppConstants.revenueCatAndroidApiKey.trim();
-    }
-    return '';
+  @override
+  Future<CustomerInfo> restorePurchases() async {
+    _requireConfigured();
+    return Purchases.restorePurchases();
   }
+
+  @override
+  Future<void> presentCustomerCenter() async {
+    _requireConfigured();
+    await RevenueCatUI.presentCustomerCenter();
+  }
+
+  @override
+  void dispose() {
+    final listener = _customerInfoListener;
+    if (listener != null && _isConfigured) {
+      Purchases.removeCustomerInfoUpdateListener(listener);
+    }
+    _customerInfoListener = null;
+  }
+
+  Future<Offering> _defaultOffering() async {
+    final offerings = await Purchases.getOfferings();
+    final offering =
+        offerings.getOffering(AppConstants.revenueCatOfferingId) ??
+        offerings.current;
+    if (offering == null) {
+      throw const RevenueCatConfigurationException(
+        'No RevenueCat offering is available for this app.',
+      );
+    }
+    return offering;
+  }
+
+  String get _apiKey {
+    if (!kReleaseMode && AppConstants.revenueCatTestApiKey.trim().isNotEmpty) {
+      return AppConstants.revenueCatTestApiKey.trim();
+    }
+    return AppConstants.revenueCatIosApiKey.trim();
+  }
+
+  void _requireConfigured() {
+    if (!_isConfigured) {
+      throw const RevenueCatConfigurationException(
+        'RevenueCat is not configured for this build.',
+      );
+    }
+  }
+}
+
+class RevenueCatConfigurationException implements Exception {
+  final String message;
+
+  const RevenueCatConfigurationException(this.message);
+
+  @override
+  String toString() => message;
 }

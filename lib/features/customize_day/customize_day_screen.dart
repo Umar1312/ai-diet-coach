@@ -289,14 +289,20 @@ class _SlotCard extends StatelessWidget {
         final hasMeals = slotMeals.isNotEmpty;
         final calories = slotMeals.fold<int>(
           0,
-          (sum, meal) => sum + meal.calories,
+          (sum, meal) => sum + meal.totalCalories,
         );
         final protein = slotMeals.fold<int>(
           0,
-          (sum, meal) => sum + meal.proteinG,
+          (sum, meal) => sum + meal.totalProteinG,
         );
-        final carbs = slotMeals.fold<int>(0, (sum, meal) => sum + meal.carbsG);
-        final fats = slotMeals.fold<int>(0, (sum, meal) => sum + meal.fatsG);
+        final carbs = slotMeals.fold<int>(
+          0,
+          (sum, meal) => sum + meal.totalCarbsG,
+        );
+        final fats = slotMeals.fold<int>(
+          0,
+          (sum, meal) => sum + meal.totalFatsG,
+        );
 
         return GestureDetector(
           onTap: () => _onTap(context),
@@ -356,7 +362,7 @@ class _SlotCard extends StatelessWidget {
                           Text(
                             hasMeals
                                 ? '${slotMeals.length} item${slotMeals.length == 1 ? '' : 's'}'
-                                : 'Add meal',
+                                : 'Add item',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -408,10 +414,14 @@ class _SlotCard extends StatelessWidget {
                   const SizedBox(height: 14),
                   for (var i = 0; i < slotMeals.length; i++) ...[
                     _SlotMealRow(
-                      meal: slotMeals[i],
-                      onRemove: () {
+                      item: slotMeals[i],
+                      onDecrease: () {
                         HapticFeedback.selectionClick();
-                        customizeDayStore.removeMeal(order, i);
+                        customizeDayStore.decrementComponent(order, i);
+                      },
+                      onIncrease: () {
+                        HapticFeedback.selectionClick();
+                        customizeDayStore.incrementComponent(order, i);
                       },
                     ),
                     if (i != slotMeals.length - 1) const SizedBox(height: 8),
@@ -431,29 +441,40 @@ class _SlotCard extends StatelessWidget {
     HapticFeedback.mediumImpact();
     final result = await showSlotMealPickerSheet(context);
     if (result != null && context.mounted) {
-      customizeDayStore.setMealFromPantry(order, result);
+      customizeDayStore.addComponent(order, result);
     }
   }
 }
 
 class _SlotMealRow extends StatelessWidget {
-  final Meal meal;
-  final VoidCallback onRemove;
+  final MealComponent item;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
 
-  const _SlotMealRow({required this.meal, required this.onRemove});
+  const _SlotMealRow({
+    required this.item,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final quantity = item.quantity;
+    final calories = item.totalCalories;
+    final protein = item.totalProteinG;
+    final carbs = item.totalCarbsG;
+    final fats = item.totalFatsG;
+
     return Row(
       children: [
-        Text(meal.emoji, style: const TextStyle(fontSize: 20)),
+        Text(item.emoji, style: const TextStyle(fontSize: 20)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                meal.name,
+                item.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -465,7 +486,7 @@ class _SlotMealRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${meal.calories} cal · ${meal.proteinG}g P · ${meal.carbsG}g C · ${meal.fatsG}g F',
+                '$calories cal · ${protein}g P · ${carbs}g C · ${fats}g F',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -475,23 +496,55 @@ class _SlotMealRow extends StatelessWidget {
             ],
           ),
         ),
-        GestureDetector(
-          onTap: onRemove,
-          child: Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.close_rounded,
-              color: AppColors.textTertiary,
-              size: 17,
-            ),
+        Container(
+          height: 34,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border, width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _QuantityButton(icon: Icons.remove_rounded, onTap: onDecrease),
+              SizedBox(
+                width: 30,
+                child: Center(
+                  child: Text(
+                    '$quantity',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              _QuantityButton(icon: Icons.add_rounded, onTap: onIncrease),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QuantityButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: 34,
+        height: 34,
+        child: Icon(icon, color: AppColors.textPrimary, size: 18),
+      ),
     );
   }
 }
