@@ -18,6 +18,10 @@ abstract interface class RevenueCatClient {
 }
 
 class RevenueCatService implements RevenueCatClient {
+  static const bool _useRevenueCatTestStore = bool.fromEnvironment(
+    'USE_REVENUECAT_TEST_STORE',
+  );
+
   bool _isConfigured = false;
   CustomerInfoUpdateListener? _customerInfoListener;
 
@@ -130,7 +134,9 @@ class RevenueCatService implements RevenueCatClient {
   }
 
   String get _apiKey {
-    if (!kReleaseMode && AppConstants.revenueCatTestApiKey.trim().isNotEmpty) {
+    if (!kReleaseMode &&
+        _useRevenueCatTestStore &&
+        AppConstants.revenueCatTestApiKey.trim().isNotEmpty) {
       return AppConstants.revenueCatTestApiKey.trim();
     }
     return AppConstants.revenueCatIosApiKey.trim();
