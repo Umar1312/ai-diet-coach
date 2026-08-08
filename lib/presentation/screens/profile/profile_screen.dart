@@ -7,7 +7,7 @@ import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/core/di/providers.dart';
 import 'package:diet_coach_ai/main.dart'
-    show authStore, profileStore, subscriptionStore;
+    show authStore, dashboardStore, profileStore, subscriptionStore;
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -99,6 +99,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
   }
 
+  Future<void> _deleteAccount() async {
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _DeleteAccountSheet(),
+    );
+    if (confirmed != true) return;
+
+    HapticFeedback.mediumImpact();
+    final deleted = await profileStore.deleteAccount();
+    if (!mounted) return;
+
+    if (!deleted) {
+      final message = profileStore.errorMessage.value;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            backgroundColor: AppColors.textPrimary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: Text(
+              message.isEmpty ? 'Unable to delete your account.' : message,
+            ),
+          ),
+        );
+      return;
+    }
+
+    await authStore.finishAccountDeletion();
+    dashboardStore.reset();
+    profileStore.reset();
+    if (mounted) context.go('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,6 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           builder: (_) {
             final user = profileStore.user.value;
             final isLoading = profileStore.isLoading.value;
+            final isDeleting = profileStore.isDeleting.value;
             final error = profileStore.errorMessage.value;
 
             return CustomScrollView(
@@ -298,6 +338,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         profileStore.reset();
                         if (context.mounted) context.go('/login');
                       },
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _DeleteAccountButton(
+                      isDeleting: isDeleting,
+                      onDelete: _deleteAccount,
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 28)),
@@ -647,6 +693,130 @@ class _SignOutButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DeleteAccountButton extends StatelessWidget {
+  final bool isDeleting;
+  final VoidCallback onDelete;
+
+  const _DeleteAccountButton({
+    required this.isDeleting,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
+      child: GestureDetector(
+        onTap: isDeleting
+            ? null
+            : () {
+                HapticFeedback.mediumImpact();
+                onDelete();
+              },
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.error.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+          ),
+          child: isDeleting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.error,
+                  ),
+                )
+              : const Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.error,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DeleteAccountSheet extends StatelessWidget {
+  const _DeleteAccountSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetFrame(
+      title: 'Delete your account?',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'This permanently deletes your profile, meal history, pantry, and uploaded meal photos. This cannot be undone.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Deleting your account does not cancel an active subscription. Cancel it first in your device subscription settings.',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.error,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () => Navigator.pop(context, true),
+            child: Container(
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Text(
+                'Permanently Delete Account',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textOnPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => Navigator.pop(context, false),
+            child: const SizedBox(
+              height: 48,
+              child: Center(
+                child: Text(
+                  'Keep my account',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

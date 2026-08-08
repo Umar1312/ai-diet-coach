@@ -461,6 +461,14 @@ class ApiService {
       return User.fromJson(response.data);
     });
   }
+
+  /// Permanently removes the authenticated user's application data and
+  /// Firebase identity. Store subscriptions must be cancelled separately.
+  Future<void> deleteAccount() async {
+    return _wrap(() async {
+      await _dio.delete('/users/me');
+    });
+  }
 }
 
 class ProfilePatchRequest {

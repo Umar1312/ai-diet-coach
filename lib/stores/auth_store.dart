@@ -240,6 +240,35 @@ class AuthStore {
     }
   }
 
+  /// Clears authentication and subscription state after the backend has
+  /// permanently deleted the account. Cleanup errors are intentionally
+  /// ignored: the deletion has already completed server-side.
+  Future<void> finishAccountDeletion() async {
+    try {
+      await subscriptionStore.logOut();
+    } catch (e) {
+      debugPrint('AuthStore: RevenueCat logout after deletion failed -> $e');
+    }
+    try {
+      await GoogleSignIn().signOut();
+    } catch (e) {
+      debugPrint('AuthStore: Google logout after deletion failed -> $e');
+    }
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('AuthStore: Firebase logout after deletion failed -> $e');
+    }
+
+    apiService.setAuthToken('');
+    runInAction(() {
+      firebaseUser.value = null;
+      status.value = AuthStatus.unauthenticated;
+      isProfileComplete.value = false;
+      errorMessage.value = null;
+    });
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   /// Used by the onboarding flow after /users/setup completes successfully.
