@@ -68,6 +68,9 @@ class SubscriptionStore {
     try {
       final info = await _revenueCatService.identify(appUserId);
       _applyCustomerInfo(info);
+      // Reconcile on every identified launch. This keeps the backend's
+      // entitlement gate current even when a webhook was delayed or missed.
+      await _syncBackend();
       return hasAccess.value;
     } catch (error) {
       debugPrint('SubscriptionStore: identity sync failed -> $error');
