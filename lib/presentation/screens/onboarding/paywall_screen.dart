@@ -9,6 +9,14 @@ import 'package:diet_coach_ai/main.dart' show authStore, subscriptionStore;
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
 
+  void _close(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/home');
+  }
+
   Future<void> _openPaywall(BuildContext context) async {
     HapticFeedback.mediumImpact();
     final activated = await subscriptionStore.presentPaywall();
@@ -57,25 +65,22 @@ class PaywallScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 16),
-                            if (context.canPop())
-                              GestureDetector(
-                                onTap: isLoading ? null : () => context.pop(),
-                                child: Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.surface,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.close_rounded,
-                                    color: AppColors.textPrimary,
-                                    size: 22,
-                                  ),
+                            GestureDetector(
+                              onTap: isLoading ? null : () => _close(context),
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surface,
+                                  shape: BoxShape.circle,
                                 ),
-                              )
-                            else
-                              const SizedBox(height: 48),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: AppColors.textPrimary,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 48),
                             const Text(
                               'Know what to\neat next',

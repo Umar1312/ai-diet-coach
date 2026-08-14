@@ -102,10 +102,10 @@ void main() {
     );
   });
 
-  test('subscription-required users are held at the paywall', () {
+  test('free users can navigate core app routes', () {
     expect(
       AppRouter.redirectForAuthStatus(AuthStatus.needsSubscription, '/home'),
-      '/onboarding/paywall',
+      isNull,
     );
     expect(
       AppRouter.redirectForAuthStatus(

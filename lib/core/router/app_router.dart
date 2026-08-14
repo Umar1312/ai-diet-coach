@@ -140,6 +140,9 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/plan',
+                redirect: (context, state) => subscriptionStore.hasAccess.value
+                    ? null
+                    : '/onboarding/paywall',
                 builder: (context, state) => const PlanScreen(),
               ),
             ],
@@ -195,8 +198,10 @@ class AppRouter {
     }
 
     if (status == AuthStatus.needsSubscription) {
-      if (location == '/onboarding/paywall') return null;
-      return '/onboarding/paywall';
+      // Free users can use the core app. Premium navigation is individually
+      // gated (for example, the daily plan route) using the entitlement.
+      if (isLoginRoute || isSplashRoute || isWelcomeRoute) return '/home';
+      return null;
     }
 
     // Fully authenticated -> block login, splash, and welcome. Keep
