@@ -27,6 +27,7 @@ import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
+import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_onboarding_screen.dart';
 
@@ -162,6 +163,12 @@ class AppRouter {
       GoRoute(
         path: '/history',
         builder: (context, state) => const MealHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/plan/customize',
+        redirect: (context, state) =>
+            subscriptionStore.hasAccess.value ? null : '/onboarding/paywall',
+        builder: (context, state) => const CustomizeDayScreen(),
       ),
       GoRoute(
         path: '/pantry/onboarding',

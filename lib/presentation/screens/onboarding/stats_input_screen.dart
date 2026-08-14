@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../widgets/primary_button.dart';
@@ -52,7 +53,7 @@ class _StatsInputScreenState extends State<StatsInputScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/'),
         ),
         title: const ProgressBar(progress: 0.2),
       ),

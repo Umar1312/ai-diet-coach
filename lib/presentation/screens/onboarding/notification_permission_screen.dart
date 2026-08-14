@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/router/safe_navigation.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
   const NotificationPermissionScreen({super.key});
@@ -26,7 +27,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back_ios, size: 20),
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.popOrGo('/onboarding/pantry'),
                 ),
               ),
               const SizedBox(height: 20),

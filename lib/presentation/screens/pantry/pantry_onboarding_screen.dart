@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show pantryStore;
 import 'package:diet_coach_ai/features/pantry/stores/pantry_store.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
@@ -37,7 +38,7 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
           builder: (_) {
             return Column(
               children: [
-                const _Header(),
+                _Header(isOnboarding: widget.isOnboarding),
                 Expanded(
                   child: _store.isLoadingStarter.value
                       ? _buildLoading()
@@ -152,7 +153,7 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
                             if (widget.isOnboarding) {
                               context.go('/onboarding/notifications');
                             } else {
-                              context.pop();
+                              context.popOrGo('/pantry');
                               _showSuccessSnackBar(count);
                             }
                           }
@@ -166,7 +167,7 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
                     if (widget.isOnboarding) {
                       context.go('/onboarding/notifications');
                     } else {
-                      context.pop();
+                      context.popOrGo('/pantry');
                     }
                   },
                 ),
@@ -210,7 +211,9 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
 // ── Header ────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
-  const _Header();
+  final bool isOnboarding;
+
+  const _Header({required this.isOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +225,9 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               GestureDetector(
-                onTap: () => context.pop(),
+                onTap: () => context.popOrGo(
+                  isOnboarding ? '/onboarding/pantry' : '/pantry',
+                ),
                 child: Container(
                   width: 42,
                   height: 42,

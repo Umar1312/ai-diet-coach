@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, textLogStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
@@ -307,7 +308,7 @@ class _CloseButton extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: GestureDetector(
-        onTap: () => context.pop(),
+        onTap: () => context.popOrGo('/home'),
         child: Container(
           width: 48,
           height: 48,

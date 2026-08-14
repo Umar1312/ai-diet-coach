@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show customizeDayStore, dashboardStore;
 import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'widgets/slot_meal_picker_sheet.dart';
@@ -69,7 +70,7 @@ class _Header extends StatelessWidget {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.popOrGo('/plan'),
             child: Container(
               width: 48,
               height: 48,

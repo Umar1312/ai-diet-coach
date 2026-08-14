@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 
@@ -55,7 +55,7 @@ class _MealHistoryScreenState extends State<MealHistoryScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/home'),
         ),
         title: const Text('Meal History'),
       ),

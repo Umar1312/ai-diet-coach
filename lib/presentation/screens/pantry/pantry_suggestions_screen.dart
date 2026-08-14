@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mobx/mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show pantrySuggestionsStore;
 import 'package:diet_coach_ai/stores/pantry_suggestions_store.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
@@ -229,7 +229,7 @@ class _Header extends StatelessWidget {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => context.pop(),
+            onTap: () => context.popOrGo('/pantry'),
             child: Container(
               width: 42,
               height: 42,
