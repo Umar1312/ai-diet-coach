@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
+import '../../widgets/onboarding_secondary_button.dart';
 
 class DietaryRestrictionsScreen extends StatefulWidget {
   const DietaryRestrictionsScreen({super.key});
@@ -79,9 +80,9 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
                 },
               ),
               const SizedBox(height: 8),
-              TextButton(
+              OnboardingSecondaryButton(
+                text: 'Skip for now',
                 onPressed: () => context.push('/onboarding/food-location'),
-                child: const Text('Skip for now'),
               ),
               const SizedBox(height: 16),
             ],

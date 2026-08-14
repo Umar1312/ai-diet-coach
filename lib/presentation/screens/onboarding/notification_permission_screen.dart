@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/router/safe_navigation.dart';
+import '../../widgets/onboarding_secondary_button.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
   const NotificationPermissionScreen({super.key});
@@ -142,12 +143,9 @@ class NotificationPermissionScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              TextButton(
+              OnboardingSecondaryButton(
+                text: 'Skip for now',
                 onPressed: () => context.push('/onboarding/paywall'),
-                child: const Text(
-                  'Skip for now',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
               ),
               const SizedBox(height: 16),
             ],

@@ -7,6 +7,7 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_scree
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/welcome_screen.dart';
+import 'package:diet_coach_ai/presentation/widgets/onboarding_secondary_button.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/home_models.dart';
 import 'package:diet_coach_ai/shared/models/meal.dart';
@@ -73,6 +74,30 @@ void main() {
     expect(find.text('Your favorites'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('onboarding skip actions stay centered at full width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 28),
+            child: OnboardingSecondaryButton(
+              text: 'Skip for now',
+              onPressed: null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final buttonCenter = tester.getCenter(
+      find.byType(OnboardingSecondaryButton),
+    );
+    final labelCenter = tester.getCenter(find.text('Skip for now'));
+    expect(labelCenter.dx, buttonCenter.dx);
   });
 
   test('setup request sends canonical food preferences', () {

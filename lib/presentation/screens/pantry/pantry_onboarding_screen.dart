@@ -8,6 +8,7 @@ import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show pantryStore;
 import 'package:diet_coach_ai/features/pantry/stores/pantry_store.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
+import 'package:diet_coach_ai/presentation/widgets/onboarding_secondary_button.dart';
 
 class PantryOnboardingScreen extends StatefulWidget {
   final bool isOnboarding;
@@ -161,9 +162,9 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
                   isLoading: isAdding,
                 ),
                 const SizedBox(height: 12),
-                _TextButton(
-                  label: 'Skip for now',
-                  onTap: () {
+                OnboardingSecondaryButton(
+                  text: 'Skip for now',
+                  onPressed: () {
                     if (widget.isOnboarding) {
                       context.go('/onboarding/notifications');
                     } else {
