@@ -57,22 +57,25 @@ class PaywallScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: isLoading ? null : () => context.pop(),
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.surface,
-                                  shape: BoxShape.circle,
+                            if (context.canPop())
+                              GestureDetector(
+                                onTap: isLoading ? null : () => context.pop(),
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.surface,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    color: AppColors.textPrimary,
+                                    size: 22,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: AppColors.textPrimary,
-                                  size: 22,
-                                ),
-                              ),
-                            ),
+                              )
+                            else
+                              const SizedBox(height: 48),
                             const SizedBox(height: 48),
                             const Text(
                               'Know what to\neat next',
