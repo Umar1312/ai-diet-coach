@@ -50,54 +50,23 @@ class WelcomeScreen extends StatelessWidget {
                 context,
               ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.lock_outline,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Your privacy matters.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'We promise to always keep your personal information private and secure.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 28),
+            const _ProblemCard(
+              icon: Icons.question_mark_rounded,
+              title: 'No more meal guesswork',
+              detail: 'See exactly what to eat next for your goals.',
+            ),
+            const SizedBox(height: 10),
+            const _ProblemCard(
+              icon: Icons.sync_rounded,
+              title: 'Your plan stays realistic',
+              detail: 'It adapts as you log meals—not tomorrow.',
+            ),
+            const SizedBox(height: 10),
+            const _ProblemCard(
+              icon: Icons.favorite_outline_rounded,
+              title: 'Food that fits your life',
+              detail: 'Built around your tastes, restrictions, and pantry.',
             ),
             const SizedBox(height: 24),
             PrimaryButton(
@@ -107,6 +76,69 @@ class WelcomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProblemCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String detail;
+
+  const _ProblemCard({
+    required this.icon,
+    required this.title,
+    required this.detail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

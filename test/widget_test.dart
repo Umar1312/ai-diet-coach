@@ -30,6 +30,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
 
     expect(find.text('Stop wondering\nwhat to eat next'), findsOneWidget);
+    expect(find.text('No more meal guesswork'), findsOneWidget);
+    expect(find.text('Your plan stays realistic'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Food that fits your life'), 120);
+    expect(find.text('Food that fits your life'), findsOneWidget);
+    expect(find.text('Your privacy matters.'), findsNothing);
     await tester.scrollUntilVisible(find.text('Build my plan'), 200);
     expect(find.text('Build my plan'), findsOneWidget);
     expect(find.text('Thank you for\ntrusting us'), findsNothing);
