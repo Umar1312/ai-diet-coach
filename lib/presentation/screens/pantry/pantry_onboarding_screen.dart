@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/router/safe_navigation.dart';
-import 'package:diet_coach_ai/main.dart' show pantryStore;
+import 'package:diet_coach_ai/main.dart' show authStore, pantryStore;
 import 'package:diet_coach_ai/features/pantry/stores/pantry_store.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/presentation/widgets/onboarding_secondary_button.dart';
@@ -26,7 +26,7 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
   void initState() {
     super.initState();
     _store = pantryStore;
-    _store.loadStarterPack();
+    _store.loadStarterPack(onboarding: widget.isOnboarding);
   }
 
   @override
@@ -88,7 +88,11 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _TextButton(label: 'Try Again', onTap: _store.loadStarterPack),
+            _TextButton(
+              label: 'Try Again',
+              onTap: () =>
+                  _store.loadStarterPack(onboarding: widget.isOnboarding),
+            ),
           ],
         ),
       ),
@@ -129,6 +133,15 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
       builder: (_) {
         final count = _store.selectedCount.value;
         final isAdding = _store.isBulkAdding.value;
+        final primaryLabel = isAdding
+            ? widget.isOnboarding
+                  ? 'Saving...'
+                  : 'Adding...'
+            : widget.isOnboarding
+            ? count == 0
+                  ? 'Select at least one staple'
+                  : 'Continue with $count ${count == 1 ? 'item' : 'items'}'
+            : 'Add Selected ($count)';
 
         return Container(
           padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
@@ -144,34 +157,39 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _PrimaryButton(
-                  label: isAdding ? 'Adding...' : 'Add Selected ($count)',
+                  label: primaryLabel,
                   onTap: isAdding || count == 0
                       ? null
                       : () async {
                           HapticFeedback.mediumImpact();
-                          await _store.addSelectedStarters();
-                          if (mounted) {
-                            if (widget.isOnboarding) {
-                              context.go('/onboarding/notifications');
-                            } else {
-                              context.popOrGo('/pantry');
-                              _showSuccessSnackBar(count);
-                            }
+                          final didAdd = widget.isOnboarding
+                              ? await _store.completeOnboardingPantry(
+                                  skipped: false,
+                                )
+                              : await _store.addSelectedStarters();
+                          if (!mounted || !didAdd) return;
+                          if (widget.isOnboarding) {
+                            authStore.markPantrySetupComplete(skipped: false);
+                            context.go('/onboarding/plan-preview');
+                          } else {
+                            context.popOrGo('/pantry');
+                            _showSuccessSnackBar(count);
                           }
                         },
                   isLoading: isAdding,
                 ),
-                const SizedBox(height: 12),
-                OnboardingSecondaryButton(
-                  text: 'Skip for now',
-                  onPressed: () {
-                    if (widget.isOnboarding) {
-                      context.go('/onboarding/notifications');
-                    } else {
-                      context.popOrGo('/pantry');
-                    }
-                  },
-                ),
+                if (!widget.isOnboarding) ...[
+                  const SizedBox(height: 12),
+                  OnboardingSecondaryButton(
+                    text: 'Skip for now',
+                    onPressed: isAdding
+                        ? null
+                        : () {
+                            HapticFeedback.selectionClick();
+                            context.popOrGo('/pantry');
+                          },
+                  ),
+                ],
               ],
             ),
           ),
@@ -258,9 +276,11 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Select the staples you usually have at home. We\'ll use them to ground your meal recommendations.',
-            style: TextStyle(
+          Text(
+            isOnboarding
+                ? 'Choose at least one staple you usually have at home. We\'ll use your choices to build your first plan.'
+                : 'Select the staples you usually have at home. We\'ll use them to ground your meal recommendations.',
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,

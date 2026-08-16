@@ -6,6 +6,7 @@ import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/food_item.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
+import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/shared/models/recommendation_models.dart';
 import 'package:diet_coach_ai/shared/models/session_response.dart';
@@ -128,6 +129,43 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.post('/users/setup', data: request.toJson());
       return UserSetupResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantryStarterPackResponse> fetchOnboardingStarterPack() async {
+    return _wrap(() async {
+      final response = await _dio.get('/users/onboarding/pantry-starter-pack');
+      return PantryStarterPackResponse.fromJson(response.data);
+    });
+  }
+
+  Future<OnboardingPantryResponse> completeOnboardingPantry({
+    required bool skipped,
+    List<String> selectedItemNames = const [],
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/users/onboarding/pantry-complete',
+        data: {
+          'decision': skipped ? 'skipped' : 'selected',
+          'selected_item_names': selectedItemNames,
+        },
+      );
+      return OnboardingPantryResponse.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> fetchOnboardingPlanPreview() async {
+    return _wrap(() async {
+      final response = await _dio.post('/users/onboarding/plan-preview');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<OnboardingStateResponse> completeOnboarding() async {
+    return _wrap(() async {
+      final response = await _dio.post('/users/onboarding/complete');
+      return OnboardingStateResponse.fromJson(response.data);
     });
   }
 

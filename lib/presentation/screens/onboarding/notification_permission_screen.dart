@@ -11,7 +11,7 @@ class NotificationPermissionScreen extends StatelessWidget {
 
   Future<void> _requestNotifications(BuildContext context) async {
     await Permission.notification.request();
-    if (context.mounted) context.push('/onboarding/paywall');
+    if (context.mounted) context.go('/onboarding/paywall');
   }
 
   @override
@@ -28,7 +28,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back_ios, size: 20),
-                  onPressed: () => context.popOrGo('/onboarding/pantry'),
+                  onPressed: () => context.popOrGo('/onboarding/plan-preview'),
                 ),
               ),
               const SizedBox(height: 20),
@@ -90,7 +90,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => context.push('/onboarding/paywall'),
+                              onTap: () => context.go('/onboarding/paywall'),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -145,7 +145,7 @@ class NotificationPermissionScreen extends StatelessWidget {
               const Spacer(),
               OnboardingSecondaryButton(
                 text: 'Skip for now',
-                onPressed: () => context.push('/onboarding/paywall'),
+                onPressed: () => context.go('/onboarding/paywall'),
               ),
               const SizedBox(height: 16),
             ],

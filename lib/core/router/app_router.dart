@@ -17,6 +17,7 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/loading_setup_scre
 import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permission_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/plan_preview_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/splash/splash_screen.dart';
 
@@ -32,6 +33,7 @@ import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.d
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_onboarding_screen.dart';
 
 import 'package:diet_coach_ai/main.dart';
+import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/stores/auth_store.dart';
 
 class AppRouter {
@@ -44,8 +46,11 @@ class AppRouter {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: _AuthRefreshNotifier(),
-    redirect: (context, state) =>
-        redirectForAuthStatus(authStore.status.value, state.matchedLocation),
+    redirect: (context, state) => redirectForAuthStatus(
+      authStore.status.value,
+      state.matchedLocation,
+      onboardingStage: authStore.onboardingStage.value,
+    ),
     routes: [
       GoRoute(
         path: '/splash',
@@ -107,6 +112,10 @@ class AppRouter {
       GoRoute(
         path: '/onboarding/pantry',
         builder: (context, state) => const PantryIntroScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/plan-preview',
+        builder: (context, state) => const OnboardingPlanPreviewScreen(),
       ),
       GoRoute(
         path: '/onboarding/paywall',
@@ -181,11 +190,16 @@ class AppRouter {
 
   static GoRouter get router => _router;
 
-  static String? redirectForAuthStatus(AuthStatus status, String location) {
+  static String? redirectForAuthStatus(
+    AuthStatus status,
+    String location, {
+    OnboardingStage onboardingStage = OnboardingStage.profileSetup,
+  }) {
     final isSplashRoute = location == '/splash';
     final isLoginRoute = location == '/login';
     final isWelcomeRoute = location == '/';
-    final isOnboardingFlow = location.startsWith('/onboarding');
+    final isOnboardingFlow =
+        location.startsWith('/onboarding') || location == '/pantry/onboarding';
 
     // While auth state is unknown, keep the neutral splash on screen.
     if (status == AuthStatus.unknown) {
@@ -200,8 +214,18 @@ class AppRouter {
     // Authenticated but onboarding incomplete -> allow onboarding flow +
     // welcome; block main app + login.
     if (status == AuthStatus.needsOnboarding) {
+      final resumePath = switch (onboardingStage) {
+        OnboardingStage.profileSetup => '/',
+        OnboardingStage.pantrySetup => '/onboarding/pantry',
+        OnboardingStage.planPreview => '/onboarding/plan-preview',
+        OnboardingStage.complete => '/home',
+      };
+      if (isSplashRoute || isLoginRoute) return resumePath;
+      if (isWelcomeRoute && onboardingStage != OnboardingStage.profileSetup) {
+        return resumePath;
+      }
       if (isOnboardingFlow || isWelcomeRoute) return null;
-      return '/';
+      return resumePath;
     }
 
     if (status == AuthStatus.needsSubscription) {
@@ -226,6 +250,9 @@ class AppRouter {
 /// [refreshListenable] so the redirect runs whenever auth state changes.
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier() {
-    reaction((_) => authStore.status.value, (_) => notifyListeners());
+    reaction(
+      (_) => (authStore.status.value, authStore.onboardingStage.value),
+      (_) => notifyListeners(),
+    );
   }
 }

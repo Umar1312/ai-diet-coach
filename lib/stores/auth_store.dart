@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/di/providers.dart';
 import '../../features/subscription/stores/subscription_store.dart';
+import '../../shared/models/onboarding_state.dart';
 import '../../shared/models/session_response.dart';
 
 /// Authentication status used by the router to decide where to route.
@@ -35,7 +36,7 @@ class AuthStore {
     _subscriptionReaction = reaction<bool>(
       (_) => subscriptionStore.hasAccess.value,
       (hasAccess) {
-        if (!isProfileComplete.value) return;
+        if (onboardingStage.value != OnboardingStage.complete) return;
         runInAction(() {
           status.value = hasAccess
               ? AuthStatus.authenticated
@@ -52,12 +53,26 @@ class AuthStore {
   final isLoading = Observable<bool>(false);
   final errorMessage = Observable<String?>(null);
   final isProfileComplete = Observable<bool>(false);
+  final onboardingStage = Observable<OnboardingStage>(
+    OnboardingStage.profileSetup,
+  );
+  final pantryDecision = Observable<String?>(null);
 
   // ── Computed ───────────────────────────────────────────────────────────
 
   late final isAuthenticated = Computed<bool>(
     () => status.value == AuthStatus.authenticated,
   );
+
+  static AuthStatus statusForOnboardingStage(
+    OnboardingStage stage, {
+    required bool hasSubscriptionAccess,
+  }) {
+    if (stage != OnboardingStage.complete) return AuthStatus.needsOnboarding;
+    return hasSubscriptionAccess
+        ? AuthStatus.authenticated
+        : AuthStatus.needsSubscription;
+  }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -82,13 +97,23 @@ class AuthStore {
 
   Future<void> _onAuthChanged(User? user) async {
     if (user != null) {
-      firebaseUser.value = user;
+      // Clear any previous account's routing state before resolving this
+      // user's durable onboarding stage from the backend.
+      runInAction(() {
+        firebaseUser.value = user;
+        status.value = AuthStatus.unknown;
+        isProfileComplete.value = false;
+        onboardingStage.value = OnboardingStage.profileSetup;
+        pantryDecision.value = null;
+      });
       await _syncTokenAndSession(user);
     } else {
       runInAction(() {
         firebaseUser.value = null;
         status.value = AuthStatus.unauthenticated;
         isProfileComplete.value = false;
+        onboardingStage.value = OnboardingStage.profileSetup;
+        pantryDecision.value = null;
       });
       apiService.setAuthToken('');
     }
@@ -119,11 +144,12 @@ class AuthStore {
       );
       runInAction(() {
         isProfileComplete.value = session.profileComplete;
-        status.value = session.profileComplete
-            ? hasSubscriptionAccess
-                  ? AuthStatus.authenticated
-                  : AuthStatus.needsSubscription
-            : AuthStatus.needsOnboarding;
+        onboardingStage.value = session.onboardingStage;
+        pantryDecision.value = session.pantryDecision;
+        status.value = statusForOnboardingStage(
+          session.onboardingStage,
+          hasSubscriptionAccess: hasSubscriptionAccess,
+        );
         errorMessage.value = null;
       });
       return session;
@@ -232,6 +258,8 @@ class AuthStore {
         firebaseUser.value = null;
         status.value = AuthStatus.unauthenticated;
         isProfileComplete.value = false;
+        onboardingStage.value = OnboardingStage.profileSetup;
+        pantryDecision.value = null;
       });
     } catch (e) {
       runInAction(() => errorMessage.value = 'Sign out failed.');
@@ -265,16 +293,44 @@ class AuthStore {
       firebaseUser.value = null;
       status.value = AuthStatus.unauthenticated;
       isProfileComplete.value = false;
+      onboardingStage.value = OnboardingStage.profileSetup;
+      pantryDecision.value = null;
       errorMessage.value = null;
     });
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
-  /// Used by the onboarding flow after /users/setup completes successfully.
-  void markOnboardingComplete() {
+  /// Keeps local routing aligned immediately after /users/setup succeeds.
+  void markProfileSetupComplete() {
     runInAction(() {
       isProfileComplete.value = true;
+      onboardingStage.value = OnboardingStage.pantrySetup;
+      pantryDecision.value = null;
+      status.value = AuthStatus.needsOnboarding;
+    });
+  }
+
+  void markPantrySetupComplete({required bool skipped}) {
+    runInAction(() {
+      onboardingStage.value = OnboardingStage.planPreview;
+      pantryDecision.value = skipped ? 'skipped' : 'selected';
+      status.value = AuthStatus.needsOnboarding;
+    });
+  }
+
+  Future<void> completeOnboarding() async {
+    final response = await apiService.completeOnboarding();
+    if (response.stage != OnboardingStage.complete) {
+      throw ApiException(
+        code: 'invalid_onboarding_state',
+        message: 'Onboarding did not complete. Please try again.',
+      );
+    }
+    runInAction(() {
+      isProfileComplete.value = true;
+      onboardingStage.value = OnboardingStage.complete;
+      pantryDecision.value = response.pantryDecision;
       status.value = subscriptionStore.hasAccess.value
           ? AuthStatus.authenticated
           : AuthStatus.needsSubscription;
@@ -283,7 +339,8 @@ class AuthStore {
 
   void markSubscriptionActive() {
     runInAction(() {
-      if (isProfileComplete.value && subscriptionStore.hasAccess.value) {
+      if (onboardingStage.value == OnboardingStage.complete &&
+          subscriptionStore.hasAccess.value) {
         status.value = AuthStatus.authenticated;
       }
     });
@@ -293,6 +350,8 @@ class AuthStore {
     runInAction(() {
       firebaseUser.value = null;
       isProfileComplete.value = false;
+      onboardingStage.value = OnboardingStage.profileSetup;
+      pantryDecision.value = null;
       status.value = AuthStatus.unauthenticated;
     });
     apiService.setAuthToken('');

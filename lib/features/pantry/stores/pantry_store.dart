@@ -3,6 +3,7 @@ import 'package:mobx/mobx.dart';
 
 import '../../../core/di/providers.dart';
 import '../../../shared/models/home_models.dart';
+import '../../../shared/models/onboarding_state.dart';
 import '../../../shared/models/pantry_models.dart';
 import '../../../stores/dashboard_store.dart';
 
@@ -104,14 +105,16 @@ class PantryStore {
 
   // ── Actions: Starter Pack ───────────────────────────────────────────────
 
-  Future<void> loadStarterPack() async {
+  Future<void> loadStarterPack({bool onboarding = false}) async {
     runInAction(() {
       isLoadingStarter.value = true;
       starterError.value = '';
       selectedStarterNames.clear();
     });
     try {
-      final response = await apiService.fetchStarterPack();
+      final response = onboarding
+          ? await apiService.fetchOnboardingStarterPack()
+          : await apiService.fetchStarterPack();
       runInAction(() {
         starterPack
           ..clear()
@@ -162,12 +165,12 @@ class PantryStore {
     return categoryItems.every((i) => selectedStarterNames.contains(i.name));
   }
 
-  Future<void> addSelectedStarters() async {
+  Future<bool> addSelectedStarters() async {
     final toAdd = starterPack
         .where((i) => selectedStarterNames.contains(i.name))
         .toList();
 
-    if (toAdd.isEmpty) return;
+    if (toAdd.isEmpty) return false;
 
     runInAction(() => isBulkAdding.value = true);
     try {
@@ -177,10 +180,47 @@ class PantryStore {
       HapticFeedback.mediumImpact();
       selectedStarterNames.clear();
       await loadPantry();
+      return true;
     } on ApiException catch (e) {
       runInAction(() => starterError.value = e.message);
+      return false;
     } catch (e) {
       runInAction(() => starterError.value = 'Failed to add items.');
+      return false;
+    } finally {
+      runInAction(() => isBulkAdding.value = false);
+    }
+  }
+
+  Future<bool> completeOnboardingPantry({required bool skipped}) async {
+    final selectedNames = selectedStarterNames.toList();
+    if (!skipped && selectedNames.isEmpty) return false;
+
+    runInAction(() {
+      isBulkAdding.value = true;
+      starterError.value = '';
+    });
+    try {
+      final response = await apiService.completeOnboardingPantry(
+        skipped: skipped,
+        selectedItemNames: skipped ? const [] : selectedNames,
+      );
+      if (response.stage != OnboardingStage.planPreview) {
+        throw ApiException(
+          code: 'invalid_onboarding_state',
+          message: 'Pantry setup did not complete. Please try again.',
+        );
+      }
+      runInAction(() {
+        selectedStarterNames.clear();
+      });
+      return true;
+    } on ApiException catch (e) {
+      runInAction(() => starterError.value = e.message);
+      return false;
+    } catch (e) {
+      runInAction(() => starterError.value = 'Failed to finish pantry setup.');
+      return false;
     } finally {
       runInAction(() => isBulkAdding.value = false);
     }

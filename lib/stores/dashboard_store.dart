@@ -163,9 +163,12 @@ class DashboardStore {
     });
     try {
       await loadPantry();
-      final plan = await apiService.fetchDashboard(
+      var plan = await apiService.fetchDashboard(
         preferPantry: pantry.isNotEmpty,
       );
+      if (plan.plannedMeals.isEmpty) {
+        plan = await apiService.fetchDayPlan();
+      }
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -255,17 +258,43 @@ class DashboardStore {
 
   // ── Day Plan (v2.1) ─────────────────────────────────────────────────────
 
-  Future<void> fetchDayPlan() async {
-    runInAction(() => isGeneratingPlan.value = true);
+  Future<bool> fetchDayPlan() async {
+    runInAction(() {
+      isGeneratingPlan.value = true;
+      errorMessage.value = '';
+    });
     try {
       final plan = await apiService.fetchDayPlan();
       applyPlan(plan);
+      return true;
     } catch (e) {
       runInAction(() {
         errorMessage.value = e is ApiException
             ? e.message
             : 'Failed to load day plan';
       });
+      return false;
+    } finally {
+      runInAction(() => isGeneratingPlan.value = false);
+    }
+  }
+
+  Future<bool> fetchOnboardingPlanPreview() async {
+    runInAction(() {
+      isGeneratingPlan.value = true;
+      errorMessage.value = '';
+    });
+    try {
+      final plan = await apiService.fetchOnboardingPlanPreview();
+      applyPlan(plan);
+      return true;
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to create your first plan';
+      });
+      return false;
     } finally {
       runInAction(() => isGeneratingPlan.value = false);
     }
