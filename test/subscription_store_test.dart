@@ -60,6 +60,33 @@ REVENUECAT_ENTITLEMENT_ID=pro
     expect(store.expiresAt.value, DateTime.utc(2026, 8, 15));
   });
 
+  test('request access skips the paywall for an active entitlement', () async {
+    final client = _FakeRevenueCatClient(
+      configured: true,
+      customerInfo: _customerInfo(periodType: PeriodType.normal),
+    );
+    final store = SubscriptionStore(
+      revenueCatService: client,
+      apiService: _FakeApiService(),
+    );
+    await store.initialize();
+
+    expect(await store.requestAccess(), isTrue);
+    expect(client.paywallPresentationCount, 0);
+  });
+
+  test('request access presents the paywall for a free user', () async {
+    final client = _FakeRevenueCatClient(configured: true);
+    final store = SubscriptionStore(
+      revenueCatService: client,
+      apiService: _FakeApiService(),
+    );
+    await store.initialize();
+
+    expect(await store.requestAccess(), isFalse);
+    expect(client.paywallPresentationCount, 1);
+  });
+
   test('a completed paywall refreshes access and syncs the backend', () async {
     final client = _FakeRevenueCatClient(
       configured: true,
@@ -74,7 +101,7 @@ REVENUECAT_ENTITLEMENT_ID=pro
     await store.initialize();
     client.customerInfo = _customerInfo(periodType: PeriodType.normal);
 
-    final activated = await store.presentPaywall();
+    final activated = await store.requestAccess();
 
     expect(activated, isTrue);
     expect(store.state.value, SubscriptionState.active);
@@ -117,6 +144,7 @@ class _FakeRevenueCatClient implements RevenueCatClient {
   CustomerInfo customerInfo;
   final PaywallResult paywallResult;
   CustomerInfoUpdateListener? listener;
+  int paywallPresentationCount = 0;
 
   @override
   bool get isConfigured => configured;
@@ -139,7 +167,10 @@ class _FakeRevenueCatClient implements RevenueCatClient {
   Future<void> logOut() async {}
 
   @override
-  Future<PaywallResult> presentPaywallIfNeeded() async => paywallResult;
+  Future<PaywallResult> presentPaywallIfNeeded() async {
+    paywallPresentationCount++;
+    return paywallResult;
+  }
 
   @override
   Future<CustomerInfo> restorePurchases() async => customerInfo;

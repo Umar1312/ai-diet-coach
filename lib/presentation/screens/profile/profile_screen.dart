@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -317,6 +318,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+                    SliverToBoxAdapter(
+                      child: _Section(
+                        title: 'Reminders',
+                        children: [
+                          _ProfileCard(
+                            icon: Icons.notifications_active_outlined,
+                            title: 'Meal check-ins',
+                            value: 'Times and notification settings',
+                            onTap: () => context.push('/profile/notifications'),
+                          ),
+                        ],
+                      ),
+                    ),
                   SliverToBoxAdapter(
                     child: _Section(
                       title: 'Subscription',

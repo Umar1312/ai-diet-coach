@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
@@ -104,6 +105,7 @@ class ProposalSheet extends StatelessWidget {
                               ? null
                               : () async {
                                   HapticFeedback.mediumImpact();
+                                  if (!await requireProAccess(context)) return;
                                   try {
                                     await dashboardStore.acceptProposal();
                                     if (context.mounted) Navigator.pop(context);
@@ -158,6 +160,7 @@ class ProposalSheet extends StatelessWidget {
                               ? null
                               : () async {
                                   HapticFeedback.selectionClick();
+                                  if (!await requireProAccess(context)) return;
                                   await dashboardStore
                                       .rejectAndRegenerateProposal();
                                   // Modal stays open in case a new proposal arrives

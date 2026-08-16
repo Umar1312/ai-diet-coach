@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
@@ -142,9 +143,10 @@ class _PlanActions extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           HapticFeedback.selectionClick();
-          store.regenerateDayPlan();
+          if (!await requireProAccess(context)) return;
+          await store.regenerateDayPlan();
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -227,9 +229,10 @@ class _GenerateDayPrompt extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               HapticFeedback.mediumImpact();
-              dashboardStore.fetchDayPlan();
+              if (!await requireProAccess(context)) return;
+              await dashboardStore.fetchDayPlan();
             },
             child: Container(
               width: double.infinity,
@@ -474,9 +477,10 @@ class _PlannedMealCard extends StatelessWidget {
                   child: GestureDetector(
                     onTap: isSwapping
                         ? null
-                        : () {
+                        : () async {
                             HapticFeedback.selectionClick();
-                            dashboardStore.swapSlot(plannedMeal.order);
+                            if (!await requireProAccess(context)) return;
+                            await dashboardStore.swapSlot(plannedMeal.order);
                           },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),

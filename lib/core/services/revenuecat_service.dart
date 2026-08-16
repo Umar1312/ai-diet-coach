@@ -95,7 +95,7 @@ class RevenueCatService implements RevenueCatClient {
     return RevenueCatUI.presentPaywallIfNeeded(
       AppConstants.revenueCatEntitlementId,
       offering: offering,
-      displayCloseButton: false,
+      displayCloseButton: true,
     );
   }
 

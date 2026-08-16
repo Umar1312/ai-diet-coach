@@ -29,8 +29,10 @@ import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
 import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
+import 'package:diet_coach_ai/features/meal_check_in/meal_check_in_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_onboarding_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/profile/notification_settings_screen.dart';
 
 import 'package:diet_coach_ai/main.dart';
 import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
@@ -150,9 +152,6 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/plan',
-                redirect: (context, state) => subscriptionStore.hasAccess.value
-                    ? null
-                    : '/onboarding/paywall',
                 builder: (context, state) => const PlanScreen(),
               ),
             ],
@@ -163,11 +162,21 @@ class AppRouter {
       // Meal logging (outside shell, push on top)
       GoRoute(
         path: '/log/text',
-        builder: (context, state) => const TextLogScreen(),
+        builder: (context, state) =>
+            TextLogScreen(initialSlot: state.uri.queryParameters['slot']),
+      ),
+      GoRoute(
+        path: '/meal-check-in',
+        builder: (context, state) =>
+            MealCheckInScreen(slot: state.uri.queryParameters['slot'] ?? ''),
       ),
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/notifications',
+        builder: (context, state) => const NotificationSettingsScreen(),
       ),
       GoRoute(
         path: '/history',

@@ -121,6 +121,13 @@ class SubscriptionStore {
     }
   }
 
+  /// Returns immediately for an active entitlement, otherwise presents the
+  /// RevenueCat paywall and resolves with the resulting access state.
+  Future<bool> requestAccess() async {
+    if (hasAccess.value) return true;
+    return presentPaywall();
+  }
+
   Future<bool> restorePurchases() async {
     if (!isConfigured.value) {
       runInAction(

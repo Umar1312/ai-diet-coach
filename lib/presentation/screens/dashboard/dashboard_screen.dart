@@ -6,6 +6,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
@@ -485,9 +486,10 @@ class _NextMeal extends StatelessWidget {
                       width: double.infinity,
                       height: 48,
                       child: TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           HapticFeedback.selectionClick();
-                          store.swapNextMeal();
+                          if (!await requireProAccess(context)) return;
+                          await store.swapNextMeal();
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.textSecondary,
@@ -620,9 +622,10 @@ class _NoPlanCard extends StatelessWidget {
             GestureDetector(
               onTap: isLoading
                   ? null
-                  : () {
+                  : () async {
                       HapticFeedback.mediumImpact();
-                      dashboardStore.fetchDayPlan();
+                      if (!await requireProAccess(context)) return;
+                      await dashboardStore.fetchDayPlan();
                     },
               child: Container(
                 width: double.infinity,

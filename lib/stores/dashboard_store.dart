@@ -163,12 +163,9 @@ class DashboardStore {
     });
     try {
       await loadPantry();
-      var plan = await apiService.fetchDashboard(
+      final plan = await apiService.fetchDashboard(
         preferPantry: pantry.isNotEmpty,
       );
-      if (plan.plannedMeals.isEmpty) {
-        plan = await apiService.fetchDayPlan();
-      }
       applyPlan(plan);
     } catch (e) {
       runInAction(() {

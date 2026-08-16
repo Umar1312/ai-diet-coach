@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show customizeDayStore, dashboardStore;
 import 'package:diet_coach_ai/shared/models/meal.dart';
@@ -646,6 +647,7 @@ class _BottomBar extends StatelessWidget {
                   onTap: canSave && !isSaving
                       ? () async {
                           HapticFeedback.mediumImpact();
+                          if (!await requireProAccess(context)) return;
                           await customizeDayStore.save();
                           if (context.mounted &&
                               (customizeDayStore.errorMessage.value?.isEmpty ??
