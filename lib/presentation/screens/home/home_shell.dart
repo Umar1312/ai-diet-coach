@@ -12,6 +12,9 @@ class HomeShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   const HomeShell({super.key, required this.navigationShell});
 
+  static const _navHeight = 64.0;
+  static const _navBottomMargin = 12.0;
+
   static const _tabs = <_TabItem>[
     _TabItem(label: 'Home', icon: Icons.home_rounded),
     _TabItem(label: 'Pantry', icon: Icons.kitchen_rounded),
@@ -28,13 +31,22 @@ class HomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset =
+        MediaQuery.paddingOf(context).bottom + _navHeight + _navBottomMargin;
+
     return LiquidGlassScaffold(
       backgroundColor: AppColors.background,
-      body: navigationShell,
+      // LiquidGlassScaffold intentionally overlays floating chrome on its
+      // body. Reserve the same space a normal Scaffold bottom nav would, so
+      // the last item in every tab remains above the glass bar.
+      body: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: navigationShell,
+      ),
       bottomNavigationBar: LiquidGlassTabBar(
         width: MediaQuery.sizeOf(context).width - 32,
-        height: 64,
-        margin: const EdgeInsets.only(bottom: 12),
+        height: _navHeight,
+        margin: const EdgeInsets.only(bottom: _navBottomMargin),
         selectedIndex: navigationShell.currentIndex,
         items: _tabs
             .map(
