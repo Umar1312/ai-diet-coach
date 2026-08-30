@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/features/customize_day/models/custom_day_plan_request.dart';
+import 'package:diet_coach_ai/features/meal_swap/models/meal_swap_models.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/food_item.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
+import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
@@ -437,6 +439,49 @@ class ApiService {
         },
       );
       return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<SlotAlternativesResponse> fetchSlotAlternatives(
+    int order, {
+    String reason = 'surprise_me',
+    List<String> excludeNames = const [],
+    bool preferPantry = true,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$order/alternatives',
+        data: {
+          'reason': reason,
+          'exclude_names': excludeNames,
+          'count': 3,
+          'prefer_pantry': preferPantry,
+        },
+      );
+      return SlotAlternativesResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    });
+  }
+
+  Future<SlotReplacementResponse> replacePlanSlot(
+    int order, {
+    required String expectedCurrentName,
+    required Meal replacement,
+    required bool rebalanceRemaining,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$order/replace',
+        data: {
+          'expected_current_name': expectedCurrentName,
+          'meal': replacement.toJson(),
+          'rebalance_remaining': rebalanceRemaining,
+        },
+      );
+      return SlotReplacementResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     });
   }
 

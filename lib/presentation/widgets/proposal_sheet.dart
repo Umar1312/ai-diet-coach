@@ -18,6 +18,17 @@ class ProposalSheet extends StatelessWidget {
       builder: (_) {
         final proposal = dashboardStore.pendingProposal.value;
         if (proposal == null) return const SizedBox.shrink();
+        final changedSlots = proposal.changedSlots.where((proposed) {
+          final current = dashboardStore.plannedMeals
+              .where((meal) => meal.order == proposed.order)
+              .firstOrNull;
+          if (current == null) return true;
+          return current.meal.name != proposed.meal.name ||
+              current.meal.calories != proposed.meal.calories ||
+              current.meal.proteinG != proposed.meal.proteinG ||
+              current.meal.carbsG != proposed.meal.carbsG ||
+              current.meal.fatsG != proposed.meal.fatsG;
+        }).toList();
 
         return Container(
           decoration: const BoxDecoration(
@@ -81,9 +92,9 @@ class ProposalSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                if (proposal.changedSlots.isNotEmpty)
+                if (changedSlots.isNotEmpty)
                   const Text(
-                    'Updated meals',
+                    'What will change',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -92,8 +103,7 @@ class ProposalSheet extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(height: 10),
-                for (final slot in proposal.changedSlots)
-                  _ChangedSlotRow(slot: slot),
+                for (final slot in changedSlots) _ChangedSlotRow(slot: slot),
                 const SizedBox(height: 28),
                 Observer(
                   builder: (_) {

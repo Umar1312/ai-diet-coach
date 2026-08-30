@@ -24,6 +24,7 @@ import 'features/pantry/stores/pantry_store.dart';
 import 'features/customize_day/stores/customize_day_store.dart';
 import 'features/subscription/stores/subscription_store.dart';
 import 'features/meal_check_in/stores/meal_check_in_store.dart';
+import 'features/meal_swap/stores/meal_swap_store.dart';
 import 'stores/notification_store.dart';
 
 final revenueCatService = RevenueCatService();
@@ -45,6 +46,10 @@ final notificationStore = NotificationStore(service: mealNotificationService);
 final mealCheckInStore = MealCheckInStore(
   dashboardStore: dashboardStore,
   notificationStore: notificationStore,
+);
+final mealSwapStore = MealSwapStore(
+  apiService: apiService,
+  dashboardStore: dashboardStore,
 );
 
 void main() async {
