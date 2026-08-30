@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show pantryStore, dashboardStore;
@@ -197,20 +198,19 @@ class _PantryScreenState extends State<PantryScreen> {
           if (pantryStore.items.isEmpty) return const SizedBox.shrink();
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: FloatingActionButton(
+            child: LiquidGlassFab(
+              icon: Icons.add_rounded,
               onPressed: () {
                 HapticFeedback.mediumImpact();
                 context.push('/pantry/onboarding');
               },
-              backgroundColor: AppColors.textPrimary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: AppColors.textOnPrimary,
-                size: 28,
+              foregroundColor: AppColors.textPrimary,
+              tooltip: 'Add pantry items',
+              style: LiquidGlassFab.defaultStyle.copyWith(
+                appearance: const LiquidGlassAppearance(
+                  color: Color(0xE6FFFFFF),
+                  blur: LiquidGlassBlur(sigmaX: 8, sigmaY: 8),
+                ),
               ),
             ),
           );

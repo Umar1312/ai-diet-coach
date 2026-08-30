@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 
@@ -27,13 +28,40 @@ class HomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LiquidGlassScaffold(
       backgroundColor: AppColors.background,
       body: navigationShell,
-      bottomNavigationBar: _BottomNavBar(
-        currentIndex: navigationShell.currentIndex,
-        tabs: _tabs,
-        onTap: _onTap,
+      bottomNavigationBar: LiquidGlassTabBar(
+        width: MediaQuery.sizeOf(context).width - 32,
+        height: 64,
+        margin: const EdgeInsets.only(bottom: 12),
+        selectedIndex: navigationShell.currentIndex,
+        items: _tabs
+            .map(
+              (tab) => LiquidGlassTabBarItem(label: tab.label, icon: tab.icon),
+            )
+            .toList(),
+        onChanged: _onTap,
+        itemPadding: 4,
+        itemStyle: const LiquidGlassTabItemStyle(
+          selectedColor: AppColors.textPrimary,
+          unselectedColor: AppColors.textTertiary,
+          iconSize: 22,
+          labelFontSize: 11,
+          iconLabelGap: 4,
+          selectedFontWeight: FontWeight.w600,
+          unselectedFontWeight: FontWeight.w500,
+        ),
+        pillStyle: const LiquidGlassTabPillStyle(
+          animated: true,
+          color: Color(0x1F1E1A24),
+        ),
+        style: LiquidGlassTabBar.defaultStyle.copyWith(
+          appearance: const LiquidGlassAppearance(
+            color: Color(0xD9FFFFFF),
+            blur: LiquidGlassBlur(sigmaX: 8, sigmaY: 8),
+          ),
+        ),
       ),
     );
   }
@@ -43,78 +71,4 @@ class _TabItem {
   final String label;
   final IconData icon;
   const _TabItem({required this.label, required this.icon});
-}
-
-class _BottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final List<_TabItem> tabs;
-  final ValueChanged<int> onTap;
-
-  const _BottomNavBar({
-    required this.currentIndex,
-    required this.tabs,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: List.generate(tabs.length, (i) {
-              final active = i == currentIndex;
-              return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onTap(i),
-                  child: _NavItem(tab: tabs[i], active: active),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final _TabItem tab;
-  final bool active;
-
-  const _NavItem({required this.tab, required this.active});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 64,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            tab.icon,
-            size: 22,
-            color: active ? AppColors.primary : AppColors.textTertiary,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            tab.label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              color: active ? AppColors.primary : AppColors.textTertiary,
-              letterSpacing: -0.1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
