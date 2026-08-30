@@ -17,6 +17,7 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/loading_setup_scre
 import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permission_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/plan_preview_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/splash/splash_screen.dart';
 
@@ -25,14 +26,16 @@ import 'package:diet_coach_ai/presentation/screens/dashboard/dashboard_screen.da
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
-import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
+import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
+import 'package:diet_coach_ai/features/meal_check_in/meal_check_in_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
-import 'package:diet_coach_ai/presentation/screens/pantry/pantry_suggestions_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/pantry/pantry_onboarding_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/profile/notification_settings_screen.dart';
 
 import 'package:diet_coach_ai/main.dart';
+import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/stores/auth_store.dart';
 
 class AppRouter {
@@ -40,54 +43,16 @@ class AppRouter {
   static final _homeNavKey = GlobalKey<NavigatorState>();
   static final _pantryNavKey = GlobalKey<NavigatorState>();
   static final _planNavKey = GlobalKey<NavigatorState>();
-  static final _profileNavKey = GlobalKey<NavigatorState>();
 
   static final GoRouter _router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: _AuthRefreshNotifier(),
-    redirect: (context, state) {
-      final status = authStore.status.value;
-      final location = state.matchedLocation;
-      final isSplashRoute = location == '/splash';
-      final isLoginRoute = location == '/login';
-      final isWelcomeRoute = location == '/';
-      final isOnboardingFlow = location.startsWith('/onboarding');
-
-      // While auth state is unknown, keep the neutral splash on screen.
-      if (status == AuthStatus.unknown) {
-        return isSplashRoute ? null : '/splash';
-      }
-
-      // Unauthenticated -> force to login (unless already there).
-      if (status == AuthStatus.unauthenticated) {
-        return isLoginRoute ? null : '/login';
-      }
-
-      // Authenticated but onboarding incomplete -> allow onboarding flow +
-      // welcome; block main app + login.
-      if (status == AuthStatus.needsOnboarding) {
-        if (isOnboardingFlow || isWelcomeRoute) return null;
-        return '/';
-      }
-
-      if (status == AuthStatus.needsSubscription) {
-        if (isOnboardingFlow) return null;
-        return '/onboarding/paywall';
-      }
-
-      // Fully authenticated -> block login + welcome only. Allow /onboarding/*
-      // so the user can finish the post-setup flow (pantry, paywall, etc.).
-      if (status == AuthStatus.authenticated &&
-          (isLoginRoute ||
-              isSplashRoute ||
-              isWelcomeRoute ||
-              location == '/onboarding/paywall')) {
-        return '/home';
-      }
-
-      return null;
-    },
+    redirect: (context, state) => redirectForAuthStatus(
+      authStore.status.value,
+      state.matchedLocation,
+      onboardingStage: authStore.onboardingStage.value,
+    ),
     routes: [
       GoRoute(
         path: '/splash',
@@ -151,11 +116,15 @@ class AppRouter {
         builder: (context, state) => const PantryIntroScreen(),
       ),
       GoRoute(
+        path: '/onboarding/plan-preview',
+        builder: (context, state) => const OnboardingPlanPreviewScreen(),
+      ),
+      GoRoute(
         path: '/onboarding/paywall',
         builder: (context, state) => const PaywallScreen(),
       ),
 
-      // Main app — persistent 4-tab shell
+      // Main app — persistent 3-tab shell
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             HomeShell(navigationShell: navigationShell),
@@ -187,34 +156,37 @@ class AppRouter {
               ),
             ],
           ),
-          StatefulShellBranch(
-            navigatorKey: _profileNavKey,
-            routes: [
-              GoRoute(
-                path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
-              ),
-            ],
-          ),
         ],
       ),
 
       // Meal logging (outside shell, push on top)
       GoRoute(
         path: '/log/text',
-        builder: (context, state) => const TextLogScreen(),
+        builder: (context, state) =>
+            TextLogScreen(initialSlot: state.uri.queryParameters['slot']),
       ),
       GoRoute(
-        path: '/plan/customize',
-        builder: (context, state) => const CustomizeDayScreen(),
+        path: '/meal-check-in',
+        builder: (context, state) =>
+            MealCheckInScreen(slot: state.uri.queryParameters['slot'] ?? ''),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/notifications',
+        builder: (context, state) => const NotificationSettingsScreen(),
       ),
       GoRoute(
         path: '/history',
         builder: (context, state) => const MealHistoryScreen(),
       ),
       GoRoute(
-        path: '/pantry/suggestions',
-        builder: (context, state) => const PantrySuggestionsScreen(),
+        path: '/plan/customize',
+        redirect: (context, state) =>
+            subscriptionStore.hasAccess.value ? null : '/onboarding/paywall',
+        builder: (context, state) => const CustomizeDayScreen(),
       ),
       GoRoute(
         path: '/pantry/onboarding',
@@ -226,12 +198,70 @@ class AppRouter {
   );
 
   static GoRouter get router => _router;
+
+  static String? redirectForAuthStatus(
+    AuthStatus status,
+    String location, {
+    OnboardingStage onboardingStage = OnboardingStage.profileSetup,
+  }) {
+    final isSplashRoute = location == '/splash';
+    final isLoginRoute = location == '/login';
+    final isWelcomeRoute = location == '/';
+    final isOnboardingFlow =
+        location.startsWith('/onboarding') || location == '/pantry/onboarding';
+
+    // While auth state is unknown, keep the neutral splash on screen.
+    if (status == AuthStatus.unknown) {
+      return isSplashRoute ? null : '/splash';
+    }
+
+    // Unauthenticated -> force to login (unless already there).
+    if (status == AuthStatus.unauthenticated) {
+      return isLoginRoute ? null : '/login';
+    }
+
+    // Authenticated but onboarding incomplete -> allow onboarding flow +
+    // welcome; block main app + login.
+    if (status == AuthStatus.needsOnboarding) {
+      final resumePath = switch (onboardingStage) {
+        OnboardingStage.profileSetup => '/',
+        OnboardingStage.pantrySetup => '/onboarding/pantry',
+        OnboardingStage.planPreview => '/onboarding/plan-preview',
+        OnboardingStage.complete => '/home',
+      };
+      if (isSplashRoute || isLoginRoute) return resumePath;
+      if (isWelcomeRoute && onboardingStage != OnboardingStage.profileSetup) {
+        return resumePath;
+      }
+      if (isOnboardingFlow || isWelcomeRoute) return null;
+      return resumePath;
+    }
+
+    if (status == AuthStatus.needsSubscription) {
+      // Free users can use the core app. Premium navigation is individually
+      // gated (for example, the daily plan route) using the entitlement.
+      if (isLoginRoute || isSplashRoute || isWelcomeRoute) return '/home';
+      return null;
+    }
+
+    // Fully authenticated -> block login, splash, and welcome. Keep
+    // onboarding routes available so the post-setup flow can finish cleanly.
+    if (status == AuthStatus.authenticated &&
+        (isLoginRoute || isSplashRoute || isWelcomeRoute)) {
+      return '/home';
+    }
+
+    return null;
+  }
 }
 
 /// Bridges MobX observable [AuthStore.status] to go_router's
 /// [refreshListenable] so the redirect runs whenever auth state changes.
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier() {
-    reaction((_) => authStore.status.value, (_) => notifyListeners());
+    reaction(
+      (_) => (authStore.status.value, authStore.onboardingStage.value),
+      (_) => notifyListeners(),
+    );
   }
 }

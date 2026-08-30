@@ -12,8 +12,12 @@ class AppConstants {
       dotenv.env['REVENUECAT_IOS_API_KEY'] ?? '';
   static String get revenueCatAndroidApiKey =>
       dotenv.env['REVENUECAT_ANDROID_API_KEY'] ?? '';
+  static String get revenueCatTestApiKey =>
+      dotenv.env['REVENUECAT_TEST_API_KEY'] ?? '';
   static String get revenueCatEntitlementId =>
       dotenv.env['REVENUECAT_ENTITLEMENT_ID'] ?? 'pro';
+  static String get revenueCatOfferingId =>
+      dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'default';
 
   /// Dev-mode auth bypass.
   /// Set this to a valid backend test token to skip Firebase Auth in debug builds.
@@ -47,11 +51,6 @@ class AppConstants {
   static const double macroRingStrokeWidth = 8.0;
   static const double macroRingSizeSmall = 80.0;
   static const double macroRingStrokeWidthSmall = 6.0;
-
-  // Paywall
-  static const String monthlyPrice = '\$6.99';
-  static const String yearlyPrice = '\$39.99';
-  static const String lifetimePrice = '\$59.99';
 
   // Dietary Restrictions
   static const List<Map<String, String>> dietaryRestrictions = [

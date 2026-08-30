@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../main.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import '../../widgets/primary_button.dart';
@@ -37,6 +38,19 @@ class _FoodLocationScreenState extends State<FoodLocationScreen> {
       'Maharashtrian',
       'Bengali',
       'Gujarati',
+      'Rajasthani',
+      'Tamil',
+      'Kerala',
+      'Karnataka',
+      'Andhra',
+      'Telugu',
+      'Odia',
+      'Kashmiri',
+      'Goan',
+      'Konkani',
+      'Assamese',
+      'Bihari',
+      'Awadhi',
     ],
     'PK': ['Pakistani', 'Punjabi', 'Mughlai', 'Sindhi', 'Pashtun'],
     'AE': ['Emirati', 'Middle Eastern', 'Levantine', 'Indian'],
@@ -77,7 +91,7 @@ class _FoodLocationScreenState extends State<FoodLocationScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/'),
         ),
         title: const OnboardingProgressBar(step: 9, totalSteps: 10),
       ),

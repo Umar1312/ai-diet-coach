@@ -3,6 +3,7 @@ import 'package:mobx/mobx.dart';
 
 import '../../../core/di/providers.dart';
 import '../../../shared/models/home_models.dart';
+import '../../../shared/models/onboarding_state.dart';
 import '../../../shared/models/pantry_models.dart';
 import '../../../stores/dashboard_store.dart';
 
@@ -27,17 +28,32 @@ class PantryStore {
 
   // ── Computed ────────────────────────────────────────────────────────────
 
-  late final selectedCount = Computed<int>(() => selectedStarterNames.length);
+  late final selectedCount = Computed<int>(
+    () => starterPack
+        .where(
+          (item) =>
+              selectedStarterNames.contains(item.name) &&
+              !isAlreadyInPantry(item.name),
+        )
+        .length,
+  );
 
   late final groupedStarters = Computed<Map<String, List<PantryStarterItem>>>(
     () {
       final map = <String, List<PantryStarterItem>>{};
-      for (final item in starterPack) {
+      for (final item in starterPack.where(
+        (item) => !isAlreadyInPantry(item.name),
+      )) {
         map.putIfAbsent(item.category, () => []).add(item);
       }
       return map;
     },
   );
+
+  bool isAlreadyInPantry(String name) {
+    final normalizedName = _normalizeItemName(name);
+    return items.any((item) => _normalizeItemName(item.name) == normalizedName);
+  }
 
   // ── Actions: Pantry ─────────────────────────────────────────────────────
 
@@ -104,14 +120,16 @@ class PantryStore {
 
   // ── Actions: Starter Pack ───────────────────────────────────────────────
 
-  Future<void> loadStarterPack() async {
+  Future<void> loadStarterPack({bool onboarding = false}) async {
     runInAction(() {
       isLoadingStarter.value = true;
       starterError.value = '';
       selectedStarterNames.clear();
     });
     try {
-      final response = await apiService.fetchStarterPack();
+      final response = onboarding
+          ? await apiService.fetchOnboardingStarterPack()
+          : await apiService.fetchStarterPack();
       runInAction(() {
         starterPack
           ..clear()
@@ -127,6 +145,7 @@ class PantryStore {
   }
 
   void toggleStarterItem(String name) {
+    if (isAlreadyInPantry(name)) return;
     runInAction(() {
       if (selectedStarterNames.contains(name)) {
         selectedStarterNames.remove(name);
@@ -139,7 +158,7 @@ class PantryStore {
   void selectAllInCategory(String category) {
     runInAction(() {
       for (final item in starterPack) {
-        if (item.category == category) {
+        if (item.category == category && !isAlreadyInPantry(item.name)) {
           selectedStarterNames.add(item.name);
         }
       }
@@ -159,15 +178,25 @@ class PantryStore {
   bool isCategoryFullySelected(String category) {
     final categoryItems = starterPack.where((i) => i.category == category);
     if (categoryItems.isEmpty) return false;
-    return categoryItems.every((i) => selectedStarterNames.contains(i.name));
+    final availableItems = categoryItems.where(
+      (item) => !isAlreadyInPantry(item.name),
+    );
+    if (availableItems.isEmpty) return false;
+    return availableItems.every(
+      (item) => selectedStarterNames.contains(item.name),
+    );
   }
 
-  Future<void> addSelectedStarters() async {
+  Future<bool> addSelectedStarters() async {
     final toAdd = starterPack
-        .where((i) => selectedStarterNames.contains(i.name))
+        .where(
+          (item) =>
+              selectedStarterNames.contains(item.name) &&
+              !isAlreadyInPantry(item.name),
+        )
         .toList();
 
-    if (toAdd.isEmpty) return;
+    if (toAdd.isEmpty) return false;
 
     runInAction(() => isBulkAdding.value = true);
     try {
@@ -177,10 +206,47 @@ class PantryStore {
       HapticFeedback.mediumImpact();
       selectedStarterNames.clear();
       await loadPantry();
+      return true;
     } on ApiException catch (e) {
       runInAction(() => starterError.value = e.message);
+      return false;
     } catch (e) {
       runInAction(() => starterError.value = 'Failed to add items.');
+      return false;
+    } finally {
+      runInAction(() => isBulkAdding.value = false);
+    }
+  }
+
+  Future<bool> completeOnboardingPantry({required bool skipped}) async {
+    final selectedNames = selectedStarterNames.toList();
+    if (!skipped && selectedNames.isEmpty) return false;
+
+    runInAction(() {
+      isBulkAdding.value = true;
+      starterError.value = '';
+    });
+    try {
+      final response = await apiService.completeOnboardingPantry(
+        skipped: skipped,
+        selectedItemNames: skipped ? const [] : selectedNames,
+      );
+      if (response.stage != OnboardingStage.planPreview) {
+        throw ApiException(
+          code: 'invalid_onboarding_state',
+          message: 'Pantry setup did not complete. Please try again.',
+        );
+      }
+      runInAction(() {
+        selectedStarterNames.clear();
+      });
+      return true;
+    } on ApiException catch (e) {
+      runInAction(() => starterError.value = e.message);
+      return false;
+    } catch (e) {
+      runInAction(() => starterError.value = 'Failed to finish pantry setup.');
+      return false;
     } finally {
       runInAction(() => isBulkAdding.value = false);
     }
@@ -194,3 +260,6 @@ class PantryStore {
     runInAction(() => errorMessage.value = '');
   }
 }
+
+String _normalizeItemName(String name) =>
+    name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');

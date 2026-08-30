@@ -6,10 +6,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore, cravingStore;
-import 'package:diet_coach_ai/features/craving/widgets/craving_fab.dart';
-import 'package:diet_coach_ai/features/craving/craving_sheet.dart';
-import 'package:diet_coach_ai/features/customize_day/widgets/generate_day_sheet.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
@@ -34,18 +32,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: CravingFAB(
-        onTap: () {
-          cravingStore.reset();
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (_) => const CravingSheet(),
-          );
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -492,7 +478,7 @@ class _NextMeal extends StatelessWidget {
                             letterSpacing: -0.3,
                           ),
                         ),
-                        child: const Text("I'll eat this"),
+                        child: const Text('I ate this'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -500,9 +486,10 @@ class _NextMeal extends StatelessWidget {
                       width: double.infinity,
                       height: 48,
                       child: TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           HapticFeedback.selectionClick();
-                          store.swapNextMeal();
+                          if (!await requireProAccess(context)) return;
+                          await store.swapNextMeal();
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.textSecondary,
@@ -635,9 +622,10 @@ class _NoPlanCard extends StatelessWidget {
             GestureDetector(
               onTap: isLoading
                   ? null
-                  : () {
+                  : () async {
                       HapticFeedback.mediumImpact();
-                      showGenerateDaySheet(context);
+                      if (!await requireProAccess(context)) return;
+                      await dashboardStore.fetchDayPlan();
                     },
               child: Container(
                 width: double.infinity,

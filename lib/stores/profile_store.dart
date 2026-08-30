@@ -12,6 +12,7 @@ class ProfileStore {
   final user = Observable<User?>(null);
   final isLoading = Observable<bool>(false);
   final isSaving = Observable<bool>(false);
+  final isDeleting = Observable<bool>(false);
   final errorMessage = Observable<String>('');
 
   Future<void> loadProfile({bool force = false}) async {
@@ -57,11 +58,36 @@ class ProfileStore {
     return false;
   }
 
+  Future<bool> deleteAccount() async {
+    if (isDeleting.value) return false;
+
+    runInAction(() {
+      isDeleting.value = true;
+      errorMessage.value = '';
+    });
+
+    try {
+      await apiService.deleteAccount();
+      return true;
+    } on ApiException catch (e) {
+      runInAction(() => errorMessage.value = e.message);
+    } catch (_) {
+      runInAction(
+        () => errorMessage.value =
+            'Unable to delete your account. Please try again.',
+      );
+    } finally {
+      runInAction(() => isDeleting.value = false);
+    }
+    return false;
+  }
+
   void reset() {
     runInAction(() {
       user.value = null;
       isLoading.value = false;
       isSaving.value = false;
+      isDeleting.value = false;
       errorMessage.value = '';
     });
   }

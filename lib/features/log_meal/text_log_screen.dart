@@ -4,12 +4,15 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, textLogStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 class TextLogScreen extends StatefulWidget {
-  const TextLogScreen({super.key});
+  final String? initialSlot;
+
+  const TextLogScreen({super.key, this.initialSlot});
 
   @override
   State<TextLogScreen> createState() => _TextLogScreenState();
@@ -47,8 +50,8 @@ class _TextLogScreenState extends State<TextLogScreen> {
   Future<void> _submit() async {
     HapticFeedback.mediumImpact();
 
-    // Ask user which slot this meal belongs to
-    final slot = await showSlotPicker(context);
+    // Notification check-ins already know which planned slot is being logged.
+    final slot = widget.initialSlot ?? await showSlotPicker(context);
     if (!mounted) return;
 
     await textLogStore.submit(slot: slot);
@@ -307,7 +310,7 @@ class _CloseButton extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: GestureDetector(
-        onTap: () => context.pop(),
+        onTap: () => context.popOrGo('/home'),
         child: Container(
           width: 48,
           height: 48,

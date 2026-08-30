@@ -2,12 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/features/customize_day/models/custom_day_plan_request.dart';
+import 'package:diet_coach_ai/features/meal_swap/models/meal_swap_models.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
+import 'package:diet_coach_ai/shared/models/food_item.dart';
 import 'package:diet_coach_ai/shared/models/history_response.dart';
+import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
+import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/shared/models/recommendation_models.dart';
 import 'package:diet_coach_ai/shared/models/session_response.dart';
+import 'package:diet_coach_ai/shared/models/subscription_status.dart';
 import 'package:diet_coach_ai/shared/models/user_setup_request.dart';
 
 final dio = Dio(
@@ -126,6 +131,43 @@ class ApiService {
     return _wrap(() async {
       final response = await _dio.post('/users/setup', data: request.toJson());
       return UserSetupResponse.fromJson(response.data);
+    });
+  }
+
+  Future<PantryStarterPackResponse> fetchOnboardingStarterPack() async {
+    return _wrap(() async {
+      final response = await _dio.get('/users/onboarding/pantry-starter-pack');
+      return PantryStarterPackResponse.fromJson(response.data);
+    });
+  }
+
+  Future<OnboardingPantryResponse> completeOnboardingPantry({
+    required bool skipped,
+    List<String> selectedItemNames = const [],
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/users/onboarding/pantry-complete',
+        data: {
+          'decision': skipped ? 'skipped' : 'selected',
+          'selected_item_names': selectedItemNames,
+        },
+      );
+      return OnboardingPantryResponse.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> fetchOnboardingPlanPreview() async {
+    return _wrap(() async {
+      final response = await _dio.post('/users/onboarding/plan-preview');
+      return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<OnboardingStateResponse> completeOnboarding() async {
+    return _wrap(() async {
+      final response = await _dio.post('/users/onboarding/complete');
+      return OnboardingStateResponse.fromJson(response.data);
     });
   }
 
@@ -299,6 +341,30 @@ class ApiService {
     });
   }
 
+  Future<FoodSearchResponse> searchFoods({
+    required String q,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.get(
+        '/foods/search',
+        queryParameters: {'q': q.trim(), 'page': page, 'page_size': pageSize},
+      );
+      return FoodSearchResponse.fromJson(response.data);
+    });
+  }
+
+  Future<FoodItem> estimateFood(String query) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/foods/estimate',
+        data: {'query': query.trim()},
+      );
+      return FoodItem.fromJson(response.data);
+    });
+  }
+
   Future<PantryItemResponse> addPantryItem(PantryCreateRequest request) async {
     return _wrap(() async {
       final response = await _dio.post('/pantry', data: request.toJson());
@@ -376,6 +442,49 @@ class ApiService {
     });
   }
 
+  Future<SlotAlternativesResponse> fetchSlotAlternatives(
+    int order, {
+    String reason = 'surprise_me',
+    List<String> excludeNames = const [],
+    bool preferPantry = true,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$order/alternatives',
+        data: {
+          'reason': reason,
+          'exclude_names': excludeNames,
+          'count': 3,
+          'prefer_pantry': preferPantry,
+        },
+      );
+      return SlotAlternativesResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    });
+  }
+
+  Future<SlotReplacementResponse> replacePlanSlot(
+    int order, {
+    required String expectedCurrentName,
+    required Meal replacement,
+    required bool rebalanceRemaining,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$order/replace',
+        data: {
+          'expected_current_name': expectedCurrentName,
+          'meal': replacement.toJson(),
+          'rebalance_remaining': rebalanceRemaining,
+        },
+      );
+      return SlotReplacementResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    });
+  }
+
   Future<DailyPlan> acceptProposal() async {
     return _wrap(() async {
       final response = await _dio.post('/day-plan/proposal/accept');
@@ -415,10 +524,32 @@ class ApiService {
     });
   }
 
+  Future<SubscriptionStatus> fetchSubscriptionStatus() async {
+    return _wrap(() async {
+      final response = await _dio.get('/subscriptions/me');
+      return SubscriptionStatus.fromJson(response.data);
+    });
+  }
+
+  Future<SubscriptionStatus> syncSubscriptionStatus() async {
+    return _wrap(() async {
+      final response = await _dio.post('/subscriptions/me/sync');
+      return SubscriptionStatus.fromJson(response.data);
+    });
+  }
+
   Future<User> updateProfile(ProfilePatchRequest request) async {
     return _wrap(() async {
       final response = await _dio.patch('/users/me', data: request.toJson());
       return User.fromJson(response.data);
+    });
+  }
+
+  /// Permanently removes the authenticated user's application data and
+  /// Firebase identity. Store subscriptions must be cancelled separately.
+  Future<void> deleteAccount() async {
+    return _wrap(() async {
+      await _dio.delete('/users/me');
     });
   }
 }
@@ -469,9 +600,14 @@ class ProfilePatchRequest {
 /// Parses a DioException into a user-friendly ApiException with the API error code.
 ApiException parseApiError(DioException e) {
   final data = e.response?.data;
-  // Backend wraps errors in {"error": {"code": "...", "message": "..."}}
-  final errorObj = (data is Map<String, dynamic>)
-      ? data['error'] as Map<String, dynamic>?
+  // FastAPI HTTPException responses wrap the app error inside `detail`, while
+  // the generic exception handler returns the same error at the top level.
+  final detail = data is Map<String, dynamic>
+      ? data['detail'] as Map<String, dynamic>?
+      : null;
+  final errorObj = data is Map<String, dynamic>
+      ? (data['error'] as Map<String, dynamic>? ??
+            detail?['error'] as Map<String, dynamic>?)
       : null;
   final code = errorObj?['code'] as String?;
   final serverMessage = errorObj?['message'] as String?;
@@ -499,6 +635,12 @@ ApiException parseApiError(DioException e) {
       return ApiException(
         code: 'rate_limited',
         message: 'Too many requests. Please slow down.',
+        statusCode: e.response?.statusCode,
+      );
+    case 'subscription_required':
+      return ApiException(
+        code: 'subscription_required',
+        message: serverMessage ?? 'An active subscription is required.',
         statusCode: e.response?.statusCode,
       );
     case 'analysis_failed':

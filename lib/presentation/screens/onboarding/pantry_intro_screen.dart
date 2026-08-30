@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 
 class PantryIntroScreen extends StatelessWidget {
   const PantryIntroScreen({super.key});
@@ -22,7 +23,7 @@ class PantryIntroScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () => context.popOrGo('/onboarding/result'),
                       child: Container(
                         width: 48,
                         height: 48,

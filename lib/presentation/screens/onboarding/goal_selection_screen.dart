@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../widgets/primary_button.dart';
@@ -41,7 +42,7 @@ class _GoalSelectionScreenState extends State<GoalSelectionScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/'),
         ),
         title: const OnboardingProgressBar(step: 6, totalSteps: 10),
       ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/onboarding_progress_bar.dart';
+import '../../widgets/onboarding_secondary_button.dart';
 
 class DietaryRestrictionsScreen extends StatefulWidget {
   const DietaryRestrictionsScreen({super.key});
@@ -24,7 +26,7 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/'),
         ),
         title: const OnboardingProgressBar(step: 8, totalSteps: 10),
       ),
@@ -78,9 +80,9 @@ class _DietaryRestrictionsScreenState extends State<DietaryRestrictionsScreen> {
                 },
               ),
               const SizedBox(height: 8),
-              TextButton(
+              OnboardingSecondaryButton(
+                text: 'Skip for now',
                 onPressed: () => context.push('/onboarding/food-location'),
-                child: const Text('Skip for now'),
               ),
               const SizedBox(height: 16),
             ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobx/mobx.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
@@ -14,12 +16,14 @@ class LoadingSetupScreen extends StatefulWidget {
 }
 
 class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
+  bool _setupFailed = false;
+
   final List<Map<String, dynamic>> _checklistItems = [
     {'label': 'Calories', 'checked': false},
     {'label': 'Carbs', 'checked': false},
     {'label': 'Protein', 'checked': false},
     {'label': 'Fats', 'checked': false},
-    {'label': 'Health Score', 'checked': false},
+    {'label': 'Food preferences', 'checked': false},
   ];
 
   @override
@@ -29,23 +33,29 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
   }
 
   Future<void> _startCalculation() async {
+    setState(() {
+      _setupFailed = false;
+      for (final item in _checklistItems) {
+        item['checked'] = false;
+      }
+    });
+
     try {
-      await onboardingStore.calculatePlan();
-      // Profile + targets are now persisted on the backend, so flip auth
-      // status to authenticated. The user still flows through the remaining
-      // post-setup screens (result, pantry, notifications, paywall).
-      authStore.markOnboardingComplete();
+      final response = await onboardingStore.calculatePlan();
+      // Keep the targets returned by setup available immediately. The full
+      // pantry-aware day plan is generated after the pantry decision.
+      dashboardStore.applyPlan(response.plan);
+      authStore.markProfileSetupComplete();
     } catch (e) {
       if (mounted) {
         setState(() {
-          onboardingStore.loadingStatus =
-              'Unable to reach server. Using default plan.';
-          onboardingStore.loadingProgress = 1.0;
+          _setupFailed = true;
         });
-      }
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        context.pushReplacement('/onboarding/result');
+        runInAction(() {
+          onboardingStore.loadingStatus =
+              'We could not create your targets. Check your connection and try again.';
+          onboardingStore.loadingProgress = 0.0;
+        });
       }
       return;
     }
@@ -124,6 +134,33 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
                 ),
               ),
               const Spacer(),
+              if (_setupFailed) ...[
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    _startCalculation();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppColors.textPrimary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Try again',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textOnPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ],
           ),
         ),

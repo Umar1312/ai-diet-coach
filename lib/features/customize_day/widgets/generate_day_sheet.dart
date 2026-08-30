@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 
 /// Bottom sheet shown from the Plan screen when the user taps
@@ -105,14 +106,16 @@ class _GenerateDaySheet extends StatelessWidget {
     );
   }
 
-  void _onAIOption(BuildContext context) {
+  Future<void> _onAIOption(BuildContext context) async {
     HapticFeedback.mediumImpact();
+    if (!await requireProAccess(context) || !context.mounted) return;
     Navigator.pop(context);
-    dashboardStore.fetchDayPlan();
+    await dashboardStore.fetchDayPlan();
   }
 
-  void _onManualOption(BuildContext context) {
+  Future<void> _onManualOption(BuildContext context) async {
     HapticFeedback.mediumImpact();
+    if (!await requireProAccess(context) || !context.mounted) return;
     Navigator.pop(context);
     context.push('/plan/customize');
   }

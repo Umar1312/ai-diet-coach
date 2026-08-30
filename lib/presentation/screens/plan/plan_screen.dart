@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/features/customize_day/widgets/generate_day_sheet.dart';
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
+import 'package:diet_coach_ai/features/meal_swap/widgets/meal_swap_sheet.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
 
@@ -65,11 +67,7 @@ class _PlanScreenState extends State<PlanScreen> {
                         const _GenerateDayPrompt()
                       else
                         for (final meal in store.plannedMeals)
-                          _PlannedMealCard(
-                            plannedMeal: meal,
-                            isSwapping:
-                                store.isSwappingSlot.value == meal.order,
-                          ),
+                          _PlannedMealCard(plannedMeal: meal),
                     ],
                   ),
                 ),
@@ -143,9 +141,10 @@ class _PlanActions extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           HapticFeedback.selectionClick();
-          store.regenerateDayPlan();
+          if (!await requireProAccess(context)) return;
+          await store.regenerateDayPlan();
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -228,9 +227,10 @@ class _GenerateDayPrompt extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               HapticFeedback.mediumImpact();
-              showGenerateDaySheet(context);
+              if (!await requireProAccess(context)) return;
+              await dashboardStore.fetchDayPlan();
             },
             child: Container(
               width: double.infinity,
@@ -309,9 +309,8 @@ class _LoadingDayPlan extends StatelessWidget {
 
 class _PlannedMealCard extends StatelessWidget {
   final PlannedMeal plannedMeal;
-  final bool isSwapping;
 
-  const _PlannedMealCard({required this.plannedMeal, required this.isSwapping});
+  const _PlannedMealCard({required this.plannedMeal});
 
   String get _slotLabel {
     switch (plannedMeal.slot) {
@@ -473,12 +472,55 @@ class _PlannedMealCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: isSwapping
-                        ? null
-                        : () {
-                            HapticFeedback.selectionClick();
-                            dashboardStore.swapSlot(plannedMeal.order);
-                          },
+                    onTap: () async {
+                      HapticFeedback.selectionClick();
+                      if (!await requireProAccess(context)) return;
+                      if (!context.mounted) return;
+                      final outcome = await showMealSwapSheet(
+                        context,
+                        plannedMeal: plannedMeal,
+                      );
+                      if (!context.mounted || outcome == null) return;
+                      if (outcome == MealSwapOutcome.proposalCreated) {
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          isScrollControlled: true,
+                          isDismissible: false,
+                          enableDrag: false,
+                          builder: (_) => const ProposalSheet(),
+                        );
+                        return;
+                      }
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                            backgroundColor: AppColors.textPrimary,
+                            content: const Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.success,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Plan updated',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        );
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -489,24 +531,14 @@ class _PlannedMealCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (isSwapping)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.textSecondary,
-                              ),
-                            )
-                          else
-                            const Icon(
-                              Icons.swap_horiz_rounded,
-                              size: 18,
-                              color: AppColors.textSecondary,
-                            ),
+                          const Icon(
+                            Icons.tune_rounded,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 6),
                           Text(
-                            isSwapping ? 'Swapping...' : 'Swap',
+                            'Change meal',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

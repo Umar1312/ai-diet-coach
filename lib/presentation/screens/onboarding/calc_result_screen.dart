@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/router/safe_navigation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../widgets/primary_button.dart';
@@ -18,7 +19,7 @@ class CalcResultScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo('/'),
         ),
         title: const OnboardingProgressBar(step: 10, totalSteps: 10),
       ),
@@ -37,7 +38,7 @@ class CalcResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Your plan\nis ready!',
+                  'Your targets\nare ready!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
@@ -62,7 +63,7 @@ class CalcResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'We\'re calculating your personalized macros...',
+                  'Next, we\'ll turn them into a practical daily meal plan.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,

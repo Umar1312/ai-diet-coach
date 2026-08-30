@@ -232,40 +232,15 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Your pantry',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -1.0,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  context.push('/pantry/suggestions');
-                },
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: AppColors.textPrimary,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Your pantry',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -1.0,
+              height: 1.1,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -395,26 +370,6 @@ class _EmptyState extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: AppColors.textOnPrimary,
                   letterSpacing: -0.3,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              context.push('/pantry/suggestions');
-            },
-            child: Container(
-              width: double.infinity,
-              height: 48,
-              alignment: Alignment.center,
-              child: const Text(
-                'Browse suggestions',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
                 ),
               ),
             ),

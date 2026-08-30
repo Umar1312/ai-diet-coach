@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/router/safe_navigation.dart';
+import '../../../main.dart' show notificationStore, subscriptionStore;
+import '../../widgets/onboarding_secondary_button.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
   const NotificationPermissionScreen({super.key});
 
+  void _continue(BuildContext context) {
+    context.go(
+      subscriptionStore.hasAccess.value ? '/home' : '/onboarding/paywall',
+    );
+  }
+
   Future<void> _requestNotifications(BuildContext context) async {
-    await Permission.notification.request();
-    if (context.mounted) context.push('/onboarding/paywall');
+    await notificationStore.setEnabled(true);
+    if (context.mounted) _continue(context);
   }
 
   @override
@@ -26,12 +34,12 @@ class NotificationPermissionScreen extends StatelessWidget {
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back_ios, size: 20),
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.popOrGo('/onboarding/plan-preview'),
                 ),
               ),
               const SizedBox(height: 20),
               Text(
-                'Be reminded\nto log meals',
+                'Stay on track\nmeal by meal',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
@@ -54,7 +62,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 20),
                     Text(
-                      '${AppConstants.appName} would like to send you\nNotifications',
+                      'Get a gentle check-in at each planned meal time',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 15,
@@ -88,7 +96,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => context.push('/onboarding/paywall'),
+                              onTap: () => _continue(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -141,12 +149,9 @@ class NotificationPermissionScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              TextButton(
-                onPressed: () => context.push('/onboarding/paywall'),
-                child: const Text(
-                  'Skip for now',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
+              OnboardingSecondaryButton(
+                text: 'Skip for now',
+                onPressed: () => _continue(context),
               ),
               const SizedBox(height: 16),
             ],

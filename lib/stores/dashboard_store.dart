@@ -101,6 +101,7 @@ class DashboardStore {
   // ── Actions ─────────────────────────────────────────────────────────────
 
   void applyPlan(DailyPlan plan) {
+    final resolvedNextMeal = _resolveNextMeal(plan);
     runInAction(() {
       consumedCalories.value = plan.consumed.calories;
       consumedProtein.value = plan.consumed.proteinG;
@@ -116,7 +117,7 @@ class DashboardStore {
       aiCardText.value = plan.aiCardText;
       aiCardState.value = plan.aiCardState;
       dayStatus.value = plan.dayStatus;
-      nextMeal.value = plan.nextMeal;
+      nextMeal.value = resolvedNextMeal;
       recalibration.value = plan.recalibration;
       plannedMeals
         ..clear()
@@ -126,6 +127,33 @@ class DashboardStore {
       hasError.value = false;
       errorMessage.value = '';
     });
+  }
+
+  NextMealRecommendation? _resolveNextMeal(DailyPlan plan) {
+    if (plan.nextMeal != null) return plan.nextMeal;
+    if (plan.consumed.calories >= plan.targets.calories) return null;
+
+    final remainingMeals =
+        plan.plannedMeals
+            .where(
+              (plannedMeal) => plannedMeal.status == PlannedMealStatus.planned,
+            )
+            .toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+    if (remainingMeals.isEmpty) return null;
+
+    final plannedMeal = remainingMeals.first;
+    final meal = plannedMeal.meal;
+    return NextMealRecommendation(
+      name: meal.name,
+      whyItFits: 'Your planned ${plannedMeal.slot} meal.',
+      prepMinutes: meal.prepMinutes,
+      calories: meal.calories,
+      proteinG: meal.proteinG,
+      carbsG: meal.carbsG,
+      fatsG: meal.fatsG,
+      emoji: meal.emoji,
+    );
   }
 
   Future<void> refresh() async {
@@ -227,17 +255,43 @@ class DashboardStore {
 
   // ── Day Plan (v2.1) ─────────────────────────────────────────────────────
 
-  Future<void> fetchDayPlan() async {
-    runInAction(() => isGeneratingPlan.value = true);
+  Future<bool> fetchDayPlan() async {
+    runInAction(() {
+      isGeneratingPlan.value = true;
+      errorMessage.value = '';
+    });
     try {
       final plan = await apiService.fetchDayPlan();
       applyPlan(plan);
+      return true;
     } catch (e) {
       runInAction(() {
         errorMessage.value = e is ApiException
             ? e.message
             : 'Failed to load day plan';
       });
+      return false;
+    } finally {
+      runInAction(() => isGeneratingPlan.value = false);
+    }
+  }
+
+  Future<bool> fetchOnboardingPlanPreview() async {
+    runInAction(() {
+      isGeneratingPlan.value = true;
+      errorMessage.value = '';
+    });
+    try {
+      final plan = await apiService.fetchOnboardingPlanPreview();
+      applyPlan(plan);
+      return true;
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to create your first plan';
+      });
+      return false;
     } finally {
       runInAction(() => isGeneratingPlan.value = false);
     }
