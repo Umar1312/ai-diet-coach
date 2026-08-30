@@ -54,6 +54,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
               const SliverToBoxAdapter(child: _BigLogButton()),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              // Trailing scroll room for the floating glass navigation bar.
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
         ),

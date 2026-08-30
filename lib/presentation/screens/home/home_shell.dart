@@ -31,18 +31,12 @@ class HomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset =
-        MediaQuery.paddingOf(context).bottom + _navHeight + _navBottomMargin;
-
     return LiquidGlassScaffold(
       backgroundColor: AppColors.background,
-      // LiquidGlassScaffold intentionally overlays floating chrome on its
-      // body. Reserve the same space a normal Scaffold bottom nav would, so
-      // the last item in every tab remains above the glass bar.
-      body: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: navigationShell,
-      ),
+      // The bar floats over the body. Each tab's scrollable adds trailing
+      // space so its content can pass behind the bar and still scroll fully
+      // above it, matching native overlay navigation behavior.
+      body: navigationShell,
       bottomNavigationBar: LiquidGlassTabBar(
         width: MediaQuery.sizeOf(context).width - 32,
         height: _navHeight,

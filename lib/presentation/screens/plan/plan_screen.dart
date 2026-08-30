@@ -77,6 +77,8 @@ class _PlanScreenState extends State<PlanScreen> {
                 ),
                 SliverToBoxAdapter(child: _MacroBudget(store: store)),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // Trailing scroll room for the floating glass navigation bar.
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             );
           },

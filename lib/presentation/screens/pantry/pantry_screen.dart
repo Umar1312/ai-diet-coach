@@ -170,7 +170,10 @@ class _PantryScreenState extends State<PantryScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
+                    // Keep enough trailing room for the floating glass bar
+                    // to overlay the grid while the final tile can scroll
+                    // completely above it.
+                    padding: const EdgeInsets.fromLTRB(28, 0, 28, 140),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -188,6 +191,8 @@ class _PantryScreenState extends State<PantryScreen> {
                       ),
                     ),
                   ),
+                if (items.isEmpty && !isLoading)
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             );
           },
