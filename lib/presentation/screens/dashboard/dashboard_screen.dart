@@ -478,7 +478,7 @@ class _NextMeal extends StatelessWidget {
                             letterSpacing: -0.3,
                           ),
                         ),
-                        child: const Text("I'll eat this"),
+                        child: const Text('I ate this'),
                       ),
                     ),
                     const SizedBox(height: 12),

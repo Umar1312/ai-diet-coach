@@ -28,17 +28,32 @@ class PantryStore {
 
   // ── Computed ────────────────────────────────────────────────────────────
 
-  late final selectedCount = Computed<int>(() => selectedStarterNames.length);
+  late final selectedCount = Computed<int>(
+    () => starterPack
+        .where(
+          (item) =>
+              selectedStarterNames.contains(item.name) &&
+              !isAlreadyInPantry(item.name),
+        )
+        .length,
+  );
 
   late final groupedStarters = Computed<Map<String, List<PantryStarterItem>>>(
     () {
       final map = <String, List<PantryStarterItem>>{};
-      for (final item in starterPack) {
+      for (final item in starterPack.where(
+        (item) => !isAlreadyInPantry(item.name),
+      )) {
         map.putIfAbsent(item.category, () => []).add(item);
       }
       return map;
     },
   );
+
+  bool isAlreadyInPantry(String name) {
+    final normalizedName = _normalizeItemName(name);
+    return items.any((item) => _normalizeItemName(item.name) == normalizedName);
+  }
 
   // ── Actions: Pantry ─────────────────────────────────────────────────────
 
@@ -130,6 +145,7 @@ class PantryStore {
   }
 
   void toggleStarterItem(String name) {
+    if (isAlreadyInPantry(name)) return;
     runInAction(() {
       if (selectedStarterNames.contains(name)) {
         selectedStarterNames.remove(name);
@@ -142,7 +158,7 @@ class PantryStore {
   void selectAllInCategory(String category) {
     runInAction(() {
       for (final item in starterPack) {
-        if (item.category == category) {
+        if (item.category == category && !isAlreadyInPantry(item.name)) {
           selectedStarterNames.add(item.name);
         }
       }
@@ -162,12 +178,22 @@ class PantryStore {
   bool isCategoryFullySelected(String category) {
     final categoryItems = starterPack.where((i) => i.category == category);
     if (categoryItems.isEmpty) return false;
-    return categoryItems.every((i) => selectedStarterNames.contains(i.name));
+    final availableItems = categoryItems.where(
+      (item) => !isAlreadyInPantry(item.name),
+    );
+    if (availableItems.isEmpty) return false;
+    return availableItems.every(
+      (item) => selectedStarterNames.contains(item.name),
+    );
   }
 
   Future<bool> addSelectedStarters() async {
     final toAdd = starterPack
-        .where((i) => selectedStarterNames.contains(i.name))
+        .where(
+          (item) =>
+              selectedStarterNames.contains(item.name) &&
+              !isAlreadyInPantry(item.name),
+        )
         .toList();
 
     if (toAdd.isEmpty) return false;
@@ -234,3 +260,6 @@ class PantryStore {
     runInAction(() => errorMessage.value = '');
   }
 }
+
+String _normalizeItemName(String name) =>
+    name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
