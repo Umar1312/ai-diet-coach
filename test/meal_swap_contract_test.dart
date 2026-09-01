@@ -148,8 +148,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Review your change'), findsOneWidget);
-    expect(find.text('Replace & keep me on track'), findsOneWidget);
-    expect(find.text('Replace only this meal'), findsOneWidget);
+    expect(find.text('CURRENT MEAL'), findsOneWidget);
+    expect(find.text('REPLACE WITH'), findsOneWidget);
+    expect(find.text('NEW MEAL'), findsOneWidget);
+    expect(find.text('Replace and rebalance my day'), findsOneWidget);
+    expect(find.text('Replace without rebalancing'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

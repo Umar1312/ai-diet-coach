@@ -502,13 +502,13 @@ class _ReviewView extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 28),
             children: [
+              _MealComparisonCard(label: 'CURRENT MEAL', meal: current),
+              const _SwapConnector(),
               _MealComparisonCard(
-                label: 'YOUR CHOICE',
+                label: 'NEW MEAL',
                 meal: replacement,
                 highlighted: true,
               ),
-              const SizedBox(height: 12),
-              _MealComparisonCard(label: 'REPLACING', meal: current),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -525,14 +525,43 @@ class _ReviewView extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        '${_signed(calorieDelta)} calories and ${_signed(proteinDelta)}g protein. I can adjust only later meals if needed.',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          height: 1.4,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Keep today on track',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'We’ll adjust only your later meals if needed. Meals you’ve logged stay unchanged.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _ChangeChip(
+                                icon: Icons.local_fire_department_outlined,
+                                label: _calorieChangeLabel(calorieDelta),
+                              ),
+                              _ChangeChip(
+                                icon: Icons.fitness_center_rounded,
+                                label: _proteinChangeLabel(proteinDelta),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -564,7 +593,8 @@ class _ReviewView extends StatelessWidget {
                     child: _ActionButton(
                       label: loading
                           ? 'Checking your day...'
-                          : 'Replace & keep me on track',
+                          : 'Replace and rebalance my day',
+                      detail: loading ? null : 'Later meals may be adjusted',
                       loading: loading,
                       primary: true,
                     ),
@@ -573,7 +603,8 @@ class _ReviewView extends StatelessWidget {
                   GestureDetector(
                     onTap: loading ? null : () => onApply(rebalance: false),
                     child: const _ActionButton(
-                      label: 'Replace only this meal',
+                      label: 'Replace without rebalancing',
+                      detail: 'All other meals stay unchanged',
                       loading: false,
                       primary: false,
                     ),
@@ -584,6 +615,88 @@ class _ReviewView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SwapConnector extends StatelessWidget {
+  const _SwapConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: Row(
+        children: [
+          const SizedBox(width: 38),
+          Container(width: 2, height: 54, color: AppColors.border),
+          Transform.translate(
+            offset: const Offset(-19, 0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.background, width: 3),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_downward_rounded,
+                    color: AppColors.textOnPrimary,
+                    size: 16,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'REPLACE WITH',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textOnPrimary,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChangeChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ChangeChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.protein.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.protein),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -654,11 +767,13 @@ class _MealComparisonCard extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   final String label;
+  final String? detail;
   final bool loading;
   final bool primary;
 
   const _ActionButton({
     required this.label,
+    this.detail,
     required this.loading,
     required this.primary,
   });
@@ -667,7 +782,7 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: primary ? 64 : 54,
+      height: detail == null ? (primary ? 64 : 54) : (primary ? 72 : 66),
       decoration: BoxDecoration(
         color: primary ? AppColors.textPrimary : AppColors.surface,
         borderRadius: BorderRadius.circular(primary ? 20 : 18),
@@ -687,22 +802,53 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 10),
           ],
           Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: primary ? 17 : 15,
-                fontWeight: FontWeight.w700,
-                color: primary ? Colors.white : AppColors.textSecondary,
-                letterSpacing: -0.2,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: primary ? 16 : 15,
+                    fontWeight: FontWeight.w700,
+                    color: primary ? Colors.white : AppColors.textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                if (detail != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: primary
+                          ? Colors.white.withValues(alpha: 0.68)
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _calorieChangeLabel(int delta) {
+  if (delta == 0) return 'Same calories';
+  final amount = delta.abs();
+  return delta > 0 ? '$amount more calories' : '$amount fewer calories';
+}
+
+String _proteinChangeLabel(int delta) {
+  if (delta == 0) return 'Same protein';
+  final amount = delta.abs();
+  return delta > 0 ? '${amount}g more protein' : '${amount}g less protein';
 }
 
 class _LoadingAlternatives extends StatelessWidget {
