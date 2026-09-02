@@ -80,88 +80,96 @@ class _LoadingSetupScreenState extends State<LoadingSetupScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 80),
-              Observer(
-                builder: (_) => Text(
-                  '${(onboardingStore.loadingProgress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontSize: 72,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "We're setting everything\nup for you",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 32),
-              Observer(
-                builder: (_) => ProgressBar(
-                  progress: onboardingStore.loadingProgress,
-                  height: 8,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Observer(
-                builder: (_) => Text(
-                  onboardingStore.loadingStatus,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 48),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Daily recommendation for',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ..._checklistItems.map(
-                (item) => _ChecklistItem(
-                  label: item['label'],
-                  isChecked: item['checked'],
-                ),
-              ),
-              const Spacer(),
-              if (_setupFailed) ...[
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    _startCalculation();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.textPrimary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Try again',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textOnPrimary,
-                        letterSpacing: -0.3,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 80),
+                      Observer(
+                        builder: (_) => Text(
+                          '${(onboardingStore.loadingProgress * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "We're setting everything\nup for you",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 32),
+                      Observer(
+                        builder: (_) => ProgressBar(
+                          progress: onboardingStore.loadingProgress,
+                          height: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Observer(
+                        builder: (_) => Text(
+                          onboardingStore.loadingStatus,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Daily recommendation for',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ..._checklistItems.map(
+                        (item) => _ChecklistItem(
+                          label: item['label'],
+                          isChecked: item['checked'],
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_setupFailed) ...[
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            _startCalculation();
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppColors.textPrimary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Try again',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textOnPrimary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-              ],
-            ],
+              ),
+            ),
           ),
         ),
       ),

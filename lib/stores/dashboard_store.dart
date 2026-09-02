@@ -38,6 +38,7 @@ class DashboardStore {
   final recalibration = Observable<RecalibrationStatus?>(null);
   final plannedMeals = ObservableList<PlannedMeal>();
   final pendingProposal = Observable<ProposedPlan?>(null);
+  final lastLoggedMeal = Observable<MealLogItem?>(null);
   final pantry = ObservableList<PantryItem>();
 
   final isLoadingPantry = Observable<bool>(false);
@@ -129,6 +130,13 @@ class DashboardStore {
     });
   }
 
+  /// Applies a meal-log response and preserves the logged item long enough
+  /// for the post-log impact screen to explain what changed.
+  void applyMealLogResponse(MealLogResponse response) {
+    applyPlan(response.updatedPlan);
+    runInAction(() => lastLoggedMeal.value = response.log);
+  }
+
   NextMealRecommendation? _resolveNextMeal(DailyPlan plan) {
     if (plan.nextMeal != null) return plan.nextMeal;
     if (plan.consumed.calories >= plan.targets.calories) return null;
@@ -179,7 +187,7 @@ class DashboardStore {
     }
   }
 
-  Future<void> addMeal(
+  Future<MealLogResponse> addMeal(
     Meal meal, {
     String source = 'text',
     String? slot,
@@ -195,12 +203,13 @@ class DashboardStore {
         slot: slot,
       ),
     );
-    applyPlan(response.updatedPlan);
+    applyMealLogResponse(response);
+    return response;
   }
 
-  Future<void> acceptNextMeal({String? slot}) async {
+  Future<MealLogResponse?> acceptNextMeal({String? slot}) async {
     final meal = nextMeal.value;
-    if (meal == null) return;
+    if (meal == null) return null;
     final response = await apiService.logManual(
       ManualLogRequest(
         foodName: meal.name,
@@ -212,7 +221,8 @@ class DashboardStore {
         slot: slot,
       ),
     );
-    applyPlan(response.updatedPlan);
+    applyMealLogResponse(response);
+    return response;
   }
 
   Future<void> swapNextMeal() async {
@@ -404,6 +414,7 @@ class DashboardStore {
       recalibration.value = null;
       plannedMeals.clear();
       pendingProposal.value = null;
+      lastLoggedMeal.value = null;
       pantry.clear();
       hasLoaded.value = false;
       hasError.value = false;

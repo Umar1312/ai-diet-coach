@@ -6,13 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore, textLogStore;
-import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
-import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 class TextLogScreen extends StatefulWidget {
-  final String? initialSlot;
-
-  const TextLogScreen({super.key, this.initialSlot});
+  const TextLogScreen({super.key});
 
   @override
   State<TextLogScreen> createState() => _TextLogScreenState();
@@ -50,57 +46,11 @@ class _TextLogScreenState extends State<TextLogScreen> {
   Future<void> _submit() async {
     HapticFeedback.mediumImpact();
 
-    // Notification check-ins already know which planned slot is being logged.
-    final slot = widget.initialSlot ?? await showSlotPicker(context);
-    if (!mounted) return;
-
-    await textLogStore.submit(slot: slot);
+    await textLogStore.submit();
 
     if (mounted && textLogStore.errorMessage.value == null) {
-      _showLoggedSnack(context);
-
-      // If there's a pending proposal from an off-plan log, show it
-      if (dashboardStore.pendingProposal.value != null) {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          isDismissible: false,
-          enableDrag: false,
-          builder: (_) => const ProposalSheet(),
-        );
-      } else {
-        context.go('/home');
-      }
+      context.go('/meal-impact');
     }
-  }
-
-  void _showLoggedSnack(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          backgroundColor: AppColors.textPrimary,
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.success),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Logged!',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
   }
 
   @override

@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
-import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
@@ -454,18 +453,7 @@ class _NextMeal extends StatelessWidget {
                           if (!context.mounted) return;
                           await store.acceptNextMeal(slot: slot);
                           if (!context.mounted) return;
-                          if (dashboardStore.pendingProposal.value != null) {
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              isScrollControlled: true,
-                              isDismissible: false,
-                              enableDrag: false,
-                              builder: (_) => const ProposalSheet(),
-                            );
-                          } else {
-                            _showAcceptedSnack(context);
-                          }
+                          context.go('/meal-impact');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -511,34 +499,6 @@ class _NextMeal extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _showAcceptedSnack(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          backgroundColor: AppColors.textPrimary,
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.success),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Logged!',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
   }
 }
 

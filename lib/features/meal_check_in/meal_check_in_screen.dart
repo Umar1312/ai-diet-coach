@@ -62,8 +62,7 @@ class _MealCheckInScreenState extends State<MealCheckInScreen> {
     HapticFeedback.mediumImpact();
     final logged = await mealCheckInStore.confirmPlannedMeal();
     if (!mounted || !logged) return;
-    _showMessage('Logged!');
-    context.go('/home');
+    context.go('/meal-impact');
   }
 
   Future<void> _skip() async {
@@ -110,7 +109,7 @@ class _MealCheckInScreenState extends State<MealCheckInScreen> {
               onConfirm: _confirm,
               onDifferentMeal: () {
                 HapticFeedback.selectionClick();
-                context.go('/log/text?slot=${Uri.encodeComponent(meal.slot)}');
+                context.go('/log/text');
               },
               onSnooze: _snooze,
               onSkip: _skip,

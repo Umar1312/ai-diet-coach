@@ -28,6 +28,7 @@ import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 
 import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
+import 'package:diet_coach_ai/features/meal_impact/meal_impact_screen.dart';
 import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 import 'package:diet_coach_ai/features/meal_check_in/meal_check_in_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/history/meal_history_screen.dart';
@@ -52,6 +53,9 @@ class AppRouter {
       authStore.status.value,
       state.matchedLocation,
       onboardingStage: authStore.onboardingStage.value,
+      isOnboardingPantryPicker:
+          state.matchedLocation == '/pantry/onboarding' &&
+          state.uri.queryParameters['source'] == 'onboarding',
     ),
     routes: [
       GoRoute(
@@ -162,13 +166,16 @@ class AppRouter {
       // Meal logging (outside shell, push on top)
       GoRoute(
         path: '/log/text',
-        builder: (context, state) =>
-            TextLogScreen(initialSlot: state.uri.queryParameters['slot']),
+        builder: (context, state) => const TextLogScreen(),
       ),
       GoRoute(
         path: '/meal-check-in',
         builder: (context, state) =>
             MealCheckInScreen(slot: state.uri.queryParameters['slot'] ?? ''),
+      ),
+      GoRoute(
+        path: '/meal-impact',
+        builder: (context, state) => const MealImpactScreen(),
       ),
       GoRoute(
         path: '/profile',
@@ -203,12 +210,15 @@ class AppRouter {
     AuthStatus status,
     String location, {
     OnboardingStage onboardingStage = OnboardingStage.profileSetup,
+    bool isOnboardingPantryPicker = false,
   }) {
     final isSplashRoute = location == '/splash';
     final isLoginRoute = location == '/login';
     final isWelcomeRoute = location == '/';
     final isOnboardingFlow =
         location.startsWith('/onboarding') || location == '/pantry/onboarding';
+    final isPantrySetupRoute =
+        location == '/onboarding/pantry' || isOnboardingPantryPicker;
 
     // While auth state is unknown, keep the neutral splash on screen.
     if (status == AuthStatus.unknown) {
@@ -229,6 +239,10 @@ class AppRouter {
         OnboardingStage.planPreview => '/onboarding/plan-preview',
         OnboardingStage.complete => '/home',
       };
+      if (isPantrySetupRoute &&
+          onboardingStage != OnboardingStage.pantrySetup) {
+        return resumePath;
+      }
       if (isSplashRoute || isLoginRoute) return resumePath;
       if (isWelcomeRoute && onboardingStage != OnboardingStage.profileSetup) {
         return resumePath;
@@ -236,6 +250,11 @@ class AppRouter {
       if (isOnboardingFlow || isWelcomeRoute) return null;
       return resumePath;
     }
+
+    // The onboarding starter-pack endpoint is stage-gated. A completed user
+    // may still use the regular pantry picker, but must never reopen its
+    // onboarding variant from stale navigation state or a deep link.
+    if (isPantrySetupRoute) return '/home';
 
     if (status == AuthStatus.needsSubscription) {
       // Free users can use the core app. Premium navigation is individually

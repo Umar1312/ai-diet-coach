@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../main.dart' show dashboardStore, cravingStore;
 import '../../../shared/models/home_models.dart';
 import '../../../shared/models/planned_meal.dart';
-import '../../../presentation/widgets/proposal_sheet.dart';
-import '../../../presentation/widgets/slot_picker.dart';
 import 'stores/craving_store.dart';
 import 'widgets/streaming_text_lines.dart';
 
 /// Bottom sheet that helps the user satisfy a craving while staying
 /// connected to their proactive day plan.
 ///
-/// Flow: Prompt → Thinking → Reveal → Slot Picker → Proposal (if off-plan)
+/// Flow: Prompt → Thinking → Reveal → Log → Daily adjustment (if needed)
 class CravingSheet extends StatelessWidget {
   const CravingSheet({super.key});
 
@@ -618,66 +617,15 @@ class _RevealView extends StatelessWidget {
   Future<void> _handleLogIt(BuildContext context) async {
     HapticFeedback.mediumImpact();
 
-    // Ask which slot this craving belongs to
-    final slot = await showSlotPicker(context);
-    if (!context.mounted) return;
-
-    final response = await cravingStore.logChosen(slot: slot);
+    final response = await cravingStore.logChosen();
     if (response != null) {
-      dashboardStore.applyPlan(response.updatedPlan);
+      dashboardStore.applyMealLogResponse(response);
     }
 
     if (!context.mounted) return;
-
-    // If off-plan, the backend returns a pending proposal
-    if (dashboardStore.pendingProposal.value != null) {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        isDismissible: false,
-        enableDrag: false,
-        builder: (_) => const ProposalSheet(),
-      );
-    } else {
-      Navigator.pop(context);
-      _showLoggedSnack(context);
-    }
-  }
-
-  void _showLoggedSnack(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          backgroundColor: AppColors.textPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 2),
-          content: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: AppColors.success,
-                size: 20,
-              ),
-              SizedBox(width: 10),
-              Text(
-                'Logged!',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+    final router = GoRouter.of(context);
+    Navigator.pop(context);
+    router.go('/meal-impact');
   }
 }
 

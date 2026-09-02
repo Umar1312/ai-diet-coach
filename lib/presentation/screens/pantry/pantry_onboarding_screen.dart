@@ -7,6 +7,7 @@ import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart' show authStore, pantryStore;
 import 'package:diet_coach_ai/features/pantry/stores/pantry_store.dart';
+import 'package:diet_coach_ai/shared/models/onboarding_state.dart';
 import 'package:diet_coach_ai/shared/models/pantry_models.dart';
 import 'package:diet_coach_ai/presentation/widgets/onboarding_secondary_button.dart';
 
@@ -26,6 +27,20 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
   void initState() {
     super.initState();
     _store = pantryStore;
+    if (widget.isOnboarding &&
+        authStore.onboardingStage.value != OnboardingStage.pantrySetup) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final destination = switch (authStore.onboardingStage.value) {
+          OnboardingStage.profileSetup => '/',
+          OnboardingStage.pantrySetup => '/onboarding/pantry',
+          OnboardingStage.planPreview => '/onboarding/plan-preview',
+          OnboardingStage.complete => '/home',
+        };
+        context.go(destination);
+      });
+      return;
+    }
     _store.loadStarterPack(onboarding: widget.isOnboarding);
   }
 

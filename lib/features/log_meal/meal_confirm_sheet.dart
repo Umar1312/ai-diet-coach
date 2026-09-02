@@ -6,8 +6,6 @@ import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
-import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
-import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 class MealConfirmSheet extends StatelessWidget {
   final Meal meal;
@@ -114,27 +112,12 @@ class MealConfirmSheet extends StatelessWidget {
                   onPressed: () async {
                     HapticFeedback.mediumImpact();
 
-                    // Ask which slot this belongs to
-                    final slot = await showSlotPicker(context);
-                    if (!context.mounted) return;
-
-                    await dashboardStore.addMeal(meal, slot: slot);
+                    await dashboardStore.addMeal(meal);
 
                     if (!context.mounted) return;
-
-                    // If there's a pending proposal from an off-plan log, show it
-                    if (dashboardStore.pendingProposal.value != null) {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
-                        isDismissible: false,
-                        enableDrag: false,
-                        builder: (_) => const ProposalSheet(),
-                      );
-                    } else {
-                      context.go('/home');
-                    }
+                    final router = GoRouter.of(context);
+                    Navigator.pop(context);
+                    router.go('/meal-impact');
                   },
                 ),
                 const SizedBox(height: 12),

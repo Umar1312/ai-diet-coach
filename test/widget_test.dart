@@ -8,6 +8,7 @@ import 'package:diet_coach_ai/presentation/screens/onboarding/plan_preview_scree
 import 'package:diet_coach_ai/presentation/screens/onboarding/pantry_intro_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/paywall_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/food_location_screen.dart';
+import 'package:diet_coach_ai/presentation/screens/onboarding/notification_permission_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/onboarding/welcome_screen.dart';
 import 'package:diet_coach_ai/presentation/widgets/onboarding_secondary_button.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
@@ -65,6 +66,28 @@ void main() {
 
     expect(find.text('Meet your\nsmart pantry'), findsOneWidget);
     expect(find.text('Set up my pantry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('notification onboarding explains the value on a compact phone', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 667));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      const MaterialApp(home: NotificationPermissionScreen()),
+    );
+
+    expect(find.text('A small nudge,\nright when it helps.'), findsOneWidget);
+    expect(find.text('Turn on meal check-ins'), findsOneWidget);
+    expect(find.text('Not now'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Always in your control'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Always in your control'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

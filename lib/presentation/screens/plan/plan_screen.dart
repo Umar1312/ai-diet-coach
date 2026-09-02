@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
@@ -660,14 +661,15 @@ class _LogSlotConfirmSheet extends StatelessWidget {
           GestureDetector(
             onTap: () async {
               HapticFeedback.mediumImpact();
-              Navigator.pop(context);
               await dashboardStore.addMeal(
                 plannedMeal.meal,
                 source: 'recommendation',
                 slot: plannedMeal.slot,
               );
               if (context.mounted) {
-                _showLoggedSnack(context);
+                final router = GoRouter.of(context);
+                Navigator.pop(context);
+                router.go('/meal-impact');
               }
             },
             child: Container(
@@ -719,34 +721,6 @@ class _LogSlotConfirmSheet extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _showLoggedSnack(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          backgroundColor: AppColors.textPrimary,
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.success),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Logged!',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
   }
 }
 
