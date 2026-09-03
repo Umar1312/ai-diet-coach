@@ -174,190 +174,187 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 24),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 28),
-              child: Text(
-                'Add item',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
+          ),
+          const SizedBox(height: 24),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 28),
+            child: Text(
+              'Add item',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 28),
-              child: Text(
-                'Search foods and servings.',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
+          ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 28),
+            child: Text(
+              'Search foods and servings.',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                autofocus: true,
-                style: const TextStyle(
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              autofocus: true,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.surface,
+                hintText: 'Search foods...',
+                hintStyle: const TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textTertiary,
                 ),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  hintText: 'Search foods...',
-                  hintStyle: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w400,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(left: 16, right: 8),
+                  child: Icon(
+                    Icons.search_rounded,
                     color: AppColors.textTertiary,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 8),
-                    child: Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textTertiary,
-                      size: 22,
-                    ),
-                  ),
-                  prefixIconConstraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? GestureDetector(
-                          onTap: _clearSearch,
-                          child: const Padding(
-                            padding: EdgeInsets.only(right: 16, left: 8),
-                            child: Icon(
-                              Icons.close_rounded,
-                              color: AppColors.textTertiary,
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
+                    size: 22,
                   ),
                 ),
-              ),
-            ),
-            if (_isLoading && _suggestions.isNotEmpty)
-              const _SearchLoadingIndicator(),
-            if (_errorMessage.isNotEmpty) _buildErrorBanner(),
-            if (_isLoading && _suggestions.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(),
-              )
-            else if (_suggestions.isEmpty && !_isLoading)
-              Padding(
-                padding: const EdgeInsets.all(28),
-                child: _searchController.text.trim().isEmpty
-                    ? const Text(
-                        'Start typing to search',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textTertiary,
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? GestureDetector(
+                        onTap: _clearSearch,
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 16, left: 8),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textTertiary,
+                            size: 20,
+                          ),
                         ),
                       )
-                    : _EstimateFoodAction(
-                        query: _searchController.text.trim(),
-                        isLoading: _isEstimating,
-                        onTap: _estimateCurrentQuery,
-                      ),
-              )
-            else
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.45,
-                ),
-                child: ListView.separated(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 12,
-                  ),
-                  itemCount:
-                      _suggestions.length +
-                      (_shouldShowEstimateAction ? 1 : 0) +
-                      (_isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, _) =>
-                      const Divider(height: 1, color: AppColors.border),
-                  itemBuilder: (context, index) {
-                    if (index < _suggestions.length) {
-                      final item = _suggestions[index];
-                      return _SuggestionTile(
-                        item: item,
-                        quantity: _quantityFor(item),
-                        onDecrease: () => _decrementQuantity(item),
-                        onIncrease: () => _incrementQuantity(item),
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          Navigator.pop(
-                            context,
-                            item.toComponent(quantity: _quantityFor(item)),
-                          );
-                        },
-                      );
-                    }
-
-                    final estimateIndex = _suggestions.length;
-                    if (_shouldShowEstimateAction && index == estimateIndex) {
-                      return _EstimateFoodAction(
-                        query: _searchController.text.trim(),
-                        isLoading: _isEstimating,
-                        onTap: _estimateCurrentQuery,
-                      );
-                    }
-
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        ),
-                      ),
-                    );
-                  },
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide.none,
                 ),
               ),
-          ],
-        ),
+            ),
+          ),
+          if (_isLoading && _suggestions.isNotEmpty)
+            const _SearchLoadingIndicator(),
+          if (_errorMessage.isNotEmpty) _buildErrorBanner(),
+          if (_isLoading && _suggestions.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            )
+          else if (_suggestions.isEmpty && !_isLoading)
+            Padding(
+              padding: const EdgeInsets.all(28),
+              child: _searchController.text.trim().isEmpty
+                  ? const Text(
+                      'Start typing to search',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textTertiary,
+                      ),
+                    )
+                  : _EstimateFoodAction(
+                      query: _searchController.text.trim(),
+                      isLoading: _isEstimating,
+                      onTap: _estimateCurrentQuery,
+                    ),
+            )
+          else
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.45,
+              ),
+              child: ListView.separated(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
+                itemCount:
+                    _suggestions.length +
+                    (_shouldShowEstimateAction ? 1 : 0) +
+                    (_isLoadingMore ? 1 : 0),
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: AppColors.border),
+                itemBuilder: (context, index) {
+                  if (index < _suggestions.length) {
+                    final item = _suggestions[index];
+                    return _SuggestionTile(
+                      item: item,
+                      quantity: _quantityFor(item),
+                      onDecrease: () => _decrementQuantity(item),
+                      onIncrease: () => _incrementQuantity(item),
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        Navigator.pop(
+                          context,
+                          item.toComponent(quantity: _quantityFor(item)),
+                        );
+                      },
+                    );
+                  }
+
+                  final estimateIndex = _suggestions.length;
+                  if (_shouldShowEstimateAction && index == estimateIndex) {
+                    return _EstimateFoodAction(
+                      query: _searchController.text.trim(),
+                      isLoading: _isEstimating,
+                      onTap: _estimateCurrentQuery,
+                    );
+                  }
+
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

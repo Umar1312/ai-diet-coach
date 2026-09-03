@@ -28,80 +28,77 @@ class _GenerateDaySheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       padding: const EdgeInsets.fromLTRB(28, 16, 28, 40),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'Build your day',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.8,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Let AI plan it for you, or craft your own menu from scratch.',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 28),
+          _OptionTile(
+            icon: Icons.auto_awesome_rounded,
+            iconBgColor: AppColors.primary.withValues(alpha: 0.1),
+            iconColor: AppColors.primary,
+            title: 'Generate with AI',
+            subtitle: 'Personalized plan based on your goals',
+            onTap: () => _onAIOption(context),
+          ),
+          const SizedBox(height: 12),
+          _OptionTile(
+            icon: Icons.edit_note_rounded,
+            iconBgColor: AppColors.protein.withValues(alpha: 0.12),
+            iconColor: AppColors.protein,
+            title: 'Customize manually',
+            subtitle: 'Pick each meal yourself',
+            onTap: () => _onManualOption(context),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: double.infinity,
+              height: 56,
+              alignment: Alignment.center,
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            const Text(
-              'Build your day',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.8,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Let AI plan it for you, or craft your own menu from scratch.',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 28),
-            _OptionTile(
-              icon: Icons.auto_awesome_rounded,
-              iconBgColor: AppColors.primary.withValues(alpha: 0.1),
-              iconColor: AppColors.primary,
-              title: 'Generate with AI',
-              subtitle: 'Personalized plan based on your goals',
-              onTap: () => _onAIOption(context),
-            ),
-            const SizedBox(height: 12),
-            _OptionTile(
-              icon: Icons.edit_note_rounded,
-              iconBgColor: AppColors.protein.withValues(alpha: 0.12),
-              iconColor: AppColors.protein,
-              title: 'Customize manually',
-              subtitle: 'Pick each meal yourself',
-              onTap: () => _onManualOption(context),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: double.infinity,
-                height: 56,
-                alignment: Alignment.center,
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

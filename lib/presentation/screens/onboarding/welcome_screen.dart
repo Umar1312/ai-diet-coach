@@ -66,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_forward_rounded, size: 20),
               onPressed: () {
                 HapticFeedback.mediumImpact();
-                context.push('/onboarding/gender');
+                context.push('/login');
               },
             ),
             const SizedBox(height: 16),

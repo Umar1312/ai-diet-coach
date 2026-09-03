@@ -228,16 +228,18 @@ class AppRouter {
       return isSplashRoute ? null : '/splash';
     }
 
-    // Unauthenticated -> force to login (unless already there).
+    // Logged-out users land on the product introduction first. The welcome
+    // CTA opens login; all other protected/deep-linked routes return here.
     if (status == AuthStatus.unauthenticated) {
-      return isLoginRoute ? null : '/login';
+      return isLoginRoute || isWelcomeRoute ? null : '/';
     }
 
-    // Authenticated but onboarding incomplete -> allow onboarding flow +
-    // welcome; block main app + login.
+    // Authenticated but onboarding incomplete -> resume the persisted step.
+    // Profile setup starts at the first question because the product intro
+    // has already been shown before login.
     if (status == AuthStatus.needsOnboarding) {
       final resumePath = switch (onboardingStage) {
-        OnboardingStage.profileSetup => '/',
+        OnboardingStage.profileSetup => '/onboarding/gender',
         OnboardingStage.pantrySetup => '/onboarding/pantry',
         OnboardingStage.planPreview => '/onboarding/plan-preview',
         OnboardingStage.complete => '/home',
@@ -247,10 +249,8 @@ class AppRouter {
         return resumePath;
       }
       if (isSplashRoute || isLoginRoute) return resumePath;
-      if (isWelcomeRoute && onboardingStage != OnboardingStage.profileSetup) {
-        return resumePath;
-      }
-      if (isOnboardingFlow || isWelcomeRoute) return null;
+      if (isWelcomeRoute) return resumePath;
+      if (isOnboardingFlow) return null;
       return resumePath;
     }
 

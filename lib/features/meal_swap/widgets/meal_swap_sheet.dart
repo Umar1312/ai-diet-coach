@@ -21,7 +21,7 @@ Future<MealSwapOutcome?> showMealSwapSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    useSafeArea: true,
+    useSafeArea: false,
     builder: (_) => _MealSwapSheet(plannedMeal: plannedMeal),
   );
 }
@@ -87,34 +87,31 @@ class _MealSwapSheetState extends State<_MealSwapSheet> {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Observer(
-          builder: (_) {
-            final selection = mealSwapStore.selectedMeal.value;
-            return Column(
-              children: [
-                const _SheetHandle(),
-                if (selection == null)
-                  Expanded(
-                    child: _AlternativesView(
-                      current: widget.plannedMeal,
-                      onChooseMyOwn: _chooseMyOwn,
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: _ReviewView(
-                      current: widget.plannedMeal.meal,
-                      replacement: selection,
-                      onBack: mealSwapStore.clearSelection,
-                      onApply: _apply,
-                    ),
+      child: Observer(
+        builder: (_) {
+          final selection = mealSwapStore.selectedMeal.value;
+          return Column(
+            children: [
+              const _SheetHandle(),
+              if (selection == null)
+                Expanded(
+                  child: _AlternativesView(
+                    current: widget.plannedMeal,
+                    onChooseMyOwn: _chooseMyOwn,
                   ),
-              ],
-            );
-          },
-        ),
+                )
+              else
+                Expanded(
+                  child: _ReviewView(
+                    current: widget.plannedMeal.meal,
+                    replacement: selection,
+                    onBack: mealSwapStore.clearSelection,
+                    onApply: _apply,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

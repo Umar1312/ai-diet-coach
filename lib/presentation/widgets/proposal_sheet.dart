@@ -43,242 +43,230 @@ class ProposalSheet extends StatelessWidget {
                   color: AppColors.background,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: AppColors.border,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(28, 28, 28, 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.protein.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: const Icon(
-                                      Icons.auto_fix_high_rounded,
-                                      color: AppColors.protein,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  const Expanded(
-                                    child: Text(
-                                      'Plan Adjustment Suggested',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                proposal.reason,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
-                                  height: 1.5,
-                                ),
-                              ),
-                              if (changedSlots.isNotEmpty) ...[
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'What will change',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textTertiary,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                for (final slot in changedSlots)
-                                  _ChangedSlotRow(slot: slot),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                      Observer(
-                        builder: (_) {
-                          final isLoading =
-                              dashboardStore.isGeneratingPlan.value;
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(28, 12, 28, 16),
-                            child: Column(
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(28, 28, 28, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                GestureDetector(
-                                  onTap: isLoading
-                                      ? null
-                                      : () async {
-                                          HapticFeedback.mediumImpact();
-                                          if (!await requireProAccess(
-                                            context,
-                                          )) {
-                                            return;
-                                          }
-                                          try {
-                                            await dashboardStore
-                                                .acceptProposal();
-                                            if (context.mounted) {
-                                              Navigator.pop(context);
-                                            }
-                                          } catch (_) {
-                                            // Error handled in store; modal stays open
-                                          }
-                                        },
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 64,
-                                    decoration: BoxDecoration(
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.protein.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_fix_high_rounded,
+                                    color: AppColors.protein,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text(
+                                    'Plan Adjustment Suggested',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
                                       color: AppColors.textPrimary,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        if (isLoading)
-                                          const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    Colors.white,
-                                                  ),
-                                            ),
-                                          )
-                                        else
-                                          const Icon(
-                                            Icons.check_rounded,
-                                            color: Colors.white,
-                                            size: 22,
-                                          ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          isLoading
-                                              ? 'Applying...'
-                                              : 'Accept Changes',
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                            letterSpacing: -0.3,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: isLoading
-                                      ? null
-                                      : () async {
-                                          HapticFeedback.selectionClick();
-                                          if (!await requireProAccess(
-                                            context,
-                                          )) {
-                                            return;
-                                          }
-                                          await dashboardStore
-                                              .rejectAndRegenerateProposal();
-                                          // Modal stays open in case a new proposal arrives
-                                        },
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: AppColors.border,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isLoading
-                                            ? 'Generating...'
-                                            : 'Try Something Else',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                GestureDetector(
-                                  onTap: isLoading
-                                      ? null
-                                      : () async {
-                                          HapticFeedback.selectionClick();
-                                          try {
-                                            await dashboardStore
-                                                .dismissProposal();
-                                            if (context.mounted) {
-                                              Navigator.pop(context);
-                                            }
-                                          } catch (_) {
-                                            // Error handled in store; modal stays open
-                                          }
-                                        },
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        'Dismiss',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textTertiary,
-                                        ),
-                                      ),
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                          );
-                        },
+                            const SizedBox(height: 20),
+                            Text(
+                              proposal.reason,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                                height: 1.5,
+                              ),
+                            ),
+                            if (changedSlots.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              const Text(
+                                'What will change',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textTertiary,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              for (final slot in changedSlots)
+                                _ChangedSlotRow(slot: slot),
+                            ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Observer(
+                      builder: (_) {
+                        final isLoading = dashboardStore.isGeneratingPlan.value;
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(28, 12, 28, 16),
+                          child: Column(
+                            children: [
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () async {
+                                        HapticFeedback.mediumImpact();
+                                        if (!await requireProAccess(context)) {
+                                          return;
+                                        }
+                                        try {
+                                          await dashboardStore.acceptProposal();
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                          }
+                                        } catch (_) {
+                                          // Error handled in store; modal stays open
+                                        }
+                                      },
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.textPrimary,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (isLoading)
+                                        const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.white,
+                                                ),
+                                          ),
+                                        )
+                                      else
+                                        const Icon(
+                                          Icons.check_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        isLoading
+                                            ? 'Applying...'
+                                            : 'Accept Changes',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          letterSpacing: -0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () async {
+                                        HapticFeedback.selectionClick();
+                                        if (!await requireProAccess(context)) {
+                                          return;
+                                        }
+                                        await dashboardStore
+                                            .rejectAndRegenerateProposal();
+                                        // Modal stays open in case a new proposal arrives
+                                      },
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      isLoading
+                                          ? 'Generating...'
+                                          : 'Try Something Else',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () async {
+                                        HapticFeedback.selectionClick();
+                                        try {
+                                          await dashboardStore
+                                              .dismissProposal();
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                          }
+                                        } catch (_) {
+                                          // Error handled in store; modal stays open
+                                        }
+                                      },
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Dismiss',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             );

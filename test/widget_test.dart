@@ -205,7 +205,7 @@ void main() {
         '/splash',
         onboardingStage: OnboardingStage.profileSetup,
       ),
-      '/',
+      '/onboarding/gender',
     );
     expect(
       AppRouter.redirectForAuthStatus(

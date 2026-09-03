@@ -41,6 +41,7 @@ class HomeShell extends StatelessWidget {
         width: MediaQuery.sizeOf(context).width - 32,
         height: _navHeight,
         margin: EdgeInsets.zero,
+
         selectedIndex: navigationShell.currentIndex,
         items: _tabs
             .map(

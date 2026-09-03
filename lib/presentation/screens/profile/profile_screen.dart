@@ -50,6 +50,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return map[level] ?? 'Moderately Active';
   }
 
+  String _genderDisplay(String gender) {
+    switch (gender) {
+      case 'male':
+        return 'Male';
+      case 'female':
+        return 'Female';
+      default:
+        return gender;
+    }
+  }
+
   Future<void> _save(ProfilePatchRequest request) async {
     final ok = await profileStore.updateProfile(request);
     if (!mounted) return;
@@ -174,7 +185,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SliverToBoxAdapter(child: _Summary(user: user)),
                   SliverToBoxAdapter(
                     child: _Section(
-                      title: 'Targets',
+                      title: 'About you',
+                      children: [
+                        _ProfileCard(
+                          icon: Icons.cake_rounded,
+                          title: 'Age',
+                          value: '${user.profile.age} years',
+                          onTap: () => _showSliderEdit(
+                            context,
+                            title: 'Age',
+                            value: user.profile.age.toDouble(),
+                            min: 16,
+                            max: 80,
+                            unit: 'years',
+                            onSave: (value) =>
+                                _save(ProfilePatchRequest(age: value.round())),
+                          ),
+                        ),
+                        _ProfileCard(
+                          icon: Icons.height_rounded,
+                          title: 'Height',
+                          value:
+                              '${user.profile.heightCm.toStringAsFixed(0)} cm',
+                          onTap: () => _showSliderEdit(
+                            context,
+                            title: 'Height',
+                            value: user.profile.heightCm,
+                            min: 120,
+                            max: 230,
+                            unit: 'cm',
+                            onSave: (value) => _save(
+                              ProfilePatchRequest(
+                                heightCm: value.roundToDouble(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _ProfileCard(
+                          icon: Icons.person_outline_rounded,
+                          title: 'Gender',
+                          value: _genderDisplay(user.profile.gender),
+                          onTap: () => _showDetailedOptionEdit(
+                            context,
+                            title: 'Gender',
+                            current: user.profile.gender,
+                            options: const [
+                              _OptionDetail('male', 'Male'),
+                              _OptionDetail('female', 'Female'),
+                            ],
+                            onSelected: (value) =>
+                                _save(ProfilePatchRequest(gender: value)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _Section(
+                      title: 'Goals',
                       children: [
                         _ProfileCard(
                           icon: Icons.local_fire_department_rounded,
@@ -186,26 +254,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'Protein',
                           value: '${user.targets.proteinG}g',
                         ),
-                      ],
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: _Section(
-                      title: 'Goal settings',
-                      children: [
                         _ProfileCard(
                           icon: Icons.track_changes_rounded,
                           title: 'Goal',
                           value: _goalDisplay(user.profile.goal),
-                          onTap: () => _showOptionEdit(
+                          onTap: () => _showDetailedOptionEdit(
                             context,
                             title: 'Goal',
                             current: user.profile.goal,
-                            options: const {
-                              'lose_weight': 'Lose Weight',
-                              'maintain': 'Maintain',
-                              'gain_muscle': 'Gain Muscle',
-                            },
+                            options: const [
+                              _OptionDetail(
+                                'lose_weight',
+                                'Lose Weight',
+                                'Build a sustainable calorie deficit.',
+                              ),
+                              _OptionDetail(
+                                'maintain',
+                                'Maintain',
+                                'Stay consistent at your current weight.',
+                              ),
+                              _OptionDetail(
+                                'gain_muscle',
+                                'Gain Muscle',
+                                'Fuel training and gradual muscle growth.',
+                              ),
+                            ],
                             onSelected: (value) =>
                                 _save(ProfilePatchRequest(goal: value)),
                           ),
@@ -215,13 +288,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'Current weight',
                           value:
                               '${user.profile.weightKg.toStringAsFixed(1)} kg',
-                          onTap: () => _showNumberEdit(
+                          onTap: () => _showSliderEdit(
                             context,
                             title: 'Current weight',
                             value: user.profile.weightKg,
                             unit: 'kg',
-                            min: 20,
-                            max: 300,
+                            min: 30,
+                            max: 200,
+                            alternateUnit: 'lb',
+                            alternateUnitFactor: 2.20462,
                             onSave: (value) =>
                                 _save(ProfilePatchRequest(weightKg: value)),
                           ),
@@ -231,13 +306,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'Target weight',
                           value:
                               '${user.profile.targetWeightKg.toStringAsFixed(1)} kg',
-                          onTap: () => _showNumberEdit(
+                          onTap: () => _showSliderEdit(
                             context,
                             title: 'Target weight',
                             value: user.profile.targetWeightKg,
                             unit: 'kg',
-                            min: 20,
-                            max: 300,
+                            min: 30,
+                            max: 200,
+                            alternateUnit: 'lb',
+                            alternateUnitFactor: 2.20462,
                             onSave: (value) => _save(
                               ProfilePatchRequest(targetWeightKg: value),
                             ),
@@ -247,17 +324,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.directions_run_rounded,
                           title: 'Activity level',
                           value: _activityDisplay(user.profile.activityLevel),
-                          onTap: () => _showOptionEdit(
+                          onTap: () => _showDetailedOptionEdit(
                             context,
                             title: 'Activity level',
                             current: user.profile.activityLevel,
-                            options: const {
-                              'sedentary': 'Sedentary',
-                              'light': 'Lightly Active',
-                              'moderate': 'Moderately Active',
-                              'active': 'Very Active',
-                              'very_active': 'Extremely Active',
-                            },
+                            options: const [
+                              _OptionDetail(
+                                'sedentary',
+                                'Sedentary',
+                                'Little to no intentional exercise.',
+                              ),
+                              _OptionDetail(
+                                'light',
+                                'Lightly Active',
+                                'Light exercise 1–3 days a week.',
+                              ),
+                              _OptionDetail(
+                                'moderate',
+                                'Moderately Active',
+                                'Exercise 3–5 days a week.',
+                              ),
+                              _OptionDetail(
+                                'active',
+                                'Very Active',
+                                'Hard exercise 6–7 days a week.',
+                              ),
+                              _OptionDetail(
+                                'very_active',
+                                'Extremely Active',
+                                'Very hard training or a physical job.',
+                              ),
+                            ],
                             onSelected: (value) => _save(
                               ProfilePatchRequest(activityLevel: value),
                             ),
@@ -284,14 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           value: user.profile.country?.isNotEmpty == true
                               ? user.profile.country!
                               : 'Not set',
-                          onTap: () => _showTextEdit(
-                            context,
-                            title: 'Country code',
-                            value: user.profile.country ?? '',
-                            hint: 'US, PK, IN',
-                            onSave: (value) =>
-                                _save(ProfilePatchRequest(country: value)),
-                          ),
+                          onTap: () => _showFoodPreferencesEdit(context, user),
                         ),
                         _ProfileCard(
                           icon: Icons.ramen_dining_rounded,
@@ -299,21 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           value: user.profile.preferredCuisines.isEmpty
                               ? 'Not set'
                               : user.profile.preferredCuisines.join(', '),
-                          onTap: () => _showTextEdit(
-                            context,
-                            title: 'Preferred cuisines',
-                            value: user.profile.preferredCuisines.join(', '),
-                            hint: 'Pakistani, Mexican',
-                            onSave: (value) => _save(
-                              ProfilePatchRequest(
-                                preferredCuisines: value
-                                    .split(',')
-                                    .map((item) => item.trim())
-                                    .where((item) => item.isNotEmpty)
-                                    .toList(),
-                              ),
-                            ),
-                          ),
+                          onTap: () => _showFoodPreferencesEdit(context, user),
                         ),
                       ],
                     ),
@@ -838,11 +914,202 @@ class _DeleteAccountSheet extends StatelessWidget {
   }
 }
 
-Future<void> _showOptionEdit(
+Future<void> _showSliderEdit(
+  BuildContext context, {
+  required String title,
+  required double value,
+  required String unit,
+  required double min,
+  required double max,
+  String? alternateUnit,
+  double? alternateUnitFactor,
+  required ValueChanged<double> onSave,
+}) {
+  var selectedValue = value.clamp(min, max);
+  var usesAlternateUnit = false;
+  return showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => StatefulBuilder(
+      builder: (context, setModalState) => _SheetFrame(
+        title: title,
+        child: Column(
+          children: [
+            if (alternateUnit != null) ...[
+              _UnitPicker(
+                primaryUnit: unit,
+                alternateUnit: alternateUnit,
+                usesAlternateUnit: usesAlternateUnit,
+                onChanged: (value) =>
+                    setModalState(() => usesAlternateUnit = value),
+              ),
+              const SizedBox(height: 18),
+            ],
+            Text(
+              (usesAlternateUnit
+                      ? selectedValue * alternateUnitFactor!
+                      : selectedValue)
+                  .toStringAsFixed(unit == 'years' ? 0 : 1),
+              style: const TextStyle(
+                fontSize: 56,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -2,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              usesAlternateUnit ? alternateUnit! : unit,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: AppColors.primary,
+                inactiveTrackColor: AppColors.surface,
+                thumbColor: AppColors.primary,
+                trackHeight: 6,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
+              ),
+              child: Slider(
+                value: usesAlternateUnit
+                    ? selectedValue * alternateUnitFactor!
+                    : selectedValue,
+                min: usesAlternateUnit ? min * alternateUnitFactor! : min,
+                max: usesAlternateUnit ? max * alternateUnitFactor! : max,
+                divisions: usesAlternateUnit
+                    ? ((max - min) * alternateUnitFactor!).round()
+                    : (max - min).round(),
+                onChanged: (newValue) => setModalState(() {
+                  selectedValue = usesAlternateUnit
+                      ? newValue / alternateUnitFactor!
+                      : newValue;
+                }),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${usesAlternateUnit ? (min * alternateUnitFactor!).round() : min.round()}',
+                  style: const TextStyle(color: AppColors.textTertiary),
+                ),
+                Text(
+                  '${usesAlternateUnit ? (max * alternateUnitFactor!).round() : max.round()}',
+                  style: const TextStyle(color: AppColors.textTertiary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _SheetButton(
+              label: 'Save',
+              onTap: () {
+                Navigator.pop(context);
+                onSave(selectedValue);
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _UnitPicker extends StatelessWidget {
+  final String primaryUnit;
+  final String alternateUnit;
+  final bool usesAlternateUnit;
+  final ValueChanged<bool> onChanged;
+
+  const _UnitPicker({
+    required this.primaryUnit,
+    required this.alternateUnit,
+    required this.usesAlternateUnit,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _UnitPickerOption(
+              label: primaryUnit,
+              selected: !usesAlternateUnit,
+              onTap: () => onChanged(false),
+            ),
+            _UnitPickerOption(
+              label: alternateUnit,
+              selected: usesAlternateUnit,
+              onTap: () => onChanged(true),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitPickerOption extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _UnitPickerOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.background : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OptionDetail {
+  final String value;
+  final String label;
+  final String? description;
+
+  const _OptionDetail(this.value, this.label, [this.description]);
+}
+
+Future<void> _showDetailedOptionEdit(
   BuildContext context, {
   required String title,
   required String current,
-  required Map<String, String> options,
+  required List<_OptionDetail> options,
   required ValueChanged<String> onSelected,
 }) {
   return showModalBottomSheet(
@@ -852,13 +1119,14 @@ Future<void> _showOptionEdit(
       title: title,
       child: Column(
         children: [
-          for (final entry in options.entries)
-            _SheetOption(
-              label: entry.value,
-              selected: entry.key == current,
+          for (final option in options)
+            _DetailedSheetOption(
+              label: option.label,
+              description: option.description,
+              selected: option.value == current,
               onTap: () {
                 Navigator.pop(context);
-                onSelected(entry.key);
+                onSelected(option.value);
               },
             ),
         ],
@@ -867,109 +1135,242 @@ Future<void> _showOptionEdit(
   );
 }
 
-Future<void> _showNumberEdit(
-  BuildContext context, {
-  required String title,
-  required double value,
-  required String unit,
-  required double min,
-  required double max,
-  required ValueChanged<double> onSave,
-}) {
-  final controller = TextEditingController(text: value.toStringAsFixed(1));
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => _SheetFrame(
-      title: title,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          children: [
-            TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              autofocus: true,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.surface,
-                hintText: unit,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.all(20),
-              ),
-            ),
-            const SizedBox(height: 18),
-            _SheetButton(
-              label: 'Save',
-              onTap: () {
-                final parsed = double.tryParse(controller.text.trim());
-                if (parsed == null || parsed < min || parsed > max) return;
-                Navigator.pop(context);
-                onSave(parsed);
-              },
-            ),
-          ],
-        ),
-      ),
-    ),
-  ).whenComplete(controller.dispose);
+const _profileCountries = <_ProfileCountryOption>[
+  _ProfileCountryOption('IN', 'India', '🇮🇳'),
+  _ProfileCountryOption('PK', 'Pakistan', '🇵🇰'),
+  _ProfileCountryOption('AE', 'United Arab Emirates', '🇦🇪'),
+  _ProfileCountryOption('US', 'United States', '🇺🇸'),
+  _ProfileCountryOption('GB', 'United Kingdom', '🇬🇧'),
+  _ProfileCountryOption('CA', 'Canada', '🇨🇦'),
+  _ProfileCountryOption('AU', 'Australia', '🇦🇺'),
+];
+
+const _profileCuisines = <String, List<String>>{
+  'IN': [
+    'North Indian',
+    'South Indian',
+    'Mughlai',
+    'Hyderabadi',
+    'Punjabi',
+    'Bengali',
+    'Gujarati',
+    'Tamil',
+    'Kerala',
+  ],
+  'PK': ['Pakistani', 'Punjabi', 'Mughlai', 'Sindhi', 'Pashtun'],
+  'AE': ['Emirati', 'Middle Eastern', 'Levantine', 'Indian'],
+  'US': ['American', 'Mexican', 'Italian', 'Asian'],
+  'GB': ['British', 'Indian', 'Mediterranean', 'European'],
+  'CA': ['Canadian', 'Indian', 'Asian', 'Mediterranean'],
+  'AU': ['Australian', 'Asian', 'Mediterranean', 'Indian'],
+};
+
+class _ProfileCountryOption {
+  final String code;
+  final String name;
+  final String emoji;
+
+  const _ProfileCountryOption(this.code, this.name, this.emoji);
 }
 
-Future<void> _showTextEdit(
-  BuildContext context, {
-  required String title,
-  required String value,
-  required String hint,
-  required ValueChanged<String> onSave,
-}) {
-  final controller = TextEditingController(text: value);
+Future<void> _showFoodPreferencesEdit(BuildContext context, User user) {
+  final initialCountry = user.profile.country;
+  var country = _profileCountries.any((item) => item.code == initialCountry)
+      ? initialCountry!
+      : _profileCountries.first.code;
+  final selected = user.profile.preferredCuisines.toSet();
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _SheetFrame(
-      title: title,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          children: [
-            TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.surface,
-                hintText: hint,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.all(20),
-              ),
+    builder: (_) => StatefulBuilder(
+      builder: (context, setModalState) => _FoodPreferencesEditSheet(
+        country: country,
+        selectedCuisines: selected,
+        onCountryChanged: (value) => setModalState(() {
+          country = value;
+          selected.clear();
+        }),
+        onCuisineToggled: (value) => setModalState(() {
+          selected.contains(value)
+              ? selected.remove(value)
+              : selected.add(value);
+        }),
+        onSave: () {
+          Navigator.pop(context);
+          profileStore.updateProfile(
+            ProfilePatchRequest(
+              country: country,
+              preferredCuisines: selected.toList(),
             ),
-            const SizedBox(height: 18),
-            _SheetButton(
-              label: 'Save',
-              onTap: () {
-                Navigator.pop(context);
-                onSave(controller.text.trim());
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     ),
-  ).whenComplete(controller.dispose);
+  );
+}
+
+class _FoodPreferencesEditSheet extends StatelessWidget {
+  final String country;
+  final Set<String> selectedCuisines;
+  final ValueChanged<String> onCountryChanged;
+  final ValueChanged<String> onCuisineToggled;
+  final VoidCallback onSave;
+
+  const _FoodPreferencesEditSheet({
+    required this.country,
+    required this.selectedCuisines,
+    required this.onCountryChanged,
+    required this.onCuisineToggled,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cuisines = _profileCuisines[country] ?? const <String>[];
+    return Container(
+      height: MediaQuery.sizeOf(context).height * .86,
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 12, 20, 16),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Food preferences',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -.6,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.surface,
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 16),
+              children: [
+                const Text(
+                  'Country',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: country,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 18,
+                    ),
+                  ),
+                  items: _profileCountries
+                      .map(
+                        (item) => DropdownMenuItem(
+                          value: item.code,
+                          child: Text(
+                            '${item.emoji}  ${item.name}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) onCountryChanged(value);
+                  },
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Your favorites',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Pick the cuisines you want to see more often.',
+                  style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: cuisines.map((item) {
+                    final selected = selectedCuisines.contains(item);
+                    return GestureDetector(
+                      onTap: () => onCuisineToggled(item),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 13,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.textPrimary
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Text(
+                          item,
+                          style: TextStyle(
+                            color: selected
+                                ? AppColors.textOnPrimary
+                                : AppColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(28, 14, 28, 12),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.border, width: .5),
+              ),
+            ),
+            child: _SheetButton(label: 'Save', onTap: onSave),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> _showRestrictionsEdit(BuildContext context, User user) {
@@ -1020,89 +1421,86 @@ class _RestrictionsEditSheet extends StatelessWidget {
         color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 12, 20, 12),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 12, 20, 12),
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Dietary restrictions',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.6,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surface,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: AppColors.textPrimary,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(28, 4, 28, 12),
-                itemCount: AppConstants.dietaryRestrictions.length,
-                itemBuilder: (context, index) {
-                  final item = AppConstants.dietaryRestrictions[index];
-                  final value = item['value']!;
-                  return _SheetOption(
-                    label: item['label']!,
-                    selected: selected.contains(value),
-                    onTap: () => onToggle(value),
-                  );
-                },
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(28, 14, 28, 12),
-              decoration: const BoxDecoration(
-                color: AppColors.background,
-                border: Border(
-                  top: BorderSide(color: AppColors.border, width: 0.5),
                 ),
-              ),
-              child: _SheetButton(label: 'Save', onTap: onSave),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Dietary restrictions',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textPrimary,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(28, 4, 28, 12),
+              itemCount: AppConstants.dietaryRestrictions.length,
+              itemBuilder: (context, index) {
+                final item = AppConstants.dietaryRestrictions[index];
+                final value = item['value']!;
+                return _SheetOption(
+                  label: item['label']!,
+                  selected: selected.contains(value),
+                  onTap: () => onToggle(value),
+                );
+              },
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(28, 14, 28, 12),
+            decoration: const BoxDecoration(
+              color: AppColors.background,
+              border: Border(
+                top: BorderSide(color: AppColors.border, width: 0.5),
+              ),
+            ),
+            child: _SheetButton(label: 'Save', onTap: onSave),
+          ),
+        ],
       ),
     );
   }
@@ -1122,37 +1520,34 @@ class _SheetFrame extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       padding: const EdgeInsets.fromLTRB(28, 16, 28, 36),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 28),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.6,
-                ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.6,
               ),
-              const SizedBox(height: 20),
-              child,
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            child,
+          ],
         ),
       ),
     );
@@ -1199,6 +1594,79 @@ class _SheetOption extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
+              ),
+            ),
+            if (selected)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.success,
+                size: 22,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailedSheetOption extends StatelessWidget {
+  final String label;
+  final String? description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _DetailedSheetOption({
+    required this.label,
+    this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? AppColors.textPrimary : AppColors.border,
+            width: selected ? 1.2 : .5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             if (selected)
