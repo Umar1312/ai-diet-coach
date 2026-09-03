@@ -38,9 +38,7 @@ class _PlanScreenState extends State<PlanScreen> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(child: _Header()),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                SliverToBoxAdapter(child: _PlanActions(store: store)),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 const SliverToBoxAdapter(child: _SectionLabel('Today so far')),
                 SliverToBoxAdapter(
                   child: Column(
@@ -124,58 +122,6 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Plan Actions (Regenerate)
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _PlanActions extends StatelessWidget {
-  final DashboardStore store;
-  const _PlanActions({required this.store});
-
-  @override
-  Widget build(BuildContext context) {
-    if (store.plannedMeals.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: GestureDetector(
-        onTap: () async {
-          HapticFeedback.selectionClick();
-          if (!await requireProAccess(context)) return;
-          await store.regenerateDayPlan();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.refresh_rounded,
-                color: AppColors.textSecondary,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Regenerate day',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

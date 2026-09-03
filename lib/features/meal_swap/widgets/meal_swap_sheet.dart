@@ -230,6 +230,7 @@ class _AlternativesView extends StatelessWidget {
               if (error != null && mealSwapStore.alternatives.isEmpty) {
                 return _AlternativesError(message: error);
               }
+              final selectedReason = mealSwapStore.selectedReason.value;
               return ListView(
                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                 children: [
@@ -240,6 +241,8 @@ class _AlternativesView extends StatelessWidget {
                   ) ...[
                     _AlternativeCard(
                       alternative: mealSwapStore.alternatives[index],
+                      currentMeal: current.meal,
+                      reason: selectedReason,
                       isBestFit: index == 0,
                     ),
                     const SizedBox(height: 12),
@@ -295,13 +298,25 @@ class _ReasonChip extends StatelessWidget {
 
 class _AlternativeCard extends StatelessWidget {
   final MealAlternative alternative;
+  final Meal currentMeal;
+  final MealSwapReason reason;
   final bool isBestFit;
 
-  const _AlternativeCard({required this.alternative, required this.isBestFit});
+  const _AlternativeCard({
+    required this.alternative,
+    required this.currentMeal,
+    required this.reason,
+    required this.isBestFit,
+  });
 
   @override
   Widget build(BuildContext context) {
     final meal = alternative.meal;
+    final benefits = _benefitLabels(
+      alternative: alternative,
+      currentMeal: currentMeal,
+      reason: reason,
+    );
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -327,32 +342,17 @@ class _AlternativeCard extends StatelessWidget {
                 Text(meal.emoji, style: const TextStyle(fontSize: 30)),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isBestFit)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            'BEST FIT',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.protein,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      Text(
-                        meal.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    meal.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.45,
+                      height: 1.2,
+                    ),
                   ),
                 ),
                 const Icon(
@@ -362,37 +362,25 @@ class _AlternativeCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
-              alternative.whyItFits,
+              benefits.join('  ·  '),
               style: const TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-                height: 1.4,
+                fontWeight: FontWeight.w800,
+                color: AppColors.protein,
+                height: 1.35,
               ),
             ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _SmallPill(label: '${meal.calories} cal'),
-                _SmallPill(label: '${meal.proteinG}g protein'),
-                if (meal.prepMinutes > 0)
-                  _SmallPill(label: '${meal.prepMinutes} min'),
-                if (alternative.usedPantryItems.isNotEmpty)
-                  const _SmallPill(
-                    label: 'Uses your pantry',
-                    highlighted: true,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
-              '${_signed(alternative.calorieDelta)} cal  ·  ${_signed(alternative.proteinDelta)}g protein vs current',
+              [
+                '${meal.calories} cal',
+                '${meal.proteinG}g protein',
+                if (meal.prepMinutes > 0) '${meal.prepMinutes} min',
+              ].join('  ·  '),
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textTertiary,
               ),
@@ -402,6 +390,70 @@ class _AlternativeCard extends StatelessWidget {
       ),
     );
   }
+}
+
+List<String> _benefitLabels({
+  required MealAlternative alternative,
+  required Meal currentMeal,
+  required MealSwapReason reason,
+}) {
+  final labels = <String>[];
+
+  void add(String label) {
+    if (!labels.contains(label) && labels.length < 2) labels.add(label);
+  }
+
+  final calorieLabel = switch (alternative.calorieDelta) {
+    0 => 'Same calories',
+    final delta when delta.abs() <= 50 => 'Similar calories',
+    final delta when delta < 0 => '${delta.abs()} fewer calories',
+    final delta => '$delta more calories',
+  };
+  final proteinLabel = switch (alternative.proteinDelta) {
+    0 => 'Same protein',
+    final delta when delta.abs() <= 2 => 'Similar protein',
+    final delta when delta > 0 => '${delta}g more protein',
+    final delta => '${delta.abs()}g less protein',
+  };
+  final prepDifference = currentMeal.prepMinutes - alternative.meal.prepMinutes;
+  final quickLabel = alternative.meal.prepMinutes <= 0
+      ? 'Quick option'
+      : prepDifference > 0
+      ? '$prepDifference min quicker'
+      : 'Ready in ${alternative.meal.prepMinutes} min';
+
+  switch (reason) {
+    case MealSwapReason.surpriseMe:
+      add(calorieLabel);
+      add(proteinLabel);
+    case MealSwapReason.noIngredients:
+      add(
+        alternative.usedPantryItems.isNotEmpty
+            ? 'Uses your pantry'
+            : 'Simpler ingredients',
+      );
+      add(calorieLabel);
+    case MealSwapReason.quicker:
+      add(quickLabel);
+      add(calorieLabel);
+    case MealSwapReason.notInMood:
+      add('A different option');
+      add(calorieLabel);
+    case MealSwapReason.eatingOut:
+      add('Eating-out friendly');
+      add(calorieLabel);
+    case MealSwapReason.lighter:
+      add(calorieLabel);
+      add(proteinLabel);
+    case MealSwapReason.moreProtein:
+      add(proteinLabel);
+      add(calorieLabel);
+  }
+
+  add(calorieLabel);
+  add(proteinLabel);
+  if (alternative.usedPantryItems.isNotEmpty) add('Uses your pantry');
+  return labels;
 }
 
 class _ChooseOwnCard extends StatelessWidget {
@@ -947,34 +999,6 @@ class _InlineError extends StatelessWidget {
   }
 }
 
-class _SmallPill extends StatelessWidget {
-  final String label;
-  final bool highlighted;
-
-  const _SmallPill({required this.label, this.highlighted = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: highlighted
-            ? AppColors.protein.withValues(alpha: 0.12)
-            : AppColors.background,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: highlighted ? AppColors.protein : AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
-
 class _RoundIcon extends StatelessWidget {
   final IconData icon;
 
@@ -993,5 +1017,3 @@ class _RoundIcon extends StatelessWidget {
     );
   }
 }
-
-String _signed(int value) => value > 0 ? '+$value' : '$value';

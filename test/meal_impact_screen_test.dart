@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:diet_coach_ai/core/di/providers.dart';
+import 'package:diet_coach_ai/features/log_meal/stores/meal_logging_store.dart';
 import 'package:diet_coach_ai/features/meal_impact/meal_impact_screen.dart';
 import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 import 'package:diet_coach_ai/shared/models/home_models.dart';
@@ -19,7 +22,14 @@ void main() {
     final store = DashboardStore()
       ..applyMealLogResponse(_logResponse(withAdjustment: false));
 
-    await tester.pumpWidget(MaterialApp(home: MealImpactScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MealImpactScreen(
+          store: store,
+          loggingStore: _loggingStoreFor(store),
+        ),
+      ),
+    );
 
     expect(find.text('MEAL LOGGED'), findsOneWidget);
     expect(find.text('You’re still\non track.'), findsOneWidget);
@@ -42,7 +52,14 @@ void main() {
     final store = DashboardStore()
       ..applyMealLogResponse(_logResponse(withAdjustment: true));
 
-    await tester.pumpWidget(MaterialApp(home: MealImpactScreen(store: store)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MealImpactScreen(
+          store: store,
+          loggingStore: _loggingStoreFor(store),
+        ),
+      ),
+    );
 
     expect(find.text('Your day can\nstill work.'), findsOneWidget);
     expect(find.text('Update my day'), findsOneWidget);
@@ -69,6 +86,11 @@ void main() {
     expect(store.consumedCalories.value, 720);
   });
 }
+
+MealLoggingStore _loggingStoreFor(DashboardStore store) => MealLoggingStore(
+  apiService: ApiService(Dio(BaseOptions(baseUrl: 'http://localhost'))),
+  dashboardStore: store,
+);
 
 MealLogResponse _logResponse({required bool withAdjustment}) {
   const currentDinner = PlannedMeal(

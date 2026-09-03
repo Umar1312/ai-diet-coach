@@ -343,13 +343,19 @@ class ApiService {
 
   Future<FoodSearchResponse> searchFoods({
     required String q,
+    String source = 'all',
     int page = 1,
     int pageSize = 20,
   }) async {
     return _wrap(() async {
       final response = await _dio.get(
         '/foods/search',
-        queryParameters: {'q': q.trim(), 'page': page, 'page_size': pageSize},
+        queryParameters: {
+          'q': q.trim(),
+          'source': source,
+          'page': page,
+          'page_size': pageSize,
+        },
       );
       return FoodSearchResponse.fromJson(response.data);
     });

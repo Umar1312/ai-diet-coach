@@ -979,40 +979,133 @@ Future<void> _showRestrictionsEdit(BuildContext context, User user) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => StatefulBuilder(
-      builder: (context, setModalState) => _SheetFrame(
-        title: 'Dietary restrictions',
+      builder: (context, setModalState) => _RestrictionsEditSheet(
+        selected: selected,
+        onToggle: (value) {
+          setModalState(() {
+            if (selected.contains(value)) {
+              selected.remove(value);
+            } else {
+              selected.add(value);
+            }
+          });
+        },
+        onSave: () {
+          Navigator.pop(context);
+          profileStore.updateProfile(
+            ProfilePatchRequest(dietaryRestrictions: selected.toList()),
+          );
+        },
+      ),
+    ),
+  );
+}
+
+class _RestrictionsEditSheet extends StatelessWidget {
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+  final VoidCallback onSave;
+
+  const _RestrictionsEditSheet({
+    required this.selected,
+    required this.onToggle,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.sizeOf(context).height * 0.92,
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SafeArea(
+        top: false,
         child: Column(
           children: [
-            for (final item in AppConstants.dietaryRestrictions)
-              _SheetOption(
-                label: item['label']!,
-                selected: selected.contains(item['value']),
-                onTap: () {
-                  setModalState(() {
-                    final value = item['value']!;
-                    if (selected.contains(value)) {
-                      selected.remove(value);
-                    } else {
-                      selected.add(value);
-                    }
-                  });
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 12, 20, 12),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Dietary restrictions',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.6,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textPrimary,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(28, 4, 28, 12),
+                itemCount: AppConstants.dietaryRestrictions.length,
+                itemBuilder: (context, index) {
+                  final item = AppConstants.dietaryRestrictions[index];
+                  final value = item['value']!;
+                  return _SheetOption(
+                    label: item['label']!,
+                    selected: selected.contains(value),
+                    onTap: () => onToggle(value),
+                  );
                 },
               ),
-            const SizedBox(height: 12),
-            _SheetButton(
-              label: 'Save',
-              onTap: () {
-                Navigator.pop(context);
-                profileStore.updateProfile(
-                  ProfilePatchRequest(dietaryRestrictions: selected.toList()),
-                );
-              },
+            ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(28, 14, 28, 12),
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 0.5),
+                ),
+              ),
+              child: _SheetButton(label: 'Save', onTap: onSave),
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SheetFrame extends StatelessWidget {

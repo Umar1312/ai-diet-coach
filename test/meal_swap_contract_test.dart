@@ -103,11 +103,11 @@ void main() {
       'current_meal': _mealJson('Chicken salad', 500, 40),
       'alternatives': [
         {
-          'meal': _mealJson('Paneer bowl', 480, 34),
+          'meal': _mealJson('Paneer bowl', 500, 44),
           'why_it_fits': 'A quick high-protein alternative.',
           'used_pantry_items': ['Paneer'],
-          'calorie_delta': -20,
-          'protein_delta': -6,
+          'calorie_delta': 0,
+          'protein_delta': 4,
           'carbs_delta': 10,
           'fats_delta': 2,
         },
@@ -141,8 +141,16 @@ void main() {
 
     expect(find.text('Change this meal'), findsOneWidget);
     expect(find.text('Paneer bowl'), findsOneWidget);
+    expect(find.text('Same calories  ·  4g more protein'), findsOneWidget);
+    expect(find.text('500 cal  ·  44g protein  ·  15 min'), findsOneWidget);
+    expect(find.text('A quick high-protein alternative.'), findsNothing);
+    expect(find.text('BEST FIT'), findsNothing);
     expect(find.text('Choose my own'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text("Don't have ingredients"));
+    await tester.pumpAndSettle();
+    expect(find.text('Uses your pantry  ·  Same calories'), findsOneWidget);
 
     await tester.tap(find.text('Paneer bowl'));
     await tester.pumpAndSettle();

@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/features/log_meal/stores/meal_logging_store.dart';
 import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/main.dart' show dashboardStore, mealLoggingStore;
 import 'package:diet_coach_ai/shared/models/meal_log_item.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
@@ -14,8 +17,9 @@ enum _ImpactAction { accepting, regenerating, keeping }
 
 class MealImpactScreen extends StatefulWidget {
   final DashboardStore? store;
+  final MealLoggingStore? loggingStore;
 
-  const MealImpactScreen({super.key, this.store});
+  const MealImpactScreen({super.key, this.store, this.loggingStore});
 
   @override
   State<MealImpactScreen> createState() => _MealImpactScreenState();
@@ -26,6 +30,7 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
   String? _errorMessage;
 
   DashboardStore get _store => widget.store ?? dashboardStore;
+  MealLoggingStore get _loggingStore => widget.loggingStore ?? mealLoggingStore;
 
   Future<bool> _unlockAdaptation() async {
     return requireProAccess(context);
@@ -111,8 +116,27 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
         bottom: false,
         child: Observer(
           builder: (_) {
+            if (_loggingStore.isLogging) {
+              return _MealImpactLoading(
+                mealName: _loggingStore.pendingMealName.value,
+                mealEmoji: _loggingStore.pendingMealEmoji.value,
+                onLeave: () => context.go('/home'),
+              );
+            }
+
             final loggedMeal = _store.lastLoggedMeal.value;
             if (loggedMeal == null) {
+              final logError = _loggingStore.errorMessage.value;
+              if (logError != null && _loggingStore.canRetry) {
+                return _MealLogFailure(
+                  message: logError,
+                  onRetry: () {
+                    HapticFeedback.mediumImpact();
+                    unawaited(_loggingStore.retryLastLog());
+                  },
+                  onBack: () => context.go('/log'),
+                );
+              }
               return _MissingImpact(onClose: () => context.go('/home'));
             }
 
@@ -961,6 +985,277 @@ class _ImpactActions extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MealImpactLoading extends StatelessWidget {
+  final String? mealName;
+  final String mealEmoji;
+  final VoidCallback onLeave;
+
+  const _MealImpactLoading({
+    required this.mealName,
+    required this.mealEmoji,
+    required this.onLeave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = mealName?.trim();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.proteinLight,
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_rounded, color: AppColors.protein, size: 16),
+                SizedBox(width: 5),
+                Text(
+                  'MEAL RECEIVED',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.protein,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Align(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 112,
+                  height: 112,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(36),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(mealEmoji, style: const TextStyle(fontSize: 48)),
+                ),
+                Positioned(
+                  right: -8,
+                  bottom: -8,
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    padding: const EdgeInsets.all(11),
+                    decoration: const BoxDecoration(
+                      color: AppColors.textPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const CircularProgressIndicator(
+                      color: AppColors.textOnPrimary,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 36),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              displayName == null || displayName.isEmpty
+                  ? 'Logging your meal…'
+                  : 'Logging $displayName…',
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -1,
+                height: 1.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Updating today’s totals and checking what this means for the rest of your plan.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 28),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: const LinearProgressIndicator(
+              minHeight: 6,
+              backgroundColor: AppColors.surface,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'Usually ready in a few seconds',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onLeave();
+            },
+            child: const SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: Center(
+                child: Text(
+                  'Back to today — we’ll keep working',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MealLogFailure extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onBack;
+
+  const _MealLogFailure({
+    required this.message,
+    required this.onRetry,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
+      child: Column(
+        children: [
+          const Spacer(),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: const Icon(
+              Icons.sync_problem_rounded,
+              color: AppColors.error,
+              size: 36,
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'That didn’t go through.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.9,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: onRetry,
+            child: Container(
+              width: double.infinity,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              alignment: Alignment.center,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.refresh_rounded,
+                    color: AppColors.textOnPrimary,
+                    size: 21,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Try again',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textOnPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onBack();
+            },
+            child: const SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: Center(
+                child: Text(
+                  'Back to meal logging',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

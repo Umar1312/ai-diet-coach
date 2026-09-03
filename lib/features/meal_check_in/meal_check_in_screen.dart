@@ -109,7 +109,7 @@ class _MealCheckInScreenState extends State<MealCheckInScreen> {
               onConfirm: _confirm,
               onDifferentMeal: () {
                 HapticFeedback.selectionClick();
-                context.go('/log/text');
+                context.go('/log/search');
               },
               onSnooze: _snooze,
               onSkip: _skip,

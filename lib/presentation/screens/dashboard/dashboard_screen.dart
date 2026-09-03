@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,9 +7,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
-import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
+import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
 class DashboardScreen extends StatefulWidget {
@@ -22,8 +22,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(_loadDashboard());
+  }
+
+  Future<void> _loadDashboard() async {
     if (!dashboardStore.hasLoaded.value && !dashboardStore.isLoading.value) {
-      dashboardStore.refresh();
+      await dashboardStore.refresh();
+    }
+    await _ensureDayPlan();
+  }
+
+  Future<void> _refreshDashboard() async {
+    await dashboardStore.refresh();
+    await _ensureDayPlan();
+  }
+
+  Future<void> _ensureDayPlan() async {
+    if (!mounted || !dashboardStore.hasLoaded.value) return;
+    if (dashboardStore.plannedMeals.isEmpty &&
+        dashboardStore.todayMeals.isEmpty &&
+        !dashboardStore.isGeneratingPlan.value) {
+      await dashboardStore.fetchDayPlan();
     }
   }
 
@@ -38,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: AppColors.surface,
           onRefresh: () async {
             HapticFeedback.mediumImpact();
-            await dashboardStore.refresh();
+            await _refreshDashboard();
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -49,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
               const SliverToBoxAdapter(child: _CalorieHero()),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
-              const SliverToBoxAdapter(child: _NextMeal()),
+              const SliverToBoxAdapter(child: _TodayPlan()),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
               const SliverToBoxAdapter(child: _BigLogButton()),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -355,11 +374,11 @@ class _MacroLegendDot extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Next Meal — one big recommendation
+// Today's plan — compact overview
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _NextMeal extends StatelessWidget {
-  const _NextMeal();
+class _TodayPlan extends StatelessWidget {
+  const _TodayPlan();
 
   @override
   Widget build(BuildContext context) {
@@ -369,131 +388,105 @@ class _NextMeal extends StatelessWidget {
         if (!store.hasLoaded.value) {
           return const SizedBox.shrink();
         }
-        final hasDayPlan = store.plannedMeals.isNotEmpty;
-        if (!hasDayPlan) {
-          return _NoPlanCard(isLoading: store.isGeneratingPlan.value);
-        }
-
-        final meal = store.nextMeal.value;
-        if (meal == null) return const SizedBox.shrink();
+        final meals = store.plannedMeals.toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+        final remainingMeals = meals
+            .where((meal) => meal.status == PlannedMealStatus.planned)
+            .toList();
+        final nextOrder = remainingMeals.isEmpty
+            ? null
+            : remainingMeals.first.order;
+        final completed = meals
+            .where((meal) => meal.status == PlannedMealStatus.logged)
+            .length;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Up next',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Today’s plan',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
+              const SizedBox(height: 14),
+              if (meals.isEmpty)
+                _PlanUnavailable(isLoading: store.isGeneratingPlan.value)
+              else
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.go('/plan');
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: Text(
-                            meal.name,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.8,
-                              height: 1.15,
+                        Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: const BoxDecoration(
+                                color: AppColors.background,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.calendar_today_rounded,
+                                color: AppColors.textPrimary,
+                                size: 18,
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                completed == meals.length
+                                    ? 'Day complete'
+                                    : '$completed of ${meals.length} meals logged',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        for (var index = 0; index < meals.length; index++) ...[
+                          _TodayPlanRow(
+                            plannedMeal: meals[index],
+                            isNext: meals[index].order == nextOrder,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          meal.emoji,
-                          style: const TextStyle(fontSize: 40, height: -0.09),
-                        ),
+                          if (index != meals.length - 1)
+                            const Divider(
+                              height: 1,
+                              thickness: 0.5,
+                              color: AppColors.border,
+                              indent: 56,
+                            ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      meal.whyItFits,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                    /* if (meal.usedPantryItems.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _PantryReasoning(
-                        items: meal.usedPantryItems,
-                        reasoning: meal.pantryReasoning,
-                      ),
-                    ], */
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          HapticFeedback.mediumImpact();
-                          final slot = await showSlotPicker(context);
-                          if (!context.mounted) return;
-                          await store.acceptNextMeal(slot: slot);
-                          if (!context.mounted) return;
-                          context.go('/meal-impact');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.textOnPrimary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        child: const Text('I ate this'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: TextButton(
-                        onPressed: () async {
-                          HapticFeedback.selectionClick();
-                          if (!await requireProAccess(context)) return;
-                          await store.swapNextMeal();
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
-                          textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        child: const Text('Suggest something else'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
             ],
           ),
         );
@@ -502,135 +495,207 @@ class _NextMeal extends StatelessWidget {
   }
 }
 
-class _NoPlanCard extends StatelessWidget {
-  final bool isLoading;
+class _TodayPlanRow extends StatelessWidget {
+  final PlannedMeal plannedMeal;
+  final bool isNext;
 
-  const _NoPlanCard({required this.isLoading});
+  const _TodayPlanRow({required this.plannedMeal, required this.isNext});
+
+  String get _slotLabel => switch (plannedMeal.slot) {
+    'breakfast' => 'BREAKFAST',
+    'lunch' => 'LUNCH',
+    'snack' => 'SNACK',
+    'dinner' => 'DINNER',
+    'late' => 'LATE MEAL',
+    _ => plannedMeal.slot.toUpperCase(),
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(32),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final meal = plannedMeal.meal;
+    final isLogged = plannedMeal.status == PlannedMealStatus.logged;
+    final isSkipped = plannedMeal.status == PlannedMealStatus.skipped;
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 180),
+      opacity: isSkipped ? 0.48 : 1,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Row(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(18),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(meal.emoji, style: const TextStyle(fontSize: 22)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _slotLabel,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textTertiary,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      if (isNext) ...[
+                        const SizedBox(width: 7),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.proteinLight,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: const Text(
+                            'NEXT',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.protein,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.calendar_today_rounded,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    'Today',
+                  const SizedBox(height: 3),
+                  Text(
+                    meal.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
+                      color: isLogged
+                          ? AppColors.textSecondary
+                          : AppColors.textPrimary,
+                      decoration: isSkipped ? TextDecoration.lineThrough : null,
                       letterSpacing: -0.2,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'No plan yet',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.8,
-                height: 1.1,
+                  const SizedBox(height: 3),
+                  Text(
+                    '${meal.calories} cal  ·  ${meal.proteinG}g protein',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            const Text(
-              'Create a simple day plan before picking your next meal.',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 28),
-            GestureDetector(
-              onTap: isLoading
-                  ? null
-                  : () async {
-                      HapticFeedback.mediumImpact();
-                      if (!await requireProAccess(context)) return;
-                      await dashboardStore.fetchDayPlan();
-                    },
-              child: Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: isLoading ? AppColors.border : AppColors.textPrimary,
-                  borderRadius: BorderRadius.circular(18),
+            const SizedBox(width: 10),
+            if (isLogged)
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.proteinLight,
+                  shape: BoxShape.circle,
                 ),
-                child: Center(
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            color: AppColors.textTertiary,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.auto_awesome_rounded,
-                              color: AppColors.textOnPrimary,
-                              size: 21,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Create plan',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textOnPrimary,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
-                        ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.protein,
+                  size: 17,
                 ),
+              )
+            else if (isSkipped)
+              const Icon(
+                Icons.remove_rounded,
+                color: AppColors.textTertiary,
+                size: 22,
+              )
+            else
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textTertiary,
+                size: 22,
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlanUnavailable extends StatelessWidget {
+  final bool isLoading;
+
+  const _PlanUnavailable({required this.isLoading});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          if (isLoading)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: AppColors.textPrimary,
+                strokeWidth: 2.5,
+              ),
+            )
+          else
+            const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.textPrimary,
+              size: 24,
+            ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              isLoading
+                  ? 'Building today’s plan…'
+                  : 'Today’s plan couldn’t load.',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          if (!isLoading)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                dashboardStore.fetchDayPlan();
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Text(
+                  'Retry',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -745,7 +810,7 @@ class _BigLogButton extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.mediumImpact();
-          context.push('/log/text');
+          context.push('/log');
         },
         child: Container(
           width: double.infinity,

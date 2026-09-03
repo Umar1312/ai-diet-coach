@@ -40,7 +40,7 @@ class HomeShell extends StatelessWidget {
       bottomNavigationBar: LiquidGlassTabBar(
         width: MediaQuery.sizeOf(context).width - 32,
         height: _navHeight,
-        margin: const EdgeInsets.only(bottom: _navBottomMargin),
+        margin: EdgeInsets.zero,
         selectedIndex: navigationShell.currentIndex,
         items: _tabs
             .map(

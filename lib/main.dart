@@ -18,7 +18,7 @@ import 'stores/onboarding_store.dart';
 import 'stores/dashboard_store.dart';
 import 'stores/pantry_suggestions_store.dart';
 import 'stores/profile_store.dart';
-import 'features/log_meal/stores/text_log_store.dart';
+import 'features/log_meal/stores/meal_logging_store.dart';
 import 'features/craving/stores/craving_store.dart';
 import 'features/pantry/stores/pantry_store.dart';
 import 'features/customize_day/stores/customize_day_store.dart';
@@ -37,7 +37,10 @@ final onboardingStore = OnboardingStore();
 final dashboardStore = DashboardStore();
 final profileStore = ProfileStore(dashboardStore: dashboardStore);
 final pantryStore = PantryStore(dashboardStore: dashboardStore);
-final textLogStore = TextLogStore();
+final mealLoggingStore = MealLoggingStore(
+  apiService: apiService,
+  dashboardStore: dashboardStore,
+);
 final pantrySuggestionsStore = PantrySuggestionsStore(pantryStore: pantryStore);
 final cravingStore = CravingStore();
 final customizeDayStore = CustomizeDayStore();

@@ -27,7 +27,8 @@ import 'package:diet_coach_ai/presentation/screens/pantry/pantry_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
 import 'package:diet_coach_ai/presentation/screens/profile/profile_screen.dart';
 
-import 'package:diet_coach_ai/features/log_meal/text_log_screen.dart';
+import 'package:diet_coach_ai/features/log_meal/food_search_screen.dart';
+import 'package:diet_coach_ai/features/log_meal/meal_log_screen.dart';
 import 'package:diet_coach_ai/features/meal_impact/meal_impact_screen.dart';
 import 'package:diet_coach_ai/features/customize_day/customize_day_screen.dart';
 import 'package:diet_coach_ai/features/meal_check_in/meal_check_in_screen.dart';
@@ -164,10 +165,12 @@ class AppRouter {
       ),
 
       // Meal logging (outside shell, push on top)
+      GoRoute(path: '/log', builder: (context, state) => const MealLogScreen()),
       GoRoute(
-        path: '/log/text',
-        builder: (context, state) => const TextLogScreen(),
+        path: '/log/search',
+        builder: (context, state) => const FoodSearchScreen(),
       ),
+      GoRoute(path: '/log/text', redirect: (context, state) => '/log/search'),
       GoRoute(
         path: '/meal-check-in',
         builder: (context, state) =>

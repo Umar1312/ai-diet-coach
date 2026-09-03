@@ -137,6 +137,10 @@ class DashboardStore {
     runInAction(() => lastLoggedMeal.value = response.log);
   }
 
+  void clearLastLoggedMeal() {
+    runInAction(() => lastLoggedMeal.value = null);
+  }
+
   NextMealRecommendation? _resolveNextMeal(DailyPlan plan) {
     if (plan.nextMeal != null) return plan.nextMeal;
     if (plan.consumed.calories >= plan.targets.calories) return null;
