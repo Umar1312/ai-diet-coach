@@ -2,6 +2,7 @@ import 'package:mobx/mobx.dart';
 
 import 'package:diet_coach_ai/core/di/providers.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
+import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
 import 'package:diet_coach_ai/stores/notification_store.dart';
 
@@ -54,7 +55,8 @@ class MealCheckInStore {
       await dashboardStore.addMeal(
         meal.meal,
         source: 'notification',
-        slot: meal.slot,
+        intent: MealLogIntent.planned,
+        slotId: meal.id,
       );
       return true;
     } on ApiException catch (error) {
@@ -75,7 +77,7 @@ class MealCheckInStore {
       errorMessage.value = '';
     });
     try {
-      await dashboardStore.skipSlot(meal.order);
+      await dashboardStore.skipSlot(meal.id);
       final updated = plannedMeal;
       if (updated?.status != PlannedMealStatus.skipped) {
         runInAction(() {

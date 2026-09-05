@@ -1,0 +1,66 @@
+{
+  "id": "plan-2026-09-05",
+  "revision": 13,
+  "context_version": "profile-4:pantry-8",
+  "adaptation_status": "proposal_ready",
+  "adaptation_access": {
+    "is_pro": false,
+    "allowance_total": 3,
+    "accepted_count": 1,
+    "remaining": 2,
+    "can_accept": true
+  },
+  "day_id": "2026-09-05",
+  "user_id": "user-1",
+  "targets": {"calories": 2100, "protein_g": 150, "carbs_g": 230, "fats_g": 68},
+  "consumed": {"calories": 930, "protein_g": 55, "carbs_g": 110, "fats_g": 32},
+  "meals": [],
+  "planned_meals": [
+    {
+      "id": "dinner-slot",
+      "slot": "dinner",
+      "order": 3,
+      "meal": {
+        "name": "Dal rice",
+        "emoji": "🍛",
+        "prep_minutes": 25,
+        "calories": 650,
+        "protein_g": 30,
+        "carbs_g": 85,
+        "fats_g": 18,
+        "servings": 1.5,
+        "serving_unit": "bowl",
+        "nutrition_basis": {
+          "serving_amount": 1,
+          "serving_unit": "bowl",
+          "calories": 433,
+          "protein_g": 20,
+          "carbs_g": 57,
+          "fats_g": 12
+        },
+        "components": [],
+        "ingredients": [{"name": "Lentils", "amount": 1, "unit": "cup", "is_available": true}],
+        "preparation_steps": ["Simmer the lentils."]
+      },
+      "status": "planned",
+      "logged_meal_id": null,
+      "is_optional": false,
+      "is_protected": true
+    }
+  ],
+  "pending_proposal": {
+    "id": "proposal-1",
+    "source_plan_revision": 13,
+    "context_version": "profile-4:pantry-8",
+    "trigger": "meal_logged",
+    "reason": "A smaller snack keeps dinner unchanged.",
+    "patches": [],
+    "changed_slots": []
+  },
+  "next_meal": null,
+  "recalibration": null,
+  "day_status": "on_track",
+  "ai_card_text": "Dinner stays as planned.",
+  "ai_card_state": "on_track",
+  "generated_at": "2026-09-05T13:00:00Z"
+}

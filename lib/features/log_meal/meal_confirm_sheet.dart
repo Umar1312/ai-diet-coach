@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 
 import 'package:diet_coach_ai/shared/models/meal.dart';
+import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
 
@@ -112,7 +113,10 @@ class MealConfirmSheet extends StatelessWidget {
                   onPressed: () async {
                     HapticFeedback.mediumImpact();
 
-                    await dashboardStore.addMeal(meal);
+                    await dashboardStore.addMeal(
+                      meal,
+                      intent: MealLogIntent.extra,
+                    );
 
                     if (!context.mounted) return;
                     final router = GoRouter.of(context);

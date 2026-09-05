@@ -95,6 +95,7 @@ class PantryStore {
       // Refresh dashboard so AI recalculates without the deleted item.
       if (dashboardStore != null) {
         final plan = await apiService.fetchDashboard(
+          dayId: dashboardStore!.activeDayId.value,
           preferPantry: items.isNotEmpty,
         );
         dashboardStore!.applyPlan(plan);

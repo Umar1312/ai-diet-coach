@@ -209,9 +209,9 @@ class _EnabledCard extends StatelessWidget {
             const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 strokeWidth: 2.5,
-                color: AppColors.textPrimary,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
               ),
             )
           else

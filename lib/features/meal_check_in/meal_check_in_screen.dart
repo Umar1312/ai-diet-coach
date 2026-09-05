@@ -93,7 +93,7 @@ class _MealCheckInScreenState extends State<MealCheckInScreen> {
             final error = mealCheckInStore.errorMessage.value;
             if (isLoading) {
               return const Center(
-                child: CircularProgressIndicator(color: AppColors.textPrimary),
+                child: CircularProgressIndicator.adaptive(valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary)),
               );
             }
             if (meal == null) {
@@ -278,8 +278,8 @@ class _PrimaryButton extends StatelessWidget {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
-                  color: AppColors.textOnPrimary,
+                child: CircularProgressIndicator.adaptive(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                   strokeWidth: 2.5,
                 ),
               )

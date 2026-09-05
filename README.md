@@ -1,6 +1,6 @@
-# diet_coach_ai
+# NextMeal
 
-A new Flutter project.
+NextMeal creates personalized meal plans for your nutrition goals.
 
 ## Getting Started
 

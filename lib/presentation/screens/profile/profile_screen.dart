@@ -171,8 +171,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (isLoading && user == null)
                   const SliverFillRemaining(
                     child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.textPrimary,
+                      child: CircularProgressIndicator.adaptive(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                       ),
                     ),
                   )
@@ -414,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         _ProfileCard(
                           icon: Icons.workspace_premium_rounded,
-                          title: 'AI Diet Buddy Pro',
+                          title: 'NextMeal Pro',
                           value: subscriptionStore.displayStatus,
                           onTap: _manageSubscription,
                         ),
@@ -529,7 +529,7 @@ class _Summary extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user.email ?? 'AI Diet Buddy',
+                    user.email ?? 'NextMeal',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -823,9 +823,9 @@ class _DeleteAccountButton extends StatelessWidget {
               ? const SizedBox(
                   width: 22,
                   height: 22,
-                  child: CircularProgressIndicator(
+                  child: CircularProgressIndicator.adaptive(
                     strokeWidth: 2.5,
-                    color: AppColors.error,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
                   ),
                 )
               : const Text(

@@ -18,17 +18,20 @@ class ProposalSheet extends StatelessWidget {
       builder: (_) {
         final proposal = dashboardStore.pendingProposal.value;
         if (proposal == null) return const SizedBox.shrink();
-        final changedSlots = proposal.changedSlots.where((proposed) {
-          final current = dashboardStore.plannedMeals
-              .where((meal) => meal.order == proposed.order)
-              .firstOrNull;
-          if (current == null) return true;
-          return current.meal.name != proposed.meal.name ||
-              current.meal.calories != proposed.meal.calories ||
-              current.meal.proteinG != proposed.meal.proteinG ||
-              current.meal.carbsG != proposed.meal.carbsG ||
-              current.meal.fatsG != proposed.meal.fatsG;
-        }).toList();
+        final changedSlots = proposal
+            .previewChanges(dashboardStore.plannedMeals)
+            .where((proposed) {
+              final current = dashboardStore.plannedMeals
+                  .where((meal) => meal.order == proposed.order)
+                  .firstOrNull;
+              if (current == null) return true;
+              return current.meal.name != proposed.meal.name ||
+                  current.meal.calories != proposed.meal.calories ||
+                  current.meal.proteinG != proposed.meal.proteinG ||
+                  current.meal.carbsG != proposed.meal.carbsG ||
+                  current.meal.fatsG != proposed.meal.fatsG;
+            })
+            .toList();
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -136,7 +139,11 @@ class ProposalSheet extends StatelessWidget {
                                     ? null
                                     : () async {
                                         HapticFeedback.mediumImpact();
-                                        if (!await requireProAccess(context)) {
+                                        if (!dashboardStore
+                                                .adaptationAccess
+                                                .value
+                                                .canAccept &&
+                                            !await requireProAccess(context)) {
                                           return;
                                         }
                                         try {
@@ -162,7 +169,7 @@ class ProposalSheet extends StatelessWidget {
                                         const SizedBox(
                                           width: 22,
                                           height: 22,
-                                          child: CircularProgressIndicator(
+                                          child: CircularProgressIndicator.adaptive(
                                             strokeWidth: 2.5,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
@@ -198,9 +205,6 @@ class ProposalSheet extends StatelessWidget {
                                     ? null
                                     : () async {
                                         HapticFeedback.selectionClick();
-                                        if (!await requireProAccess(context)) {
-                                          return;
-                                        }
                                         await dashboardStore
                                             .rejectAndRegenerateProposal();
                                         // Modal stays open in case a new proposal arrives

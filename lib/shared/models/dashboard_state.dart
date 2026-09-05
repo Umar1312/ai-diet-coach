@@ -21,6 +21,11 @@ enum AICardState {
 }
 
 class DailyPlan {
+  final String id;
+  final int revision;
+  final String contextVersion;
+  final AdaptationStatus adaptationStatus;
+  final AdaptationAccess adaptationAccess;
   final String dayId;
   final String userId;
   final MacroTargets targets;
@@ -36,6 +41,11 @@ class DailyPlan {
   final String generatedAt;
 
   const DailyPlan({
+    this.id = '',
+    this.revision = 0,
+    this.contextVersion = '',
+    this.adaptationStatus = AdaptationStatus.idle,
+    this.adaptationAccess = const AdaptationAccess(),
     required this.dayId,
     required this.userId,
     required this.targets,
@@ -52,6 +62,15 @@ class DailyPlan {
   });
 
   factory DailyPlan.fromJson(Map<String, dynamic> json) => DailyPlan(
+    id: json['id'] as String,
+    revision: json['revision'] as int,
+    contextVersion: json['context_version'] as String,
+    adaptationStatus: AdaptationStatus.fromString(
+      json['adaptation_status'] as String,
+    ),
+    adaptationAccess: AdaptationAccess.fromJson(
+      json['adaptation_access'] as Map<String, dynamic>,
+    ),
     dayId: json['day_id'] as String,
     userId: json['user_id'] as String,
     targets: MacroTargets.fromJson(json['targets'] as Map<String, dynamic>),
@@ -95,6 +114,39 @@ class DailyPlan {
   double get carbsProgress =>
       (consumed.carbsG / targets.carbsG).clamp(0.0, 1.0);
   double get fatsProgress => (consumed.fatsG / targets.fatsG).clamp(0.0, 1.0);
+}
+
+class AdaptationAccess {
+  final bool isPro;
+  final int allowanceTotal;
+  final int acceptedCount;
+  final int remaining;
+  final bool canAccept;
+
+  const AdaptationAccess({
+    this.isPro = false,
+    this.allowanceTotal = 3,
+    this.acceptedCount = 0,
+    this.remaining = 3,
+    this.canAccept = true,
+  });
+
+  factory AdaptationAccess.fromJson(Map<String, dynamic> json) =>
+      AdaptationAccess(
+        isPro: json['is_pro'] as bool,
+        allowanceTotal: json['allowance_total'] as int,
+        acceptedCount: json['accepted_count'] as int,
+        remaining: json['remaining'] as int,
+        canAccept: json['can_accept'] as bool,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'is_pro': isPro,
+    'allowance_total': allowanceTotal,
+    'accepted_count': acceptedCount,
+    'remaining': remaining,
+    'can_accept': canAccept,
+  };
 }
 
 class MacroTargets {

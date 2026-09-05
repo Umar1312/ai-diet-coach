@@ -277,7 +277,7 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
           if (_isLoading && _suggestions.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator.adaptive(),
             )
           else if (_suggestions.isEmpty && !_isLoading)
             Padding(
@@ -326,7 +326,9 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
                         HapticFeedback.mediumImpact();
                         Navigator.pop(
                           context,
-                          item.toComponent(quantity: _quantityFor(item)),
+                          item.toComponent(
+                            quantity: _quantityFor(item).toDouble(),
+                          ),
                         );
                       },
                     );
@@ -347,7 +349,7 @@ class _SlotMealPickerSheetState extends State<_SlotMealPickerSheet> {
                       child: SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                        child: CircularProgressIndicator.adaptive(strokeWidth: 2.5),
                       ),
                     ),
                   );
@@ -451,9 +453,9 @@ class _SearchLoadingIndicator extends StatelessWidget {
           SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               strokeWidth: 2,
-              color: AppColors.textTertiary,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textTertiary),
             ),
           ),
           SizedBox(width: 10),
@@ -503,7 +505,7 @@ class _EstimateFoodAction extends StatelessWidget {
                       child: SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator.adaptive(strokeWidth: 2),
                       ),
                     )
                   : const Icon(

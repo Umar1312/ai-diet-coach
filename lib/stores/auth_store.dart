@@ -51,6 +51,8 @@ class AuthStore {
   final status = Observable<AuthStatus>(AuthStatus.unknown);
   final firebaseUser = Observable<User?>(null);
   final isLoading = Observable<bool>(false);
+  final isAppleLoading = Observable<bool>(false);
+  final isGoogleLoading = Observable<bool>(false);
   final errorMessage = Observable<String?>(null);
   final isProfileComplete = Observable<bool>(false);
   final onboardingStage = Observable<OnboardingStage>(
@@ -169,7 +171,7 @@ class AuthStore {
 
   Future<void> signInWithApple() async {
     runInAction(() {
-      isLoading.value = true;
+      isAppleLoading.value = true;
       errorMessage.value = null;
     });
     try {
@@ -205,7 +207,7 @@ class AuthStore {
         () => errorMessage.value = 'Apple Sign In failed. Try again.',
       );
     } finally {
-      runInAction(() => isLoading.value = false);
+      runInAction(() => isAppleLoading.value = false);
     }
   }
 
@@ -213,7 +215,7 @@ class AuthStore {
 
   Future<void> signInWithGoogle() async {
     runInAction(() {
-      isLoading.value = true;
+      isGoogleLoading.value = true;
       errorMessage.value = null;
     });
     try {
@@ -238,7 +240,7 @@ class AuthStore {
         () => errorMessage.value = 'Google Sign In failed. Please try again.',
       );
     } finally {
-      runInAction(() => isLoading.value = false);
+      runInAction(() => isGoogleLoading.value = false);
     }
   }
 

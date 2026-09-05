@@ -1,4 +1,5 @@
 import 'package:mobx/mobx.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/di/providers.dart';
 import '../../shared/models/dashboard_state.dart';
 import '../../shared/models/history_response.dart';
@@ -11,6 +12,7 @@ import '../../shared/models/planned_meal.dart';
 /// MobX store WITHOUT codegen.
 /// All observables/computed are declared manually via Observable()/Computed().
 class DashboardStore {
+  static const _uuid = Uuid();
   // ── Core daily numbers ──────────────────────────────────────────────────
 
   final consumedCalories = Observable<int>(0);
@@ -38,6 +40,14 @@ class DashboardStore {
   final recalibration = Observable<RecalibrationStatus?>(null);
   final plannedMeals = ObservableList<PlannedMeal>();
   final pendingProposal = Observable<ProposedPlan?>(null);
+  final planId = Observable<String>('');
+  final planRevision = Observable<int>(0);
+  final contextVersion = Observable<String>('');
+  final activeDayId = Observable<String>('');
+  final adaptationStatus = Observable<AdaptationStatus>(AdaptationStatus.idle);
+  final adaptationAccess = Observable<AdaptationAccess>(
+    const AdaptationAccess(),
+  );
   final lastLoggedMeal = Observable<MealLogItem?>(null);
   final pantry = ObservableList<PantryItem>();
 
@@ -124,6 +134,12 @@ class DashboardStore {
         ..clear()
         ..addAll(plan.plannedMeals);
       pendingProposal.value = plan.pendingProposal;
+      planId.value = plan.id;
+      planRevision.value = plan.revision;
+      contextVersion.value = plan.contextVersion;
+      activeDayId.value = plan.dayId;
+      adaptationStatus.value = plan.adaptationStatus;
+      adaptationAccess.value = plan.adaptationAccess;
       hasLoaded.value = true;
       hasError.value = false;
       errorMessage.value = '';
@@ -169,6 +185,8 @@ class DashboardStore {
   }
 
   Future<void> refresh() async {
+    final requestedDay = _localDayId();
+    final requestVersion = ++_refreshVersion;
     runInAction(() {
       isLoading.value = true;
       hasError.value = false;
@@ -176,8 +194,10 @@ class DashboardStore {
     try {
       await loadPantry();
       final plan = await apiService.fetchDashboard(
+        dayId: requestedDay,
         preferPantry: pantry.isNotEmpty,
       );
+      if (requestVersion != _refreshVersion) return;
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -194,17 +214,19 @@ class DashboardStore {
   Future<MealLogResponse> addMeal(
     Meal meal, {
     String source = 'text',
-    String? slot,
+    MealLogIntent intent = MealLogIntent.extra,
+    String? slotId,
+    String? operationId,
   }) async {
-    final response = await apiService.logManual(
-      ManualLogRequest(
-        foodName: meal.name,
-        calories: meal.calories,
-        proteinG: meal.proteinG,
-        carbsG: meal.carbsG,
-        fatsG: meal.fatsG,
+    final response = await apiService.createMealLog(
+      MealLogMutationRequest(
+        operationId: operationId ?? _uuid.v4(),
+        dayId: activeDayId.value.isEmpty ? _localDayId() : activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+        intent: intent,
+        slotId: slotId,
         source: source,
-        slot: slot,
+        meal: meal,
       ),
     );
     applyMealLogResponse(response);
@@ -214,18 +236,32 @@ class DashboardStore {
   Future<MealLogResponse?> acceptNextMeal({String? slot}) async {
     final meal = nextMeal.value;
     if (meal == null) return null;
-    final response = await apiService.logManual(
-      ManualLogRequest(
-        foodName: meal.name,
+    PlannedMeal? planned;
+    for (final candidate in plannedMeals) {
+      final matchesRequestedSlot = slot != null && candidate.slot == slot;
+      final matchesRecommendation =
+          slot == null && candidate.meal.name == meal.name;
+      if (candidate.status == PlannedMealStatus.planned &&
+          (matchesRequestedSlot || matchesRecommendation)) {
+        planned = candidate;
+        break;
+      }
+    }
+    if (planned == null) return null;
+    final response = await addMeal(
+      Meal(
+        name: meal.name,
+        emoji: meal.emoji,
+        prepMinutes: meal.prepMinutes,
         calories: meal.calories,
         proteinG: meal.proteinG,
         carbsG: meal.carbsG,
         fatsG: meal.fatsG,
-        source: 'recommendation',
-        slot: slot,
       ),
+      source: 'recommendation',
+      intent: MealLogIntent.planned,
+      slotId: planned.id,
     );
-    applyMealLogResponse(response);
     return response;
   }
 
@@ -275,7 +311,7 @@ class DashboardStore {
       errorMessage.value = '';
     });
     try {
-      final plan = await apiService.fetchDayPlan();
+      final plan = await apiService.fetchDayPlan(dayId: _localDayId());
       applyPlan(plan);
       return true;
     } catch (e) {
@@ -314,7 +350,11 @@ class DashboardStore {
   Future<void> regenerateDayPlan() async {
     runInAction(() => isGeneratingPlan.value = true);
     try {
-      final plan = await apiService.regenerateDayPlan();
+      final plan = await apiService.regenerateDayPlan(
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+        operationId: _uuid.v4(),
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -327,10 +367,16 @@ class DashboardStore {
     }
   }
 
-  Future<void> skipSlot(int order) async {
+  Future<void> skipSlot(String slotId) async {
+    final order = plannedMeals.firstWhere((meal) => meal.id == slotId).order;
     runInAction(() => isSwappingSlot.value = order);
     try {
-      final plan = await apiService.skipSlot(order);
+      final plan = await apiService.skipSlot(
+        slotId,
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+        operationId: _uuid.v4(),
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -340,6 +386,25 @@ class DashboardStore {
       });
     } finally {
       runInAction(() => isSwappingSlot.value = null);
+    }
+  }
+
+  Future<void> protectSlot(String slotId) async {
+    try {
+      final plan = await apiService.protectSlot(
+        slotId,
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+        operationId: _uuid.v4(),
+      );
+      applyPlan(plan);
+    } catch (e) {
+      runInAction(() {
+        errorMessage.value = e is ApiException
+            ? e.message
+            : 'Failed to keep this meal';
+      });
+      rethrow;
     }
   }
 
@@ -360,8 +425,15 @@ class DashboardStore {
   }
 
   Future<void> acceptProposal() async {
+    final proposal = pendingProposal.value;
+    if (proposal == null) return;
     try {
-      final plan = await apiService.acceptProposal();
+      final plan = await apiService.acceptProposal(
+        proposalId: proposal.id,
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+        operationId: _uuid.v4(),
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -374,9 +446,15 @@ class DashboardStore {
   }
 
   Future<void> rejectAndRegenerateProposal() async {
+    final proposal = pendingProposal.value;
+    if (proposal == null) return;
     runInAction(() => isGeneratingPlan.value = true);
     try {
-      final plan = await apiService.rejectProposal(regenerate: true);
+      final plan = await apiService.regenerateProposal(
+        proposalId: proposal.id,
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -390,8 +468,14 @@ class DashboardStore {
   }
 
   Future<void> dismissProposal() async {
+    final proposal = pendingProposal.value;
+    if (proposal == null) return;
     try {
-      final plan = await apiService.rejectProposal(regenerate: false);
+      final plan = await apiService.dismissProposal(
+        proposalId: proposal.id,
+        dayId: activeDayId.value,
+        expectedPlanRevision: planRevision.value,
+      );
       applyPlan(plan);
     } catch (e) {
       runInAction(() {
@@ -418,11 +502,25 @@ class DashboardStore {
       recalibration.value = null;
       plannedMeals.clear();
       pendingProposal.value = null;
+      planId.value = '';
+      planRevision.value = 0;
+      contextVersion.value = '';
+      activeDayId.value = '';
+      adaptationStatus.value = AdaptationStatus.idle;
+      adaptationAccess.value = const AdaptationAccess();
       lastLoggedMeal.value = null;
       pantry.clear();
       hasLoaded.value = false;
       hasError.value = false;
       errorMessage.value = '';
     });
+  }
+
+  int _refreshVersion = 0;
+
+  String _localDayId() {
+    final now = DateTime.now();
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${now.year}-${two(now.month)}-${two(now.day)}';
   }
 }

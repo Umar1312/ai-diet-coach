@@ -9,6 +9,7 @@ import 'package:diet_coach_ai/features/meal_swap/widgets/meal_swap_sheet.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/widgets/proposal_sheet.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
+import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
 
 class PlanScreen extends StatefulWidget {
@@ -232,9 +233,9 @@ class _LoadingDayPlan extends StatelessWidget {
           const SizedBox(
             width: 32,
             height: 32,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               strokeWidth: 3,
-              color: AppColors.textPrimary,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
             ),
           ),
           const SizedBox(height: 16),
@@ -610,7 +611,8 @@ class _LogSlotConfirmSheet extends StatelessWidget {
               await dashboardStore.addMeal(
                 plannedMeal.meal,
                 source: 'recommendation',
-                slot: plannedMeal.slot,
+                intent: MealLogIntent.planned,
+                slotId: plannedMeal.id,
               );
               if (context.mounted) {
                 final router = GoRouter.of(context);

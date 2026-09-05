@@ -53,7 +53,7 @@ class FoodItem {
     source: json['source'] as String?,
   );
 
-  MealComponent toComponent({int quantity = 1}) => MealComponent(
+  MealComponent toComponent({double quantity = 1}) => MealComponent(
     foodItemId: id,
     name: name,
     emoji: emoji,

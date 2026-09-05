@@ -1,11 +1,11 @@
 {
-    "name": "diet_coach_ai",
-    "short_name": "diet_coach_ai",
+    "name": "NextMeal",
+    "short_name": "NextMeal",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Personalized meal planning for your nutrition goals.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

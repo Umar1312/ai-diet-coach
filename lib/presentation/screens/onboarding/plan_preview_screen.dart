@@ -158,8 +158,8 @@ class _BuildingPlanView extends StatelessWidget {
           const SizedBox(
             width: 28,
             height: 28,
-            child: CircularProgressIndicator(
-              color: AppColors.textPrimary,
+            child: CircularProgressIndicator.adaptive(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
               strokeWidth: 2.5,
             ),
           ),
@@ -389,8 +389,8 @@ class _PlanReadyView extends StatelessWidget {
                             ? const SizedBox(
                                 width: 23,
                                 height: 23,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.textOnPrimary,
+                                child: CircularProgressIndicator.adaptive(
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                                   strokeWidth: 2.5,
                                 ),
                               )

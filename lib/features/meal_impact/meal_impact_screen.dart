@@ -33,6 +33,7 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
   MealLoggingStore get _loggingStore => widget.loggingStore ?? mealLoggingStore;
 
   Future<bool> _unlockAdaptation() async {
+    if (_store.adaptationAccess.value.canAccept) return true;
     return requireProAccess(context);
   }
 
@@ -70,12 +71,6 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
       _activeAction = _ImpactAction.regenerating;
       _errorMessage = null;
     });
-    final unlocked = await _unlockAdaptation();
-    if (!mounted) return;
-    if (!unlocked) {
-      setState(() => _activeAction = null);
-      return;
-    }
     await _store.rejectAndRegenerateProposal();
     if (!mounted) return;
     setState(() {
@@ -145,7 +140,7 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
                 ? const <_MealChange>[]
                 : _meaningfulChanges(
                     current: _store.plannedMeals,
-                    proposed: proposal.changedSlots,
+                    proposed: proposal.previewChanges(_store.plannedMeals),
                   );
             final hasAdjustment = proposal != null && changes.isNotEmpty;
             final isOverTarget =
@@ -193,6 +188,9 @@ class _MealImpactScreenState extends State<MealImpactScreen> {
                                 _NoAdjustmentCard(
                                   store: _store,
                                   isOverTarget: isOverTarget,
+                                  onRetry: () => unawaited(
+                                    _loggingStore.retryAdaptation(),
+                                  ),
                                 ),
                             ],
                           ),
@@ -752,12 +750,19 @@ class _NotAppliedNote extends StatelessWidget {
 class _NoAdjustmentCard extends StatelessWidget {
   final DashboardStore store;
   final bool isOverTarget;
+  final VoidCallback onRetry;
 
-  const _NoAdjustmentCard({required this.store, required this.isOverTarget});
+  const _NoAdjustmentCard({
+    required this.store,
+    required this.isOverTarget,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
     final nextMeal = store.nextMeal.value;
+    final unavailable =
+        store.adaptationStatus.value == AdaptationStatus.unavailable;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -775,9 +780,9 @@ class _NoAdjustmentCard extends StatelessWidget {
               color: AppColors.background,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.check_rounded,
-              color: AppColors.protein,
+            child: Icon(
+              unavailable ? Icons.refresh_rounded : Icons.check_rounded,
+              color: unavailable ? AppColors.error : AppColors.protein,
               size: 22,
             ),
           ),
@@ -787,7 +792,11 @@ class _NoAdjustmentCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isOverTarget ? 'Your plan is unchanged' : 'No changes needed',
+                  unavailable
+                      ? 'Meal saved; update unavailable'
+                      : isOverTarget
+                      ? 'Your plan is unchanged'
+                      : 'No changes needed',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -797,7 +806,9 @@ class _NoAdjustmentCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  isOverTarget
+                  unavailable
+                      ? 'Your meal is safely logged. Retry checking the remaining meals without logging it again.'
+                      : isOverTarget
                       ? 'Finish today normally and focus on your next good choice—no compensation required.'
                       : nextMeal == null
                       ? 'Everything is accounted for. Keep listening to your body.'
@@ -809,6 +820,20 @@ class _NoAdjustmentCard extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+                if (unavailable) ...[
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: onRetry,
+                    child: const Text(
+                      'Retry update',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -891,8 +916,8 @@ class _ImpactActions extends StatelessWidget {
                     ? const SizedBox(
                         width: 23,
                         height: 23,
-                        child: CircularProgressIndicator(
-                          color: AppColors.textOnPrimary,
+                        child: CircularProgressIndicator.adaptive(
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                           strokeWidth: 2.5,
                         ),
                       )
@@ -935,8 +960,8 @@ class _ImpactActions extends StatelessWidget {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              color: AppColors.textSecondary,
+                            child: CircularProgressIndicator.adaptive(
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textSecondary),
                               strokeWidth: 2.2,
                             ),
                           )
@@ -966,8 +991,8 @@ class _ImpactActions extends StatelessWidget {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(
-                              color: AppColors.textTertiary,
+                            child: CircularProgressIndicator.adaptive(
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.textTertiary),
                               strokeWidth: 2,
                             ),
                           )
@@ -1058,8 +1083,8 @@ class _MealImpactLoading extends StatelessWidget {
                       color: AppColors.textPrimary,
                       shape: BoxShape.circle,
                     ),
-                    child: const CircularProgressIndicator(
-                      color: AppColors.textOnPrimary,
+                    child: const CircularProgressIndicator.adaptive(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                       strokeWidth: 2.5,
                     ),
                   ),

@@ -143,7 +143,7 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
     return const Center(
       child: Padding(
         padding: EdgeInsets.all(32),
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator.adaptive(),
       ),
     );
   }
@@ -155,7 +155,7 @@ class _PantrySuggestionsScreenState extends State<PantrySuggestionsScreen> {
         child: SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2.5),
+          child: CircularProgressIndicator.adaptive(strokeWidth: 2.5),
         ),
       ),
     );

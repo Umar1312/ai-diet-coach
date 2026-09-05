@@ -1,4 +1,4 @@
-# Backend API Contract — AI Diet Coach
+# Backend API Contract — NextMeal
 
 > **Purpose:** Defines the exact data contracts and endpoints the Flutter client expects from the backend.
 > **Scope:** Models, request/response shapes, status codes, and validation rules. No implementation details.

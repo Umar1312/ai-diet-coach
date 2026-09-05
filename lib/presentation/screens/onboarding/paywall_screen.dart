@@ -139,8 +139,8 @@ class PaywallScreen extends StatelessWidget {
                                     ? const SizedBox(
                                         width: 22,
                                         height: 22,
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.textOnPrimary,
+                                        child: CircularProgressIndicator.adaptive(
+                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
                                           strokeWidth: 2.5,
                                         ),
                                       )

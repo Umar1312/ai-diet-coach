@@ -843,9 +843,9 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 strokeWidth: 2.5,
-                color: Colors.white,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             ),
             const SizedBox(width: 10),
@@ -909,9 +909,9 @@ class _LoadingAlternatives extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(
+          CircularProgressIndicator.adaptive(
             strokeWidth: 2.5,
-            color: AppColors.textPrimary,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
           ),
           SizedBox(height: 16),
           Text(

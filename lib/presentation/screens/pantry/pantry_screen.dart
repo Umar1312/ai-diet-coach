@@ -155,7 +155,7 @@ class _PantryScreenState extends State<PantryScreen> {
                     child: Center(
                       child: Padding(
                         padding: EdgeInsets.all(32),
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator.adaptive(),
                       ),
                     ),
                   )

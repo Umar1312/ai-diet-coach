@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
+import '../../../shared/widgets/nextmeal_app_icon.dart';
 
 /// CAL AI-inspired login screen.
 ///
@@ -55,21 +56,7 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.surface,
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.restaurant_rounded,
-              size: 56,
-              color: AppColors.primary,
-            ),
-          ),
-        ),
+        const NextMealAppIcon(size: 120),
         const SizedBox(height: 32),
         Text(
           AppConstants.appName,
@@ -142,7 +129,7 @@ class _AppleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        final loading = authStore.isLoading.value;
+        final loading = authStore.isAppleLoading.value;
         return _SocialButton(
           label: 'Continue with Apple',
           icon: SvgPicture.string(
@@ -174,7 +161,7 @@ class _GoogleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        final loading = authStore.isLoading.value;
+        final loading = authStore.isGoogleLoading.value;
         return _SocialButton(
           label: 'Continue with Google',
           icon: SvgPicture.string(_googleLogoSvg, width: 20, height: 20),
@@ -230,7 +217,7 @@ class _SocialButton extends StatelessWidget {
             ? SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
+                child: CircularProgressIndicator.adaptive(
                   strokeWidth: 2.5,
                   valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
                 ),

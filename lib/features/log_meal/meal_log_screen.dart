@@ -357,7 +357,7 @@ class _MealStatusIcon extends StatelessWidget {
       return const SizedBox(
         width: 24,
         height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2.4),
+        child: CircularProgressIndicator.adaptive(strokeWidth: 2.4),
       );
     }
     if (status == PlannedMealStatus.logged) {
@@ -468,7 +468,7 @@ class _PlanLoading extends StatelessWidget {
       child: SizedBox(
         width: 26,
         height: 26,
-        child: CircularProgressIndicator(strokeWidth: 2.5),
+        child: CircularProgressIndicator.adaptive(strokeWidth: 2.5),
       ),
     );
   }

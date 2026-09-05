@@ -75,7 +75,7 @@ class _PantryOnboardingScreenState extends State<PantryOnboardingScreen> {
     return const Center(
       child: Padding(
         padding: EdgeInsets.all(32),
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator.adaptive(),
       ),
     );
   }
@@ -471,7 +471,7 @@ class _PrimaryButton extends StatelessWidget {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
+                child: CircularProgressIndicator.adaptive(
                   strokeWidth: 2.5,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     AppColors.textOnPrimary,

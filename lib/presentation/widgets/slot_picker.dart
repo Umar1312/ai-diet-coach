@@ -2,28 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
+import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
-const _slotOptions = [
-  ('breakfast', '🌅 Breakfast'),
-  ('lunch', '🌞 Lunch'),
-  ('snack', '🍎 Snack'),
-  ('dinner', '🌙 Dinner'),
-  ('late', '🌃 Late'),
-];
+const extraMealChoice = '__extra__';
 
 /// Shows a bottom sheet asking "Which meal is this?"
 /// Returns the selected slot string, or null if "None / Off-plan" is chosen.
-Future<String?> showSlotPicker(BuildContext context) async {
+Future<String?> showSlotPicker(
+  BuildContext context,
+  Iterable<PlannedMeal> plannedMeals,
+) async {
   return showModalBottomSheet<String?>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => const _SlotPickerSheet(),
+    builder: (context) => _SlotPickerSheet(
+      plannedMeals: plannedMeals
+          .where((meal) => meal.status == PlannedMealStatus.planned)
+          .toList(),
+    ),
   );
 }
 
 class _SlotPickerSheet extends StatelessWidget {
-  const _SlotPickerSheet();
+  final List<PlannedMeal> plannedMeals;
+
+  const _SlotPickerSheet({required this.plannedMeals});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +63,7 @@ class _SlotPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Link this log to a slot in your day plan, or skip if it\'s off-plan.',
+            'Choose the planned meal it replaced, or mark it as something extra.',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -68,11 +72,11 @@ class _SlotPickerSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          for (final (value, label) in _slotOptions) ...[
+          for (final meal in plannedMeals) ...[
             GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
-                Navigator.pop(context, value);
+                Navigator.pop(context, meal.id);
               },
               child: Container(
                 width: double.infinity,
@@ -83,7 +87,7 @@ class _SlotPickerSheet extends StatelessWidget {
                   border: Border.all(color: AppColors.border, width: 0.5),
                 ),
                 child: Text(
-                  label,
+                  '${meal.meal.emoji} ${_slotLabel(meal.slot)} · ${meal.meal.name}',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
@@ -97,7 +101,7 @@ class _SlotPickerSheet extends StatelessWidget {
           GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
-              Navigator.pop(context, null);
+              Navigator.pop(context, extraMealChoice);
             },
             child: Container(
               width: double.infinity,
@@ -108,7 +112,7 @@ class _SlotPickerSheet extends StatelessWidget {
                 border: Border.all(color: AppColors.border),
               ),
               child: const Text(
-                'None — off-plan log',
+                'Something extra',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
@@ -121,4 +125,7 @@ class _SlotPickerSheet extends StatelessWidget {
       ),
     );
   }
+
+  String _slotLabel(String slot) =>
+      '${slot[0].toUpperCase()}${slot.substring(1)}';
 }

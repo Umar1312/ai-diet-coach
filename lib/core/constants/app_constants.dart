@@ -1,7 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConstants {
-  static const String appName = 'AI Diet Buddy';
+  static const String appName = 'NextMeal';
   static const String appTagline = 'Your Personal AI Nutrition Coach';
 
   // API

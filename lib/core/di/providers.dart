@@ -171,11 +171,17 @@ class ApiService {
     });
   }
 
-  Future<DailyPlan> fetchDashboard({bool preferPantry = false}) async {
+  Future<DailyPlan> fetchDashboard({
+    required String dayId,
+    bool preferPantry = false,
+  }) async {
     return _wrap(() async {
       final response = await _dio.get(
         '/dashboard/state',
-        queryParameters: {if (preferPantry) 'prefer_pantry': 'true'},
+        queryParameters: {
+          'day_id': dayId,
+          if (preferPantry) 'prefer_pantry': 'true',
+        },
       );
       return DailyPlan.fromJson(response.data);
     });
@@ -235,6 +241,13 @@ class ApiService {
     });
   }
 
+  Future<MealLogResponse> createMealLog(MealLogMutationRequest request) async {
+    return _wrap(() async {
+      final response = await _dio.post('/meal-logs', data: request.toJson());
+      return MealLogResponse.fromJson(response.data as Map<String, dynamic>);
+    });
+  }
+
   Future<MealLogResponse> logRecommendation(
     LogRecommendationRequest request,
   ) async {
@@ -252,14 +265,29 @@ class ApiService {
     MealEditRequest request,
   ) async {
     return _wrap(() async {
-      final response = await _dio.patch('/log/$mealId', data: request.toJson());
+      final response = await _dio.patch(
+        '/meal-logs/$mealId',
+        data: request.toJson(),
+      );
       return MealLogResponse.fromJson(response.data);
     });
   }
 
-  Future<DailyPlan> deleteMeal(String mealId) async {
+  Future<DailyPlan> deleteMeal(
+    String mealId, {
+    required String operationId,
+    required String dayId,
+    required int expectedPlanRevision,
+  }) async {
     return _wrap(() async {
-      final response = await _dio.delete('/log/$mealId');
+      final response = await _dio.delete(
+        '/meal-logs/$mealId',
+        data: {
+          'operation_id': operationId,
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+        },
+      );
       return DailyPlan.fromJson(response.data);
     });
   }
@@ -383,7 +411,7 @@ class ApiService {
     PantryUpdateRequest request,
   ) async {
     return _wrap(() async {
-      final response = await _dio.put('/pantry/$id', data: request.toJson());
+      final response = await _dio.patch('/pantry/$id', data: request.toJson());
       return PantryItemResponse.fromJson(response.data);
     });
   }
@@ -403,16 +431,30 @@ class ApiService {
 
   // ── Day Plan (v2.1 proactive daily menu) ────────────────────────────────
 
-  Future<DailyPlan> fetchDayPlan() async {
+  Future<DailyPlan> fetchDayPlan({required String dayId}) async {
     return _wrap(() async {
-      final response = await _dio.get('/day-plan');
+      final response = await _dio.get(
+        '/day-plan',
+        queryParameters: {'day_id': dayId},
+      );
       return DailyPlan.fromJson(response.data);
     });
   }
 
-  Future<DailyPlan> regenerateDayPlan() async {
+  Future<DailyPlan> regenerateDayPlan({
+    required String dayId,
+    required int expectedPlanRevision,
+    required String operationId,
+  }) async {
     return _wrap(() async {
-      final response = await _dio.post('/day-plan/regenerate');
+      final response = await _dio.post(
+        '/day-plan/regenerate',
+        data: {
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+          'operation_id': operationId,
+        },
+      );
       return DailyPlan.fromJson(response.data);
     });
   }
@@ -427,10 +469,41 @@ class ApiService {
     });
   }
 
-  Future<DailyPlan> skipSlot(int order) async {
+  Future<DailyPlan> skipSlot(
+    String slotId, {
+    required String dayId,
+    required int expectedPlanRevision,
+    required String operationId,
+  }) async {
     return _wrap(() async {
-      final response = await _dio.post('/day-plan/slots/$order/skip');
+      final response = await _dio.post(
+        '/day-plan/slots/$slotId/skip',
+        data: {
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+          'operation_id': operationId,
+        },
+      );
       return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> protectSlot(
+    String slotId, {
+    required String dayId,
+    required int expectedPlanRevision,
+    required String operationId,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/slots/$slotId/protect',
+        data: {
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+          'operation_id': operationId,
+        },
+      );
+      return DailyPlan.fromJson(response.data as Map<String, dynamic>);
     });
   }
 
@@ -491,20 +564,69 @@ class ApiService {
     });
   }
 
-  Future<DailyPlan> acceptProposal() async {
+  Future<DailyPlan> acceptProposal({
+    required String proposalId,
+    required String dayId,
+    required int expectedPlanRevision,
+    required String operationId,
+  }) async {
     return _wrap(() async {
-      final response = await _dio.post('/day-plan/proposal/accept');
+      final response = await _dio.post(
+        '/day-plan/proposals/$proposalId/accept',
+        data: {
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+          'operation_id': operationId,
+        },
+      );
       return DailyPlan.fromJson(response.data);
     });
   }
 
-  Future<DailyPlan> rejectProposal({bool regenerate = true}) async {
+  Future<DailyPlan> dismissProposal({
+    required String proposalId,
+    required String dayId,
+    required int expectedPlanRevision,
+  }) async {
     return _wrap(() async {
       final response = await _dio.post(
-        '/day-plan/proposal/reject',
-        data: {'regenerate': regenerate},
+        '/day-plan/proposals/$proposalId/dismiss',
+        data: {'day_id': dayId, 'expected_plan_revision': expectedPlanRevision},
       );
       return DailyPlan.fromJson(response.data);
+    });
+  }
+
+  Future<DailyPlan> regenerateProposal({
+    required String proposalId,
+    required String dayId,
+    required int expectedPlanRevision,
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/proposals/$proposalId/regenerate',
+        data: {'day_id': dayId, 'expected_plan_revision': expectedPlanRevision},
+      );
+      return DailyPlan.fromJson(response.data as Map<String, dynamic>);
+    });
+  }
+
+  Future<AdaptationResult> retryAdaptation({
+    required String dayId,
+    required int expectedPlanRevision,
+    String trigger = 'retry',
+  }) async {
+    return _wrap(() async {
+      final response = await _dio.post(
+        '/day-plan/adaptation/check',
+        data: {
+          'day_id': dayId,
+          'expected_plan_revision': expectedPlanRevision,
+          'trigger': trigger,
+          'excluded_proposal_ids': const <String>[],
+        },
+      );
+      return AdaptationResult.fromJson(response.data as Map<String, dynamic>);
     });
   }
 

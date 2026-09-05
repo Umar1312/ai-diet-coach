@@ -157,7 +157,7 @@ void main() {
 
     expect(dashboard.lastMeal?.name, 'Paneer wrap');
     expect(dashboard.lastSource, 'recommendation');
-    expect(dashboard.lastSlot, 'lunch');
+    expect(dashboard.lastSlot, 'lunch-slot');
     expect(router.state.uri.path, '/meal-impact');
     expect(logging.isLogging, isTrue);
     expect(find.text('MEAL RECEIVED'), findsOneWidget);
@@ -199,6 +199,7 @@ DailyPlan _dailyPlan() => DailyPlan(
   meals: const [],
   plannedMeals: const [
     PlannedMeal(
+      id: 'breakfast-slot',
       slot: 'breakfast',
       order: 0,
       meal: Meal(
@@ -212,6 +213,7 @@ DailyPlan _dailyPlan() => DailyPlan(
       status: PlannedMealStatus.logged,
     ),
     PlannedMeal(
+      id: 'lunch-slot',
       slot: 'lunch',
       order: 1,
       meal: Meal(
@@ -225,6 +227,7 @@ DailyPlan _dailyPlan() => DailyPlan(
       status: PlannedMealStatus.planned,
     ),
     PlannedMeal(
+      id: 'snack-slot',
       slot: 'snack',
       order: 2,
       meal: Meal(
@@ -239,6 +242,7 @@ DailyPlan _dailyPlan() => DailyPlan(
       isOptional: true,
     ),
     PlannedMeal(
+      id: 'dinner-slot',
       slot: 'dinner',
       order: 3,
       meal: Meal(
@@ -301,6 +305,9 @@ Map<String, dynamic> _mealLogResponseJson() {
     'id': 'log-1',
     'user_id': 'user-1',
     'day_id': '2026-09-03',
+    'operation_id': 'operation-1',
+    'intent': 'planned',
+    'slot_id': 'lunch-slot',
     'source': 'recommendation',
     'logged_at': '2026-09-03T13:00:00Z',
     'image_url': null,
@@ -316,6 +323,17 @@ Map<String, dynamic> _mealLogResponseJson() {
   return {
     'log': loggedMeal,
     'updated_plan': {
+      'id': 'plan-1',
+      'revision': 2,
+      'context_version': 'context-1',
+      'adaptation_status': 'not_needed',
+      'adaptation_access': {
+        'is_pro': false,
+        'allowance_total': 3,
+        'accepted_count': 0,
+        'remaining': 3,
+        'can_accept': true,
+      },
       'day_id': '2026-09-03',
       'user_id': 'user-1',
       'targets': {
@@ -333,6 +351,7 @@ Map<String, dynamic> _mealLogResponseJson() {
       'meals': [loggedMeal],
       'planned_meals': [
         {
+          'id': 'dinner-slot',
           'slot': 'dinner',
           'order': 3,
           'meal': _mealJson(
@@ -345,6 +364,7 @@ Map<String, dynamic> _mealLogResponseJson() {
           ),
           'status': 'planned',
           'is_optional': false,
+          'is_protected': false,
         },
       ],
       'pending_proposal': null,
@@ -354,6 +374,11 @@ Map<String, dynamic> _mealLogResponseJson() {
       'ai_card_text': 'You are still in a workable range.',
       'ai_card_state': 'on_track',
       'generated_at': '2026-09-03T13:00:00Z',
+    },
+    'adaptation': {
+      'status': 'not_needed',
+      'proposal': null,
+      'retryable': false,
     },
   };
 }
@@ -395,11 +420,13 @@ class _DeferredDashboardStore extends DashboardStore {
   Future<MealLogResponse> addMeal(
     Meal meal, {
     String source = 'text',
-    String? slot,
+    MealLogIntent intent = MealLogIntent.extra,
+    String? slotId,
+    String? operationId,
   }) async {
     lastMeal = meal;
     lastSource = source;
-    lastSlot = slot;
+    lastSlot = slotId;
     if (!started.isCompleted) started.complete();
     final response = await _response.future;
     applyMealLogResponse(response);

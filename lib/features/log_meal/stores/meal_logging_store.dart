@@ -1,12 +1,15 @@
 import 'package:mobx/mobx.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:diet_coach_ai/core/di/providers.dart';
 import 'package:diet_coach_ai/shared/models/food_item.dart';
 import 'package:diet_coach_ai/shared/models/meal.dart';
+import 'package:diet_coach_ai/shared/models/meal_log_response.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 import 'package:diet_coach_ai/stores/dashboard_store.dart';
 
 class MealLoggingStore {
+  static const _uuid = Uuid();
   final ApiService apiService;
   final DashboardStore dashboardStore;
 
@@ -25,13 +28,17 @@ class MealLoggingStore {
   final errorMessage = Observable<String?>(null);
   final pendingMealName = Observable<String?>(null);
   final pendingMealEmoji = Observable<String>('🍽️');
+  final adaptationMessage = Observable<String?>(null);
 
   int _currentPage = 1;
   int _searchGeneration = 0;
   PlannedMeal? _retryPlannedMeal;
   FoodItem? _retryFood;
+  PlannedMeal? _retryReplacedSlot;
+  double _retryServings = 1;
   String? _retryEstimateQuery;
   _MealLogAttempt? _lastAttempt;
+  String? _retryOperationId;
 
   bool get isLogging =>
       loggingPlanOrder.value != null ||
@@ -154,7 +161,10 @@ class MealLoggingStore {
     }
   }
 
-  Future<bool> logPlannedMeal(PlannedMeal plannedMeal) async {
+  Future<bool> logPlannedMeal(
+    PlannedMeal plannedMeal, {
+    String? operationId,
+  }) async {
     if (plannedMeal.status != PlannedMealStatus.planned || isLogging) {
       return false;
     }
@@ -168,13 +178,17 @@ class MealLoggingStore {
     _retryPlannedMeal = plannedMeal;
     _retryFood = null;
     _retryEstimateQuery = null;
+    _retryOperationId = operationId ?? _uuid.v4();
     dashboardStore.clearLastLoggedMeal();
     try {
       await dashboardStore.addMeal(
         plannedMeal.meal,
         source: 'recommendation',
-        slot: plannedMeal.slot,
+        intent: MealLogIntent.planned,
+        slotId: plannedMeal.id,
+        operationId: _retryOperationId,
       );
+      _applyAdaptationMessage();
       return true;
     } on ApiException catch (error) {
       runInAction(() => errorMessage.value = error.message);
@@ -186,7 +200,12 @@ class MealLoggingStore {
     return false;
   }
 
-  Future<bool> logFood(FoodItem item) async {
+  Future<bool> logFood(
+    FoodItem item, {
+    PlannedMeal? replacedSlot,
+    double servings = 1,
+    String? operationId,
+  }) async {
     if (isLogging) return false;
     runInAction(() {
       loggingFoodId.value = item.id;
@@ -197,10 +216,19 @@ class MealLoggingStore {
     _lastAttempt = _MealLogAttempt.food;
     _retryPlannedMeal = null;
     _retryFood = item;
+    _retryReplacedSlot = replacedSlot;
+    _retryServings = servings;
     _retryEstimateQuery = null;
+    _retryOperationId = operationId ?? _uuid.v4();
     dashboardStore.clearLastLoggedMeal();
     try {
-      await _logAdHocFood(item);
+      await _logAdHocFood(
+        item,
+        replacedSlot: replacedSlot,
+        servings: servings,
+        operationId: _retryOperationId,
+      );
+      _applyAdaptationMessage();
       return true;
     } on ApiException catch (error) {
       runInAction(() => errorMessage.value = error.message);
@@ -217,7 +245,29 @@ class MealLoggingStore {
     return _estimateAndLog(searchQuery);
   }
 
-  Future<bool> _estimateAndLog(String searchQuery) async {
+  Future<FoodItem?> estimateFoodForReview() async {
+    final searchQuery = query.value.trim();
+    if (searchQuery.length < 2 || isLogging) return null;
+    runInAction(() {
+      isEstimating.value = true;
+      errorMessage.value = null;
+    });
+    try {
+      return await apiService.estimateFood(searchQuery);
+    } on ApiException catch (error) {
+      runInAction(() => errorMessage.value = error.message);
+    } catch (_) {
+      runInAction(() => errorMessage.value = 'Could not estimate this food.');
+    } finally {
+      runInAction(() => isEstimating.value = false);
+    }
+    return null;
+  }
+
+  Future<bool> _estimateAndLog(
+    String searchQuery, {
+    String? operationId,
+  }) async {
     if (searchQuery.length < 2 || isLogging) return false;
     runInAction(() {
       isEstimating.value = true;
@@ -229,6 +279,7 @@ class MealLoggingStore {
     _retryPlannedMeal = null;
     _retryFood = null;
     _retryEstimateQuery = searchQuery;
+    _retryOperationId = operationId ?? _uuid.v4();
     dashboardStore.clearLastLoggedMeal();
     try {
       final item = await apiService.estimateFood(searchQuery);
@@ -236,7 +287,8 @@ class MealLoggingStore {
         pendingMealName.value = item.name;
         pendingMealEmoji.value = item.emoji;
       });
-      await _logAdHocFood(item);
+      await _logAdHocFood(item, operationId: _retryOperationId);
+      _applyAdaptationMessage();
       return true;
     } on ApiException catch (error) {
       runInAction(() => errorMessage.value = error.message);
@@ -255,33 +307,96 @@ class MealLoggingStore {
     switch (_lastAttempt) {
       case _MealLogAttempt.planned:
         final meal = _retryPlannedMeal;
-        return meal == null ? Future.value(false) : logPlannedMeal(meal);
+        return meal == null
+            ? Future.value(false)
+            : logPlannedMeal(meal, operationId: _retryOperationId);
       case _MealLogAttempt.food:
         final food = _retryFood;
-        return food == null ? Future.value(false) : logFood(food);
+        return food == null
+            ? Future.value(false)
+            : logFood(
+                food,
+                replacedSlot: _retryReplacedSlot,
+                servings: _retryServings,
+                operationId: _retryOperationId,
+              );
       case _MealLogAttempt.estimate:
         final estimateQuery = _retryEstimateQuery;
         return estimateQuery == null
             ? Future.value(false)
-            : _estimateAndLog(estimateQuery);
+            : _estimateAndLog(estimateQuery, operationId: _retryOperationId);
       case null:
         return Future.value(false);
     }
   }
 
-  Future<void> _logAdHocFood(FoodItem item) {
+  Future<void> _logAdHocFood(
+    FoodItem item, {
+    PlannedMeal? replacedSlot,
+    double servings = 1,
+    String? operationId,
+  }) {
     return dashboardStore.addMeal(
       Meal(
         name: item.name,
         emoji: item.emoji,
-        calories: item.calories,
-        proteinG: item.proteinG,
-        carbsG: item.carbsG,
-        fatsG: item.fatsG,
+        calories: (item.calories * servings).round(),
+        proteinG: (item.proteinG * servings).round(),
+        carbsG: (item.carbsG * servings).round(),
+        fatsG: (item.fatsG * servings).round(),
         servingSize: item.servingSize,
+        servings: servings,
+        servingUnit: item.servingSize,
+        nutritionBasis: NutritionBasis(
+          servingAmount: 1,
+          servingUnit: item.servingSize,
+          calories: item.calories,
+          proteinG: item.proteinG,
+          carbsG: item.carbsG,
+          fatsG: item.fatsG,
+        ),
       ),
       source: 'text',
+      intent: replacedSlot == null
+          ? MealLogIntent.extra
+          : MealLogIntent.replacement,
+      slotId: replacedSlot?.id,
+      operationId: operationId,
     );
+  }
+
+  void _applyAdaptationMessage() {
+    final status = dashboardStore.adaptationStatus.value;
+    runInAction(() {
+      adaptationMessage.value = switch (status) {
+        AdaptationStatus.unavailable =>
+          'Meal saved; update unavailable. You can retry without logging again.',
+        AdaptationStatus.notNeeded => 'Meal saved. No plan changes are needed.',
+        _ => null,
+      };
+    });
+  }
+
+  Future<bool> retryAdaptation() async {
+    runInAction(() {
+      adaptationMessage.value = null;
+      errorMessage.value = null;
+    });
+    try {
+      final result = await apiService.retryAdaptation(
+        dayId: dashboardStore.activeDayId.value,
+        expectedPlanRevision: dashboardStore.planRevision.value,
+      );
+      runInAction(() {
+        dashboardStore.adaptationStatus.value = result.status;
+        dashboardStore.pendingProposal.value = result.proposal;
+      });
+      _applyAdaptationMessage();
+      return result.status != AdaptationStatus.unavailable;
+    } on ApiException catch (error) {
+      runInAction(() => adaptationMessage.value = error.message);
+      return false;
+    }
   }
 }
 

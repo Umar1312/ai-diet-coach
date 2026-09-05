@@ -1,6 +1,22 @@
 import 'meal.dart';
 
+enum PantryAvailability {
+  available('available'),
+  unavailable('unavailable'),
+  unknown('unknown');
+
+  final String value;
+  const PantryAvailability(this.value);
+
+  static PantryAvailability fromString(String value) =>
+      PantryAvailability.values.firstWhere(
+        (item) => item.value == value,
+        orElse: () => PantryAvailability.unknown,
+      );
+}
+
 class PantryItemResponse {
+  final PantryAvailability availability;
   final String id;
   final String userId;
   final String name;
@@ -16,6 +32,7 @@ class PantryItemResponse {
   final String updatedAt;
 
   const PantryItemResponse({
+    this.availability = PantryAvailability.unknown,
     required this.id,
     required this.userId,
     required this.name,
@@ -33,6 +50,9 @@ class PantryItemResponse {
 
   factory PantryItemResponse.fromJson(Map<String, dynamic> json) =>
       PantryItemResponse(
+        availability: PantryAvailability.fromString(
+          json['availability'] as String,
+        ),
         id: json['id'] as String,
         userId: json['user_id'] as String,
         name: json['name'] as String,
@@ -63,6 +83,7 @@ class PantryListResponse {
 }
 
 class PantryCreateRequest {
+  final PantryAvailability availability;
   final String name;
   final String emoji;
   final String? quantityHint;
@@ -74,6 +95,7 @@ class PantryCreateRequest {
   final String? servingSize;
 
   const PantryCreateRequest({
+    this.availability = PantryAvailability.available,
     required this.name,
     required this.emoji,
     this.quantityHint,
@@ -86,6 +108,7 @@ class PantryCreateRequest {
   });
 
   Map<String, dynamic> toJson() => {
+    'availability': availability.value,
     'name': name,
     'emoji': emoji,
     if (quantityHint != null) 'quantity_hint': quantityHint,
@@ -99,6 +122,7 @@ class PantryCreateRequest {
 }
 
 class PantryUpdateRequest {
+  final PantryAvailability? availability;
   final String? name;
   final String? emoji;
   final String? quantityHint;
@@ -110,6 +134,7 @@ class PantryUpdateRequest {
   final String? servingSize;
 
   const PantryUpdateRequest({
+    this.availability,
     this.name,
     this.emoji,
     this.quantityHint,
@@ -122,6 +147,7 @@ class PantryUpdateRequest {
   });
 
   Map<String, dynamic> toJson() => {
+    if (availability != null) 'availability': availability!.value,
     if (name != null) 'name': name,
     if (emoji != null) 'emoji': emoji,
     if (quantityHint != null) 'quantity_hint': quantityHint,

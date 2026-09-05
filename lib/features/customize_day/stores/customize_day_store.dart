@@ -106,7 +106,7 @@ class CustomizeDayStore {
           final mergedQuantity = existing.quantity + component.quantity;
           slotMeals[existingIndex] = existing.copyWith(
             quantity: mergedQuantity > _maxQuantity
-                ? _maxQuantity
+                ? _maxQuantity.toDouble()
                 : mergedQuantity,
           );
         }

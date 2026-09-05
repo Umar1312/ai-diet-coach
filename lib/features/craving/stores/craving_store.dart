@@ -1,11 +1,17 @@
 import 'package:mobx/mobx.dart';
 import '../../../core/di/providers.dart';
 import '../../../shared/models/home_models.dart';
+import '../../../shared/models/meal.dart';
 import '../../../shared/models/meal_log_response.dart';
+import '../../../stores/dashboard_store.dart';
 
 enum CravingPhase { prompt, thinking, reveal, error }
 
 class CravingStore {
+  final DashboardStore dashboardStore;
+
+  CravingStore({required this.dashboardStore});
+
   // ── Observables ─────────────────────────────────────────────────────────
 
   final cravingText = Observable<String>('');
@@ -139,14 +145,26 @@ class CravingStore {
 
     runInAction(() => isLogging.value = true);
     try {
-      return await apiService.logRecommendation(
-        LogRecommendationRequest(
-          foodName: meal.name,
+      return await dashboardStore.addMeal(
+        Meal(
+          name: meal.name,
+          emoji: meal.emoji,
+          prepMinutes: meal.prepMinutes,
           calories: meal.calories,
           proteinG: meal.proteinG,
           carbsG: meal.carbsG,
           fatsG: meal.fatsG,
+          nutritionBasis: NutritionBasis(
+            servingAmount: 1,
+            servingUnit: 'serving',
+            calories: meal.calories,
+            proteinG: meal.proteinG,
+            carbsG: meal.carbsG,
+            fatsG: meal.fatsG,
+          ),
         ),
+        source: 'recommendation',
+        intent: MealLogIntent.extra,
       );
     } finally {
       runInAction(() => isLogging.value = false);

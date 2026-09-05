@@ -179,6 +179,17 @@ Map<String, dynamic> _mealJson(String name, int calories, int protein) => {
 };
 
 Map<String, dynamic> _planJson() => {
+  'id': 'plan-1',
+  'revision': 1,
+  'context_version': 'context-1',
+  'adaptation_status': 'idle',
+  'adaptation_access': {
+    'is_pro': false,
+    'allowance_total': 3,
+    'accepted_count': 0,
+    'remaining': 3,
+    'can_accept': true,
+  },
   'day_id': '2026-08-23',
   'user_id': 'test-user',
   'targets': {'calories': 2100, 'protein_g': 150, 'carbs_g': 230, 'fats_g': 65},
@@ -186,11 +197,13 @@ Map<String, dynamic> _planJson() => {
   'meals': [],
   'planned_meals': [
     {
+      'id': 'lunch-slot',
       'slot': 'lunch',
       'order': 1,
       'meal': _mealJson('Paneer bowl', 580, 45),
       'status': 'planned',
       'is_optional': false,
+      'is_protected': false,
     },
   ],
   'pending_proposal': null,

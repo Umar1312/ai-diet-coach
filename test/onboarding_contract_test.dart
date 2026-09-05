@@ -15,6 +15,17 @@ void main() {
 
   test('pantry completion sends only canonical starter names', () async {
     final adapter = _RecordingAdapter({
+      'id': 'plan-1',
+      'revision': 1,
+      'context_version': 'context-1',
+      'adaptation_status': 'idle',
+      'adaptation_access': {
+        'is_pro': false,
+        'allowance_total': 3,
+        'accepted_count': 0,
+        'remaining': 3,
+        'can_accept': true,
+      },
       'onboarding_stage': 'plan_preview',
       'pantry_decision': 'selected',
       'onboarding_completed_at': null,
@@ -45,6 +56,7 @@ void main() {
       'country_name': 'India',
       'items': [
         {
+          'id': 'breakfast-slot',
           'name': 'Paneer',
           'emoji': '🧀',
           'quantity_hint': '200g block',
@@ -90,6 +102,17 @@ void main() {
 
   test('plan preview uses its pre-paywall generation endpoint', () async {
     final adapter = _RecordingAdapter({
+      'id': 'plan-1',
+      'revision': 1,
+      'context_version': 'context-1',
+      'adaptation_status': 'idle',
+      'adaptation_access': {
+        'is_pro': false,
+        'allowance_total': 3,
+        'accepted_count': 0,
+        'remaining': 3,
+        'can_accept': true,
+      },
       'day_id': '2026-08-16',
       'user_id': 'test-user',
       'targets': {
@@ -102,6 +125,7 @@ void main() {
       'meals': [],
       'planned_meals': [
         {
+          'id': 'breakfast-slot',
           'slot': 'breakfast',
           'order': 0,
           'meal': {
@@ -115,6 +139,7 @@ void main() {
           },
           'status': 'planned',
           'is_optional': false,
+          'is_protected': false,
         },
       ],
       'pending_proposal': null,

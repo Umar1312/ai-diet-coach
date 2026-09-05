@@ -1,4 +1,4 @@
-# AI Diet Buddy — Agent Instructions
+# NextMeal — Agent Instructions
 
 ## API Integration Protocol
 
@@ -15,7 +15,7 @@ Use the returned contract data to build the correct Dart models, API service met
 
 ## Project Overview
 
-AI Diet Buddy is a Flutter mobile app that acts as a personal AI nutrition coach. Users log meals via text description, camera photo, or manual entry. The AI estimates macros and provides daily recommendations to help users hit their calorie and protein goals. The app features a dashboard with macro ring visualizations, meal recommendations, pantry management, and meal history.
+NextMeal is a Flutter mobile app that acts as a personal AI nutrition coach. Users log meals via text description, camera photo, or manual entry. The AI estimates macros and provides daily recommendations to help users hit their calorie and protein goals. The app features a dashboard with macro ring visualizations, meal recommendations, pantry management, and meal history.
 
 ## Tech Stack
 

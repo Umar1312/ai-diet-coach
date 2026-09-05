@@ -653,8 +653,8 @@ class _PlanUnavailable extends StatelessWidget {
             const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(
-                color: AppColors.textPrimary,
+              child: CircularProgressIndicator.adaptive(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                 strokeWidth: 2.5,
               ),
             )
@@ -712,8 +712,8 @@ class _CalorieLoadingCard extends StatelessWidget {
         child: SizedBox(
           width: 32,
           height: 32,
-          child: CircularProgressIndicator(
-            color: AppColors.textPrimary,
+          child: CircularProgressIndicator.adaptive(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
             strokeWidth: 3,
           ),
         ),

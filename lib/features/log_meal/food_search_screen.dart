@@ -10,6 +10,8 @@ import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/features/log_meal/stores/meal_logging_store.dart';
 import 'package:diet_coach_ai/main.dart' show mealLoggingStore;
 import 'package:diet_coach_ai/shared/models/food_item.dart';
+import 'package:diet_coach_ai/shared/models/planned_meal.dart';
+import 'package:diet_coach_ai/presentation/widgets/slot_picker.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final MealLoggingStore? store;
@@ -72,20 +74,41 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     unawaited(_store.search());
   }
 
-  void _logFood(FoodItem item) {
+  Future<void> _reviewFood(FoodItem item) async {
     if (_store.isLogging) return;
-    HapticFeedback.mediumImpact();
     FocusManager.instance.primaryFocus?.unfocus();
-    unawaited(_store.logFood(item));
+    final servings = await showModalBottomSheet<double>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PortionReviewSheet(item: item),
+    );
+    if (!mounted || servings == null) return;
+    final choice = await showSlotPicker(
+      context,
+      _store.dashboardStore.plannedMeals,
+    );
+    if (!mounted || choice == null) return;
+    PlannedMeal? replacedSlot;
+    if (choice != extraMealChoice) {
+      replacedSlot = _store.dashboardStore.plannedMeals
+          .where((meal) => meal.id == choice)
+          .firstOrNull;
+      if (replacedSlot == null) return;
+    }
+    HapticFeedback.mediumImpact();
+    unawaited(
+      _store.logFood(item, servings: servings, replacedSlot: replacedSlot),
+    );
     context.go('/meal-impact');
   }
 
-  void _estimateAndLog() {
+  Future<void> _estimateAndReview() async {
     if (_store.isLogging) return;
-    HapticFeedback.mediumImpact();
     FocusManager.instance.primaryFocus?.unfocus();
-    unawaited(_store.estimateAndLog());
-    context.go('/meal-impact');
+    final item = await _store.estimateFoodForReview();
+    if (!mounted || item == null) return;
+    await _reviewFood(item);
   }
 
   @override
@@ -157,7 +180,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                     return _NoResults(
                       query: query,
                       isEstimating: _store.isEstimating.value,
-                      onEstimate: _estimateAndLog,
+                      onEstimate: _estimateAndReview,
                     );
                   }
 
@@ -194,7 +217,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                                 isLogging:
                                     _store.loggingFoodId.value == item.id,
                                 enabled: !_store.isLogging,
-                                onTap: () => _logFood(item),
+                                onTap: () => _reviewFood(item),
                               );
                             }
                             if (index == results.length) {
@@ -202,7 +225,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                                 query: query,
                                 isLoading: _store.isEstimating.value,
                                 enabled: !_store.isLogging,
-                                onTap: _estimateAndLog,
+                                onTap: _estimateAndReview,
                               );
                             }
                             return const Padding(
@@ -211,7 +234,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                                 child: SizedBox(
                                   width: 22,
                                   height: 22,
-                                  child: CircularProgressIndicator(
+                                  child: CircularProgressIndicator.adaptive(
                                     strokeWidth: 2.3,
                                   ),
                                 ),
@@ -407,7 +430,7 @@ class _FoodResultTile extends StatelessWidget {
                 const SizedBox(
                   width: 23,
                   height: 23,
-                  child: CircularProgressIndicator(strokeWidth: 2.3),
+                  child: CircularProgressIndicator.adaptive(strokeWidth: 2.3),
                 )
               else
                 const Icon(
@@ -457,7 +480,7 @@ class _EstimateResult extends StatelessWidget {
                       child: SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                        child: CircularProgressIndicator.adaptive(strokeWidth: 2.2),
                       ),
                     )
                   : const Icon(
@@ -527,7 +550,7 @@ class _SearchingState extends StatelessWidget {
       child: SizedBox(
         width: 26,
         height: 26,
-        child: CircularProgressIndicator(strokeWidth: 2.5),
+        child: CircularProgressIndicator.adaptive(strokeWidth: 2.5),
       ),
     );
   }
@@ -716,6 +739,181 @@ class _CenteredMessage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PortionReviewSheet extends StatefulWidget {
+  final FoodItem item;
+
+  const _PortionReviewSheet({required this.item});
+
+  @override
+  State<_PortionReviewSheet> createState() => _PortionReviewSheetState();
+}
+
+class _PortionReviewSheetState extends State<_PortionReviewSheet> {
+  double _servings = 1;
+
+  int _scaled(int value) => (value * _servings).round();
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final isEstimate = item.source == 'ai' || item.source == 'estimate';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              '${item.emoji} ${item.name}',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.7,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isEstimate
+                  ? 'Estimated nutrition — confirm the portion before saving.'
+                  : 'Confirm the portion you actually ate.',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  _PortionButton(
+                    icon: Icons.remove_rounded,
+                    enabled: _servings > 0.5,
+                    onTap: () => setState(() => _servings -= 0.5),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          '${_servings.toStringAsFixed(_servings % 1 == 0 ? 0 : 1)} × ${item.servingSize}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '${_scaled(item.calories)} cal · ${_scaled(item.proteinG)}g protein',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _PortionButton(
+                    icon: Icons.add_rounded,
+                    enabled: _servings < 10,
+                    onTap: () => setState(() => _servings += 0.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                Navigator.pop(context, _servings);
+              },
+              child: Container(
+                height: 64,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Confirm Portion',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PortionButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _PortionButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled
+          ? () {
+              HapticFeedback.selectionClick();
+              onTap();
+            }
+          : null,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Icon(
+          icon,
+          color: enabled ? AppColors.textPrimary : AppColors.textTertiary,
+        ),
       ),
     );
   }

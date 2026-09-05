@@ -42,7 +42,7 @@ final mealLoggingStore = MealLoggingStore(
   dashboardStore: dashboardStore,
 );
 final pantrySuggestionsStore = PantrySuggestionsStore(pantryStore: pantryStore);
-final cravingStore = CravingStore();
+final cravingStore = CravingStore(dashboardStore: dashboardStore);
 final customizeDayStore = CustomizeDayStore();
 final mealNotificationService = MealNotificationService();
 final notificationStore = NotificationStore(service: mealNotificationService);
@@ -166,7 +166,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'AI Diet Buddy',
+      title: 'NextMeal',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
