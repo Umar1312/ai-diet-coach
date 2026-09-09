@@ -157,6 +157,8 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/plan',
+                redirect: (context, state) =>
+                    redirectForProAccess(subscriptionStore.hasAccess.value),
                 builder: (context, state) => const PlanScreen(),
               ),
             ],
@@ -195,7 +197,7 @@ class AppRouter {
       GoRoute(
         path: '/plan/customize',
         redirect: (context, state) =>
-            subscriptionStore.hasAccess.value ? null : '/onboarding/paywall',
+            redirectForProAccess(subscriptionStore.hasAccess.value),
         builder: (context, state) => const CustomizeDayScreen(),
       ),
       GoRoute(
@@ -208,6 +210,10 @@ class AppRouter {
   );
 
   static GoRouter get router => _router;
+
+  static String? redirectForProAccess(bool hasAccess) {
+    return hasAccess ? null : '/onboarding/paywall';
+  }
 
   static String? redirectForAuthStatus(
     AuthStatus status,

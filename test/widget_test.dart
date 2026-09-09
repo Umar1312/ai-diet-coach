@@ -200,6 +200,11 @@ void main() {
     );
   });
 
+  test('daily plan routes require Pro access', () {
+    expect(AppRouter.redirectForProAccess(false), '/onboarding/paywall');
+    expect(AppRouter.redirectForProAccess(true), isNull);
+  });
+
   test('interrupted onboarding resumes at the persisted milestone', () {
     expect(
       AppRouter.redirectForAuthStatus(

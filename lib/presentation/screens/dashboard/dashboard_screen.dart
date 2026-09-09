@@ -7,12 +7,15 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show dashboardStore;
+import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
+import 'package:diet_coach_ai/main.dart' show dashboardStore, subscriptionStore;
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
 
 /// CalAI-style dashboard: massive text, extreme minimalism, only what matters.
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final bool Function()? hasProAccess;
+
+  const DashboardScreen({super.key, this.hasProAccess});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -39,6 +42,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _ensureDayPlan() async {
     if (!mounted || !dashboardStore.hasLoaded.value) return;
+    final hasProAccess =
+        widget.hasProAccess?.call() ?? subscriptionStore.hasAccess.value;
+    if (!hasProAccess) return;
     if (dashboardStore.plannedMeals.isEmpty &&
         dashboardStore.todayMeals.isEmpty &&
         !dashboardStore.isGeneratingPlan.value) {
@@ -654,7 +660,9 @@ class _PlanUnavailable extends StatelessWidget {
               width: 24,
               height: 24,
               child: CircularProgressIndicator.adaptive(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.textPrimary,
+                ),
                 strokeWidth: 2.5,
               ),
             )
@@ -679,9 +687,10 @@ class _PlanUnavailable extends StatelessWidget {
           ),
           if (!isLoading)
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 HapticFeedback.mediumImpact();
-                dashboardStore.fetchDayPlan();
+                if (!await requireProAccess(context)) return;
+                await dashboardStore.fetchDayPlan();
               },
               child: const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),

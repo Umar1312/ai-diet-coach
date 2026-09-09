@@ -16,8 +16,6 @@ class AppConstants {
       dotenv.env['REVENUECAT_TEST_API_KEY'] ?? '';
   static String get revenueCatEntitlementId =>
       dotenv.env['REVENUECAT_ENTITLEMENT_ID'] ?? 'pro';
-  static String get revenueCatOfferingId =>
-      dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'default';
 
   /// Dev-mode auth bypass.
   /// Set this to a valid backend test token to skip Firebase Auth in debug builds.

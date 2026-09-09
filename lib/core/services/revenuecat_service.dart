@@ -91,10 +91,8 @@ class RevenueCatService implements RevenueCatClient {
   @override
   Future<PaywallResult> presentPaywallIfNeeded() async {
     _requireConfigured();
-    final offering = await _defaultOffering();
     return RevenueCatUI.presentPaywallIfNeeded(
       AppConstants.revenueCatEntitlementId,
-      offering: offering,
       displayCloseButton: true,
     );
   }
@@ -118,19 +116,6 @@ class RevenueCatService implements RevenueCatClient {
       Purchases.removeCustomerInfoUpdateListener(listener);
     }
     _customerInfoListener = null;
-  }
-
-  Future<Offering> _defaultOffering() async {
-    final offerings = await Purchases.getOfferings();
-    final offering =
-        offerings.getOffering(AppConstants.revenueCatOfferingId) ??
-        offerings.current;
-    if (offering == null) {
-      throw const RevenueCatConfigurationException(
-        'No RevenueCat offering is available for this app.',
-      );
-    }
-    return offering;
   }
 
   String get _apiKey {

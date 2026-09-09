@@ -17,7 +17,9 @@ void main() {
     });
     dashboardStore.applyPlan(_dayPlan());
 
-    await tester.pumpWidget(const MaterialApp(home: DashboardScreen()));
+    await tester.pumpWidget(
+      MaterialApp(home: DashboardScreen(hasProAccess: () => false)),
+    );
     await tester.pump();
 
     expect(find.text('Today’s plan'), findsOneWidget);
@@ -32,7 +34,34 @@ void main() {
     expect(find.text('Create plan'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('free home does not generate a missing day plan', (tester) async {
+    addTearDown(dashboardStore.reset);
+    dashboardStore.applyPlan(_emptyDayPlan());
+
+    await tester.pumpWidget(
+      MaterialApp(home: DashboardScreen(hasProAccess: () => false)),
+    );
+    await tester.pump();
+
+    expect(dashboardStore.plannedMeals, isEmpty);
+    expect(dashboardStore.isGeneratingPlan.value, isFalse);
+    expect(tester.takeException(), isNull);
+  });
 }
+
+DailyPlan _emptyDayPlan() => const DailyPlan(
+  dayId: '2026-09-03',
+  userId: 'free-user',
+  targets: MacroTargets(calories: 2100, proteinG: 150, carbsG: 230, fatsG: 68),
+  consumed: MacroTargets(calories: 0, proteinG: 0, carbsG: 0, fatsG: 0),
+  meals: [],
+  plannedMeals: [],
+  dayStatus: DayStatus.onTrack,
+  aiCardText: '',
+  aiCardState: AICardState.onTrack,
+  generatedAt: '2026-09-03T00:00:00Z',
+);
 
 DailyPlan _dayPlan() => DailyPlan(
   dayId: '2026-09-03',
