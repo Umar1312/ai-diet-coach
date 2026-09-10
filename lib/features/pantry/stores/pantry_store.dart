@@ -126,6 +126,8 @@ class PantryStore {
       isLoadingStarter.value = true;
       starterError.value = '';
       selectedStarterNames.clear();
+      // Onboarding belongs to a new pantry, not cached items from a prior user.
+      if (onboarding) items.clear();
     });
     try {
       final response = onboarding

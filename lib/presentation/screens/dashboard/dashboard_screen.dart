@@ -269,24 +269,27 @@ class _CalorieHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 24,
+                runSpacing: 12,
                 children: [
                   _MacroLegendDot(
                     color: AppColors.protein,
-                    label: '${store.proteinLeft.value.clamp(0, 999)}g P',
+                    label: '${store.proteinLeft.value.clamp(0, 999)}g',
+                    name: 'Protein',
                   ),
-                  const SizedBox(width: 20),
                   _MacroLegendDot(
                     color: AppColors.carbs,
                     label:
-                        '${(store.targetCarbs.value - store.consumedCarbs.value).clamp(0, 999)}g C',
+                        '${(store.targetCarbs.value - store.consumedCarbs.value).clamp(0, 999)}g',
+                    name: 'Carbs',
                   ),
-                  const SizedBox(width: 20),
                   _MacroLegendDot(
                     color: AppColors.fats,
                     label:
-                        '${(store.targetFats.value - store.consumedFats.value).clamp(0, 999)}g F',
+                        '${(store.targetFats.value - store.consumedFats.value).clamp(0, 999)}g',
+                    name: 'Fats',
                   ),
                 ],
               ),
@@ -352,29 +355,51 @@ class _MacroRingsPainter extends CustomPainter {
 class _MacroLegendDot extends StatelessWidget {
   final Color color;
   final String label;
+  final String name;
 
-  const _MacroLegendDot({required this.color, required this.label});
+  const _MacroLegendDot({
+    required this.color,
+    required this.label,
+    required this.name,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+    return Semantics(
+      label: '$name, $label remaining',
+      excludeSemantics: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

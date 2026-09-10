@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobx/mobx.dart';
+import 'package:uuid/uuid.dart';
+import 'package:diet_coach_ai/core/di/providers.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/features/subscription/subscription_gate.dart';
@@ -546,6 +549,7 @@ class _PlannedMealCard extends StatelessWidget {
   void _showLogSlotConfirmation(BuildContext context, PlannedMeal meal) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => _LogSlotConfirmSheet(plannedMeal: meal),
@@ -557,10 +561,50 @@ class _PlannedMealCard extends StatelessWidget {
 // Log Slot Confirmation Sheet
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _LogSlotConfirmSheet extends StatelessWidget {
+class _LogSlotConfirmSheet extends StatefulWidget {
   final PlannedMeal plannedMeal;
 
   const _LogSlotConfirmSheet({required this.plannedMeal});
+
+  @override
+  State<_LogSlotConfirmSheet> createState() => _LogSlotConfirmSheetState();
+}
+
+class _LogSlotConfirmSheetState extends State<_LogSlotConfirmSheet> {
+  final _busy = Observable(false);
+  final _error = Observable('');
+  final _operationId = const Uuid().v4();
+  PlannedMeal get plannedMeal => widget.plannedMeal;
+
+  Future<void> _log() async {
+    if (_busy.value) return;
+    runInAction(() {
+      _busy.value = true;
+      _error.value = '';
+    });
+    HapticFeedback.mediumImpact();
+    try {
+      await dashboardStore.addMeal(
+        plannedMeal.meal,
+        source: 'recommendation',
+        intent: MealLogIntent.planned,
+        slotId: plannedMeal.id,
+        operationId: _operationId,
+      );
+      if (!mounted) return;
+      final router = GoRouter.of(context);
+      Navigator.pop(context);
+      router.go('/meal-impact');
+    } on ApiException catch (e) {
+      runInAction(() => _error.value = e.message);
+    } catch (_) {
+      runInAction(
+        () => _error.value = 'Could not log your meal. Please try again.',
+      );
+    } finally {
+      runInAction(() => _busy.value = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -605,45 +649,65 @@ class _LogSlotConfirmSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
-          GestureDetector(
-            onTap: () async {
-              HapticFeedback.mediumImpact();
-              await dashboardStore.addMeal(
-                plannedMeal.meal,
-                source: 'recommendation',
-                intent: MealLogIntent.planned,
-                slotId: plannedMeal.id,
-              );
-              if (context.mounted) {
-                final router = GoRouter.of(context);
-                Navigator.pop(context);
-                router.go('/meal-impact');
-              }
-            },
-            child: Container(
-              width: double.infinity,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.textPrimary,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_rounded, color: Colors.white, size: 22),
-                  SizedBox(width: 10),
-                  Text(
-                    "Yes, I ate this",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                ],
+          Observer(
+            builder: (_) => GestureDetector(
+              onTap: _busy.value ? null : _log,
+              child: Container(
+                width: double.infinity,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _busy.value
+                    ? const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            "Yes, I ate this",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
+          ),
+          Observer(
+            builder: (_) => _error.value.isEmpty
+                ? const SizedBox.shrink()
+                : Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: .08),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _error.value,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
           ),
           const SizedBox(height: 12),
           GestureDetector(

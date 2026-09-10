@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
-import 'package:diet_coach_ai/main.dart' show notificationStore;
+import 'package:diet_coach_ai/main.dart' show notificationStore, dashboardStore;
+import 'package:diet_coach_ai/presentation/widgets/primary_button.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -101,6 +103,14 @@ class NotificationSettingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      if (notificationStore.syncError.value.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            notificationStore.syncError.value,
+                            style: const TextStyle(color: AppColors.error),
+                          ),
+                        ),
                       for (final entry in notificationStore.times.entries) ...[
                         _TimeCard(
                           slot: entry.key,
@@ -112,6 +122,34 @@ class NotificationSettingsScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                       ],
                       const SizedBox(height: 24),
+                      if (kDebugMode) ...[
+                        const Text(
+                          'Developer tools',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        PrimaryButton(
+                          text: 'Test check-in now',
+                          isLoading: notificationStore.isTesting.value,
+                          onPressed: notificationStore.isTesting.value
+                              ? null
+                              : () {
+                                  HapticFeedback.mediumImpact();
+                                  notificationStore.testCheckInNow(
+                                    dashboardStore.plannedMeals.toList(),
+                                  );
+                                },
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          notificationStore.testResult.value,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ]),
                   ),
                 ),
@@ -211,7 +249,9 @@ class _EnabledCard extends StatelessWidget {
               height: 24,
               child: CircularProgressIndicator.adaptive(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.textPrimary,
+                ),
               ),
             )
           else

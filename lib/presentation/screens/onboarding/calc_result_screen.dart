@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -71,13 +72,22 @@ class CalcResultScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                PrimaryButton(
-                  text: "Let's get started!",
-                  onPressed: () => context.push('/onboarding/pantry'),
-                ),
                 const SizedBox(height: 16),
               ],
             ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 16, 28, 16),
+          child: PrimaryButton(
+            text: "Let's get started!",
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              context.push('/onboarding/pantry');
+            },
           ),
         ),
       ),

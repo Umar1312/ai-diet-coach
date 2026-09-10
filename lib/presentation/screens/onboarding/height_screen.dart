@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:diet_coach_ai/shared/widgets/stepper_slider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -117,7 +118,8 @@ class _HeightScreenState extends State<HeightScreen> {
             trackHeight: 6,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
           ),
-          child: Slider(
+          child: StepperSlider(
+            semanticLabel: 'height in centimetres',
             value: _heightCm.toDouble(),
             min: 120,
             max: 230,
@@ -201,7 +203,8 @@ class _HeightScreenState extends State<HeightScreen> {
                     enabledThumbRadius: 12,
                   ),
                 ),
-                child: Slider(
+                child: StepperSlider(
+                  semanticLabel: 'height in feet',
                   value: _heightFt.toDouble(),
                   min: 3,
                   max: 8,
@@ -222,7 +225,8 @@ class _HeightScreenState extends State<HeightScreen> {
                     enabledThumbRadius: 12,
                   ),
                 ),
-                child: Slider(
+                child: StepperSlider(
+                  semanticLabel: 'height in inches',
                   value: _heightIn.toDouble(),
                   min: 0,
                   max: 11,

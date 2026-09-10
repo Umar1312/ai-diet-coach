@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:diet_coach_ai/shared/widgets/stepper_slider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
@@ -974,7 +975,10 @@ Future<void> _showSliderEdit(
                 trackHeight: 6,
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
               ),
-              child: Slider(
+              child: StepperSlider(
+                semanticLabel:
+                    '$title in ${usesAlternateUnit ? alternateUnit : unit}',
+                step: unit == 'years' ? 1 : .1,
                 value: usesAlternateUnit
                     ? selectedValue * alternateUnitFactor!
                     : selectedValue,

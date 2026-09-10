@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:diet_coach_ai/shared/widgets/stepper_slider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -115,7 +116,8 @@ class _WeightScreenState extends State<WeightScreen> {
             trackHeight: 6,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
           ),
-          child: Slider(
+          child: StepperSlider(
+            semanticLabel: 'weight in kilograms',
             value: _weightKg,
             min: 30,
             max: 200,
@@ -172,7 +174,8 @@ class _WeightScreenState extends State<WeightScreen> {
             trackHeight: 6,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
           ),
-          child: Slider(
+          child: StepperSlider(
+            semanticLabel: 'weight in pounds',
             value: _weightLbs,
             min: 66,
             max: 440,

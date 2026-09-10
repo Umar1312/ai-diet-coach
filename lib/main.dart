@@ -26,6 +26,7 @@ import 'features/subscription/stores/subscription_store.dart';
 import 'features/meal_check_in/stores/meal_check_in_store.dart';
 import 'features/meal_swap/stores/meal_swap_store.dart';
 import 'stores/notification_store.dart';
+import 'presentation/screens/splash/splash_screen.dart';
 
 final revenueCatService = RevenueCatService();
 final subscriptionStore = SubscriptionStore(
@@ -126,18 +127,32 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late final ReactionDisposer _authReaction;
+  bool _showLaunchAnimation = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     notificationStore.onOpenCheckIn = _openPendingCheckIn;
     _authReaction = reaction<AuthStatus>(
       (_) => authStore.status.value,
       (_) => _openPendingCheckIn(),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _openPendingCheckIn());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final status = authStore.status.value;
+    if (status == AuthStatus.authenticated ||
+        status == AuthStatus.needsSubscription) {
+      unawaited(
+        notificationStore.syncWithPlan(dashboardStore.plannedMeals.toList()),
+      );
+    }
   }
 
   void _openPendingCheckIn() {
@@ -159,6 +174,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     notificationStore.onOpenCheckIn = null;
+    WidgetsBinding.instance.removeObserver(this);
     _authReaction();
     super.dispose();
   }
@@ -170,6 +186,19 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
+      builder: (context, child) => Stack(
+        children: [
+          ?child,
+          if (_showLaunchAnimation)
+            Positioned.fill(
+              child: SplashScreen(
+                onComplete: () {
+                  if (mounted) setState(() => _showLaunchAnimation = false);
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

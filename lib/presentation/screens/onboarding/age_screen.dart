@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:diet_coach_ai/shared/widgets/stepper_slider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/safe_navigation.dart';
@@ -72,7 +73,8 @@ class _AgeScreenState extends State<AgeScreen> {
                           enabledThumbRadius: 12,
                         ),
                       ),
-                      child: Slider(
+                      child: StepperSlider(
+                        semanticLabel: 'age in years',
                         value: _selectedAge.toDouble(),
                         min: 16,
                         max: 80,

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:diet_coach_ai/core/services/meal_notification_service.dart';
@@ -30,6 +29,9 @@ class NotificationStore {
   final isUpdating = Observable<bool>(false);
   final times = ObservableMap<String, int>.of(defaultTimes);
   final pendingSlot = Observable<String?>(null);
+  final syncError = Observable<String>('');
+  final testResult = Observable<String>('');
+  final isTesting = Observable<bool>(false);
   Future<void> _syncQueue = Future<void>.value();
 
   VoidCallback? onOpenCheckIn;
@@ -42,7 +44,7 @@ class NotificationStore {
     final savedEnabled = await _preferences.getBool(_enabledKey);
     var resolvedEnabled = savedEnabled ?? false;
     if (!hasSavedPreference && service.isSupported) {
-      resolvedEnabled = await Permission.notification.isGranted;
+      resolvedEnabled = (await service.permissions())?.isEnabled ?? false;
       await _preferences.setBool(_enabledKey, resolvedEnabled);
     }
 
@@ -89,14 +91,47 @@ class NotificationStore {
     final enabledSnapshot = enabled.value;
     final timesSnapshot = Map<String, int>.from(times);
     final mealsSnapshot = List<PlannedMeal>.from(plannedMeals);
-    _syncQueue = _syncQueue.then(
-      (_) => service.syncDailyReminders(
-        enabled: enabledSnapshot,
-        times: timesSnapshot,
-        plannedMeals: mealsSnapshot,
-      ),
-    );
+    _syncQueue = _syncQueue.then((_) async {
+      try {
+        await service.syncDailyReminders(
+          enabled: enabledSnapshot,
+          times: timesSnapshot,
+          plannedMeals: mealsSnapshot,
+        );
+        runInAction(() => syncError.value = '');
+      } catch (e) {
+        runInAction(
+          () => syncError.value =
+              'Could not schedule check-ins. Please check notification settings and try again.',
+        );
+        debugPrint('Meal reminder scheduling failed: $e');
+      }
+    });
     return _syncQueue;
+  }
+
+  Future<void> testCheckInNow(List<PlannedMeal> meals) async {
+    if (isTesting.value) return;
+    runInAction(() {
+      isTesting.value = true;
+      testResult.value = '';
+    });
+    try {
+      final planned = meals.where(
+        (meal) => meal.status == PlannedMealStatus.planned,
+      );
+      final slot = planned.isEmpty ? 'lunch' : planned.first.slot;
+      await service.testCheckIn(slot);
+      final details = await service.diagnostics();
+      runInAction(
+        () => testResult.value =
+            'Test submitted to iOS. Delivery is not confirmed; check banners or Notification Centre. Focus and Scheduled Summary may delay alerts.\n$details',
+      );
+    } catch (e) {
+      runInAction(() => testResult.value = 'Test failed: $e');
+    } finally {
+      runInAction(() => isTesting.value = false);
+    }
   }
 
   Future<void> snooze(String slot) => service.snooze(slot);

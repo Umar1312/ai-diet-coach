@@ -24,6 +24,7 @@ class MealNotificationService {
   MealNotificationTap? onTap;
   String? initialSlot;
   bool _initialized = false;
+  String? timezoneError;
 
   MealNotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
@@ -35,12 +36,7 @@ class MealNotificationService {
     if (!isSupported || _initialized) return;
 
     tz_data.initializeTimeZones();
-    try {
-      final timezone = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(timezone.identifier));
-    } catch (_) {
-      // Scheduling still works in the timezone package's safe fallback zone.
-    }
+    await refreshTimezone();
 
     const settings = InitializationSettings(
       iOS: DarwinInitializationSettings(
@@ -65,6 +61,70 @@ class MealNotificationService {
     _initialized = true;
   }
 
+  Future<void> refreshTimezone() async {
+    try {
+      final timezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timezone.identifier));
+      timezoneError = null;
+    } catch (e) {
+      timezoneError = 'Could not read the device timezone: $e';
+    }
+  }
+
+  Future<NotificationsEnabledOptions?> permissions() async {
+    if (!isSupported) return null;
+    await initialize();
+    return _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.checkPermissions();
+  }
+
+  Future<String> diagnostics() async {
+    if (!isSupported) {
+      return 'Local check-ins are currently supported on iOS only.';
+    }
+    final permission = await permissions();
+    final pending = await _plugin.pendingNotificationRequests();
+    final reminders = pending.where(
+      (item) => item.payload?.startsWith(_payloadPrefix) ?? false,
+    );
+    return 'Permission: ${permission?.isEnabled}\nAlerts: ${permission?.isAlertEnabled}'
+        '\nSound: ${permission?.isSoundEnabled}\nTimezone: ${tz.local.name}'
+        '\nPending check-ins: ${reminders.length}'
+        '\nSlots: ${reminders.map((item) => item.payload!.substring(_payloadPrefix.length)).join(', ')}'
+        '\nRegistration: local notifications; no push token required.'
+        '${timezoneError == null ? '' : '\n$timezoneError'}';
+  }
+
+  Future<void> testCheckIn(String slot) async {
+    if (!isSupported) throw StateError('Check-in notifications require iOS.');
+    await initialize();
+    if (!((await permissions())?.isEnabled ?? false)) {
+      if (!await requestPermission()) {
+        throw StateError(
+          'Notification permission was denied. Enable it in iPhone Settings.',
+        );
+      }
+    }
+    await _plugin.show(
+      id: 4199,
+      title: '🍽️ Test check-in',
+      body: 'Your check-in test is ready. Tap to open it.',
+      notificationDetails: const NotificationDetails(
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentList: true,
+          presentSound: true,
+          threadIdentifier: _channelId,
+        ),
+      ),
+      payload: '$_payloadPrefix$slot',
+    );
+  }
+
   Future<bool> requestPermission() async {
     if (!isSupported) return false;
     await initialize();
@@ -83,12 +143,28 @@ class MealNotificationService {
   }) async {
     if (!isSupported) return;
     await initialize();
-    await cancelMealReminders();
-    if (!enabled) return;
+    if (!enabled) {
+      await cancelMealReminders();
+      return;
+    }
+    await refreshTimezone();
+    if (timezoneError != null) throw StateError(timezoneError!);
+    if (!((await permissions())?.isEnabled ?? false)) {
+      throw StateError('Notifications are disabled in iPhone Settings.');
+    }
 
     final mealsBySlot = <String, PlannedMeal>{
       for (final meal in plannedMeals) meal.slot: meal,
     };
+    // Replace matching IDs without a cancel-all gap. Preserve snoozes for
+    // outstanding meals across unrelated plan refreshes.
+    for (final entry in _slotIds.entries) {
+      final meal = mealsBySlot[entry.key];
+      if (meal == null) await _plugin.cancel(id: entry.value);
+      if (meal == null || meal.status != PlannedMealStatus.planned) {
+        await _plugin.cancel(id: entry.value + 100);
+      }
+    }
     for (final entry in mealsBySlot.entries) {
       final id = _slotIds[entry.key];
       final minuteOfDay = times[entry.key];
