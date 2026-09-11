@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/main.dart' show authStore, subscriptionStore;
+import 'package:diet_coach_ai/shared/widgets/legal_footer.dart';
 
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
@@ -139,10 +140,14 @@ class PaywallScreen extends StatelessWidget {
                                     ? const SizedBox(
                                         width: 22,
                                         height: 22,
-                                        child: CircularProgressIndicator.adaptive(
-                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
-                                          strokeWidth: 2.5,
-                                        ),
+                                        child:
+                                            CircularProgressIndicator.adaptive(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    AppColors.textOnPrimary,
+                                                  ),
+                                              strokeWidth: 2.5,
+                                            ),
                                       )
                                     : const Text(
                                         'View plans',
@@ -173,6 +178,7 @@ class PaywallScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            const LegalFooter(),
                             const SizedBox(height: 16),
                           ],
                         ),

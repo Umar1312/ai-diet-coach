@@ -39,11 +39,13 @@ class CustomPlannedMeal {
 
 /// Request payload for saving a fully custom day plan.
 class CustomDayPlanRequest {
+  final String dayId;
   final List<CustomPlannedMeal> meals;
 
-  const CustomDayPlanRequest({required this.meals});
+  const CustomDayPlanRequest({required this.dayId, required this.meals});
 
   Map<String, dynamic> toJson() => {
+    'day_id': dayId,
     'meals': meals.map((m) => m.toJson()).toList(),
   };
 }

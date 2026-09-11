@@ -3,57 +3,198 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Legal documents, privacy information, support, and account deletion for NextMeal.">
-    <title>NextMeal — Legal &amp; Support</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="NextMeal is the calorie tracker that plans around your goals, pantry, and real life — then adapts the rest of your day when plans change.">
+    <meta name="theme-color" content="#ffffff">
+    <meta property="og:title" content="NextMeal — Your day, handled.">
+    <meta property="og:description" content="A smarter calorie tracker that plans, tracks, and adapts with you.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nextmeal.pages.dev">
+    <title>NextMeal — A calorie tracker that adapts</title>
+    <link rel="icon" href="assets/app-icon.webp" type="image/webp">
+    <link rel="stylesheet" href="landing.css">
+    <script src="landing.js" defer></script>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="index.html">NextMeal</a>
-      <nav class="site-nav" aria-label="Legal and support navigation">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="topbar" data-header>
+      <a class="wordmark" href="#top" aria-label="NextMeal home">
+        <img src="assets/app-icon.webp" alt="" width="36" height="36">
+        <span>NextMeal</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#pantry">Smart pantry</a>
+      </nav>
+      <a class="nav-cta" href="mailto:yourspaceai@gmail.com?subject=NextMeal%20early%20access">Get early access <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span class="live-dot"></span> Nutrition, planned around real life</p>
+          <h1>Your day,<br><span>handled.</span></h1>
+          <p class="hero-lede">NextMeal turns your goals and the food you already have into a flexible daily plan. Log what happened. We’ll make the rest fit.</p>
+          <div class="hero-actions">
+            <a class="button button-dark" href="mailto:yourspaceai@gmail.com?subject=NextMeal%20early%20access">Get early access <span aria-hidden="true">→</span></a>
+            <a class="text-link" href="#how-it-works">See how it adapts <span aria-hidden="true">↓</span></a>
+          </div>
+          <div class="trust-row" aria-label="Product highlights">
+            <span>No rigid meal plans</span>
+            <span>Pantry-aware</span>
+            <span>Macro-smart</span>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal" data-delay="1" aria-label="NextMeal dashboard preview">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="phone phone-hero">
+            <div class="phone-speaker"></div>
+            <img src="assets/dashboard.webp" alt="NextMeal dashboard showing calories left, macros, and today's meal plan" width="720" height="1565" fetchpriority="high">
+          </div>
+          <div class="float-card float-target">
+            <span class="float-label">Today</span>
+            <strong>1,839</strong><small>cal left</small>
+          </div>
+          <div class="float-card float-status">
+            <span class="check">✓</span>
+            <div><strong>On track</strong><small>Plan adjusted</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="statement reveal" aria-label="Product promise">
+        <p>Tracking tells you what happened.</p>
+        <h2>NextMeal helps decide<br>what happens <em>next.</em></h2>
+      </section>
+
+      <section class="adaptive-section" id="how-it-works">
+        <div class="section-heading reveal">
+          <p class="eyebrow">A plan that moves with you</p>
+          <h2>Plans change.<br>Your targets don’t have to.</h2>
+          <p>Had an unplanned lunch? Log it in seconds. NextMeal recalculates what’s left and reshapes the rest of your day around your goals.</p>
+        </div>
+
+        <div class="adapt-demo reveal" data-delay="1">
+          <div class="demo-topline">
+            <span>YOUR AFTERNOON</span>
+            <span class="status-pill"><i></i> REBALANCED</span>
+          </div>
+          <div class="macro-balance">
+            <div><span>Calories left</span><strong data-calories>1,149</strong></div>
+            <div><span>Protein left</span><strong class="green" data-protein>63g</strong></div>
+          </div>
+          <div class="meal-flow">
+            <article class="meal-row logged-row">
+              <span class="meal-emoji">🥗</span>
+              <div><small>LOGGED LUNCH</small><strong data-logged-meal>Chicken power bowl</strong></div>
+              <span class="meal-macro" data-logged-macro>610 cal</span>
+            </article>
+            <div class="flow-line"><span>NextMeal adapts</span></div>
+            <article class="meal-row next-row" data-next-row>
+              <span class="meal-emoji" data-next-emoji>🍝</span>
+              <div><small>NEW DINNER</small><strong data-next-meal>Lentil pasta &amp; chicken</strong></div>
+              <span class="meal-macro" data-next-macro>700 cal</span>
+            </article>
+          </div>
+          <button class="swap-button" type="button" data-swap>
+            <span class="swap-icon" aria-hidden="true">⇄</span>
+            Try another lunch
+          </button>
+          <p class="demo-note" aria-live="polite" data-demo-note>Everything after lunch now fits your remaining calories and protein.</p>
+        </div>
+      </section>
+
+      <section class="feature-grid" aria-label="NextMeal features">
+        <article class="feature-card feature-track reveal">
+          <div class="feature-copy">
+            <span class="feature-number">01</span>
+            <h3>See the whole day,<br>not another food diary.</h3>
+            <p>Calories, protein, carbs, and fats stay clear at a glance — alongside the meals that get you there.</p>
+          </div>
+          <div class="ring-art" aria-hidden="true">
+            <span class="ring ring-red"></span><span class="ring ring-green"></span><span class="ring ring-orange"></span><span class="ring ring-blue"></span>
+            <strong>1839</strong><small>cal left</small>
+          </div>
+        </article>
+
+        <article class="feature-card feature-log reveal" data-delay="1">
+          <div class="feature-copy">
+            <span class="feature-number">02</span>
+            <h3>Log it.<br>Keep moving.</h3>
+            <p>Capture what you ate and instantly understand how the rest of today still fits.</p>
+          </div>
+          <div class="mini-confirm">
+            <span>✓</span>
+            <div><small>MEAL LOGGED</small><strong>You’re still on track.</strong></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="pantry-section" id="pantry">
+        <div class="pantry-visual reveal">
+          <div class="phone phone-pantry phone-back">
+            <div class="phone-speaker"></div>
+            <img src="assets/plan.webp" alt="A flexible NextMeal daily plan with options to change or log meals" width="720" height="1565" loading="lazy">
+          </div>
+          <div class="phone phone-pantry phone-front">
+            <div class="phone-speaker"></div>
+            <img src="assets/pantry.webp" alt="NextMeal pantry showing ingredients available at home" width="720" height="1565" loading="lazy">
+          </div>
+        </div>
+        <div class="pantry-copy reveal" data-delay="1">
+          <p class="eyebrow">Your kitchen, understood</p>
+          <h2>Meals built from<br>what you have.</h2>
+          <p>Tell NextMeal what’s in your pantry. Recommendations stay grounded in your real kitchen, so you buy less, waste less, and still hit your macros.</p>
+          <ul class="benefit-list">
+            <li><span>✓</span><div><strong>Use what you have</strong><small>Practical meals from familiar ingredients.</small></div></li>
+            <li><span>✓</span><div><strong>Swap without the math</strong><small>Alternatives still respect today’s targets.</small></div></li>
+            <li><span>✓</span><div><strong>Stay flexible</strong><small>Nothing is locked in. Your plan is yours.</small></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="outcome-section">
+        <div class="outcome-copy reveal">
+          <p class="eyebrow">Less tracking. More living.</p>
+          <h2>One meal doesn’t<br>ruin the day.</h2>
+          <p>NextMeal accounts for what you ate, shows exactly what remains, and keeps your next best move simple.</p>
+          <div class="metric-strip">
+            <div><strong>1839</strong><small>calories left</small></div>
+            <div><strong>108g</strong><small>protein left</small></div>
+          </div>
+        </div>
+        <div class="outcome-visual reveal" data-delay="1">
+          <div class="phone phone-outcome">
+            <div class="phone-speaker"></div>
+            <img src="assets/logged.webp" alt="NextMeal confirmation showing a meal logged and the remaining daily calories and protein" width="720" height="1565" loading="lazy">
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta reveal">
+        <img src="assets/app-icon.webp" alt="NextMeal" width="84" height="84">
+        <p class="eyebrow">Meet your next meal</p>
+        <h2>Eat with a plan.<br>Live without one.</h2>
+        <p>A modern nutrition coach that adapts to your goals, your kitchen, and your day.</p>
+        <a class="button button-light" href="mailto:yourspaceai@gmail.com?subject=NextMeal%20early%20access">Get early access <span aria-hidden="true">→</span></a>
+      </section>
+    </main>
+
+    <footer>
+      <a class="wordmark footer-brand" href="#top">
+        <img src="assets/app-icon.webp" alt="" width="34" height="34">
+        <span>NextMeal</span>
+      </a>
+      <p>Nutrition that keeps up.</p>
+      <nav aria-label="Legal and support">
         <a href="privacy.html">Privacy</a>
         <a href="terms.html">Terms</a>
         <a href="support.html">Support</a>
         <a href="delete-account.html">Delete account</a>
       </nav>
-    </header>
-
-    <main>
-      <section class="hero">
-        <p class="eyebrow">Legal &amp; Support</p>
-        <h1>Clear answers, without the fine-print maze.</h1>
-        <p class="lede">Review how NextMeal handles your information, understand the terms that apply to the service, get support, or request account deletion.</p>
-        <p class="meta">Last updated: September 4, 2026</p>
-      </section>
-
-      <section class="card-grid" aria-label="Documents">
-        <a class="card" href="privacy.html">
-          <h2>Privacy Policy</h2>
-          <p>What we collect, why we use it, service providers, retention, security, and your privacy choices.</p>
-        </a>
-        <a class="card" href="terms.html">
-          <h2>Terms of Use</h2>
-          <p>Rules for using the app, subscription terms, and important health and AI limitations.</p>
-        </a>
-        <a class="card" href="support.html">
-          <h2>Support</h2>
-          <p>Help with sign-in, meal logging, subscriptions, purchase restoration, privacy, and technical issues.</p>
-        </a>
-        <a class="card" href="delete-account.html">
-          <h2>Account Deletion</h2>
-          <p>How to request deletion, what gets removed, what may be retained, and how subscriptions are handled.</p>
-        </a>
-      </section>
-
-      <section class="callout">
-        <h2>Contact</h2>
-        <p>For support, privacy questions, or legal correspondence, email <a href="mailto:yourspaceai@gmail.com">yourspaceai@gmail.com</a>.</p>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <p>&copy; 2026 NextMeal</p>
-      <p><a href="mailto:yourspaceai@gmail.com">yourspaceai@gmail.com</a></p>
+      <small>© 2026 NextMeal</small>
     </footer>
   </body>
 </html>

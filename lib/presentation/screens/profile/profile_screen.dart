@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:diet_coach_ai/core/constants/app_colors.dart';
 import 'package:diet_coach_ai/core/constants/app_constants.dart';
 import 'package:diet_coach_ai/core/di/providers.dart';
+import 'package:diet_coach_ai/core/legal/legal_links.dart';
 import 'package:diet_coach_ai/core/router/safe_navigation.dart';
 import 'package:diet_coach_ai/main.dart'
     show authStore, dashboardStore, profileStore, subscriptionStore;
@@ -173,7 +174,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SliverFillRemaining(
                     child: Center(
                       child: CircularProgressIndicator.adaptive(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   )
@@ -418,6 +421,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'NextMeal Pro',
                           value: subscriptionStore.displayStatus,
                           onTap: _manageSubscription,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _Section(
+                      title: 'Legal',
+                      children: [
+                        _ProfileCard(
+                          icon: Icons.description_outlined,
+                          title: 'Terms of Use',
+                          value: 'How NextMeal works',
+                          onTap: LegalLinks.openTermsOfUse,
+                        ),
+                        _ProfileCard(
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'Privacy Policy',
+                          value: 'How we handle your data',
+                          onTap: LegalLinks.openPrivacyPolicy,
                         ),
                       ],
                     ),

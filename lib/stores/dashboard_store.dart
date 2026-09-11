@@ -109,6 +109,13 @@ class DashboardStore {
     () => aiCardText.value.isEmpty ? null : aiCardText.value,
   );
 
+  /// Whether the shared dashboard state already represents the current day.
+  ///
+  /// Screens can use this to avoid replacing a valid in-memory plan with an
+  /// unnecessary background fetch when navigating between tabs.
+  bool get hasLoadedToday =>
+      hasLoaded.value && activeDayId.value == _localDayId();
+
   // ── Actions ─────────────────────────────────────────────────────────────
 
   void applyPlan(DailyPlan plan) {
@@ -411,8 +418,10 @@ class DashboardStore {
   Future<void> swapSlot(int order) async {
     runInAction(() => isSwappingSlot.value = order);
     try {
-      final plan = await apiService.swapSlot(order);
-      applyPlan(plan);
+      final dayId = activeDayId.value;
+      final slot = plannedMeals.firstWhere((meal) => meal.order == order);
+      final plan = await apiService.swapSlot(slot.id, dayId: dayId);
+      if (activeDayId.value == dayId) applyPlan(plan);
     } catch (e) {
       runInAction(() {
         errorMessage.value = e is ApiException

@@ -18,10 +18,12 @@ class MealSwapStore {
   final isApplying = Observable<bool>(false);
   final errorMessage = Observable<String?>(null);
   int _requestVersion = 0;
+  String? _activeDayId;
 
   MealSwapStore({required this.apiService, required this.dashboardStore});
 
   Future<void> begin(PlannedMeal meal) async {
+    _activeDayId = dashboardStore.activeDayId.value;
     runInAction(() {
       activeMeal.value = meal;
       alternatives.clear();
@@ -53,7 +55,8 @@ class MealSwapStore {
     });
     try {
       final response = await apiService.fetchSlotAlternatives(
-        plannedMeal.order,
+        plannedMeal.id,
+        dayId: _activeDayId!,
         reason: reason.value,
         excludeNames: [plannedMeal.meal.name],
         preferPantry: dashboardStore.pantry.isNotEmpty,
@@ -105,12 +108,15 @@ class MealSwapStore {
     });
     try {
       final response = await apiService.replacePlanSlot(
-        plannedMeal.order,
+        plannedMeal.id,
+        dayId: _activeDayId!,
         expectedCurrentName: plannedMeal.meal.name,
         replacement: replacement,
         rebalanceRemaining: rebalanceRemaining,
       );
-      dashboardStore.applyPlan(response.updatedPlan);
+      if (dashboardStore.activeDayId.value == _activeDayId) {
+        dashboardStore.applyPlan(response.updatedPlan);
+      }
       return response;
     } on ApiException catch (error) {
       runInAction(() => errorMessage.value = error.message);
@@ -127,6 +133,7 @@ class MealSwapStore {
 
   void reset() {
     _requestVersion++;
+    _activeDayId = null;
     runInAction(() {
       activeMeal.value = null;
       alternatives.clear();

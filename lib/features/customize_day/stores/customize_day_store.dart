@@ -183,6 +183,7 @@ class CustomizeDayStore {
 
     try {
       final request = CustomDayPlanRequest(
+        dayId: dashboardStore.activeDayId.value,
         meals: filledMeals.entries.map((e) {
           final order = e.key;
           final meal = e.value;
@@ -198,7 +199,9 @@ class CustomizeDayStore {
 
       final plan = await apiService.saveCustomDayPlan(request);
       runInAction(() => errorMessage.value = '');
-      dashboardStore.applyPlan(plan);
+      if (dashboardStore.activeDayId.value == request.dayId) {
+        dashboardStore.applyPlan(plan);
+      }
     } on ApiException catch (e) {
       runInAction(() => errorMessage.value = e.message);
     } catch (e) {

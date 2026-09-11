@@ -10,10 +10,41 @@ import 'package:diet_coach_ai/core/di/providers.dart';
 import 'package:diet_coach_ai/features/meal_swap/widgets/meal_swap_sheet.dart';
 import 'package:diet_coach_ai/shared/models/meal.dart';
 import 'package:diet_coach_ai/shared/models/planned_meal.dart';
+import 'package:diet_coach_ai/stores/dashboard_store.dart';
+import 'package:diet_coach_ai/features/meal_swap/stores/meal_swap_store.dart';
 
 void main() {
   setUpAll(() {
     dotenv.testLoad(fileInput: 'BASE_URL=http://localhost');
+  });
+
+  test('an open swap retains its selected day across midnight', () async {
+    final adapter = _RecordingAdapter({
+      'slot_order': 1,
+      'current_meal': _mealJson('Chicken salad', 500, 40),
+      'alternatives': [],
+    });
+    final client = Dio(BaseOptions(baseUrl: 'http://localhost'))
+      ..httpClientAdapter = adapter;
+    final dashboard = DashboardStore();
+    dashboard.activeDayId.value = '2026-09-10';
+    final store = MealSwapStore(
+      apiService: ApiService(client),
+      dashboardStore: dashboard,
+    );
+    await store.begin(
+      PlannedMeal(
+        id: 'lunch-id',
+        slot: 'lunch',
+        order: 1,
+        meal: Meal.fromJson(_mealJson('Chicken salad', 500, 40)),
+        status: PlannedMealStatus.planned,
+      ),
+    );
+    dashboard.activeDayId.value = '2026-09-11';
+    await store.loadAlternatives();
+    expect(adapter.lastRequest?.data['day_id'], '2026-09-10');
+    expect(adapter.lastRequest?.path, '/day-plan/slots/lunch-id/alternatives');
   });
 
   test('requests non-mutating alternatives with the selected intent', () async {
@@ -37,15 +68,17 @@ void main() {
     final service = ApiService(dio);
 
     final response = await service.fetchSlotAlternatives(
-      1,
+      'lunch-id',
+      dayId: '2026-09-10',
       reason: 'quicker',
       excludeNames: const ['Chicken salad'],
       preferPantry: true,
     );
 
     expect(adapter.lastRequest?.method, 'POST');
-    expect(adapter.lastRequest?.path, '/day-plan/slots/1/alternatives');
+    expect(adapter.lastRequest?.path, '/day-plan/slots/lunch-id/alternatives');
     expect(adapter.lastRequest?.data, {
+      'day_id': '2026-09-10',
       'reason': 'quicker',
       'exclude_names': ['Chicken salad'],
       'count': 3,
@@ -74,15 +107,17 @@ void main() {
     final replacement = Meal.fromJson(_mealJson('Paneer bowl', 580, 45));
 
     final response = await service.replacePlanSlot(
-      1,
+      'lunch-id',
+      dayId: '2026-09-10',
       expectedCurrentName: 'Chicken salad',
       replacement: replacement,
       rebalanceRemaining: true,
     );
 
     expect(adapter.lastRequest?.method, 'POST');
-    expect(adapter.lastRequest?.path, '/day-plan/slots/1/replace');
+    expect(adapter.lastRequest?.path, '/day-plan/slots/lunch-id/replace');
     final data = adapter.lastRequest?.data as Map<String, dynamic>;
+    expect(data['day_id'], '2026-09-10');
     expect(data['expected_current_name'], 'Chicken salad');
     expect(data['rebalance_remaining'], true);
     expect((data['meal'] as Map<String, dynamic>)['name'], 'Paneer bowl');

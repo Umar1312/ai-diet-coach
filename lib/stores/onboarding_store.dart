@@ -1,4 +1,5 @@
 import 'package:mobx/mobx.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import '../core/constants/app_constants.dart';
 import '../core/di/providers.dart';
 import '../shared/models/user_setup_request.dart';
@@ -82,7 +83,7 @@ abstract class _OnboardingStore with Store {
     dietaryRestrictions = restrictions;
   }
 
-  UserSetupRequest toApiRequest() {
+  UserSetupRequest toApiRequest({String timezone = 'UTC'}) {
     return UserSetupRequest(
       gender: (gender ?? 'male').toLowerCase(),
       age: (age?.toInt()) ?? 25,
@@ -92,6 +93,7 @@ abstract class _OnboardingStore with Store {
       goal: AppConstants.goalMap[goal] ?? 'lose_weight',
       targetWeightKg: targetWeight ?? 65,
       dietaryRestrictions: dietaryRestrictions,
+      timezone: timezone,
       country: country,
       preferredCuisines: preferredCuisines,
     );
@@ -102,7 +104,8 @@ abstract class _OnboardingStore with Store {
     loadingProgress = 0.3;
     loadingStatus = 'Creating your profile...';
 
-    final request = toApiRequest();
+    final timezone = await FlutterTimezone.getLocalTimezone();
+    final request = toApiRequest(timezone: timezone.identifier);
     final response = await apiService.setupUser(request);
 
     setupResponse = response;

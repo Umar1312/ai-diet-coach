@@ -26,7 +26,9 @@ class _PlanScreenState extends State<PlanScreen> {
   @override
   void initState() {
     super.initState();
-    dashboardStore.refresh();
+    if (!dashboardStore.hasLoadedToday) {
+      dashboardStore.refresh();
+    }
   }
 
   @override

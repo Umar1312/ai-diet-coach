@@ -114,23 +114,7 @@ class _BuildingPlanView extends StatelessWidget {
       child: Column(
         children: [
           const Spacer(flex: 2),
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.92, end: 1),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutBack,
-            builder: (context, scale, child) =>
-                Transform.scale(scale: scale, child: child),
-            child: Container(
-              width: 112,
-              height: 112,
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: const Text('🍽️', style: TextStyle(fontSize: 52)),
-            ),
-          ),
+          const _FoodConveyor(),
           const SizedBox(height: 32),
           const Text(
             'Building your day',
@@ -174,6 +158,121 @@ class _BuildingPlanView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+}
+
+/// A light, looping food parade: each ingredient enters from the left,
+/// settles over the plate, then continues off the right edge.
+class _FoodConveyor extends StatefulWidget {
+  const _FoodConveyor();
+
+  @override
+  State<_FoodConveyor> createState() => _FoodConveyorState();
+}
+
+class _FoodConveyorState extends State<_FoodConveyor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 3000),
+  )..repeat();
+
+  static const _foods = ['🥑', '🍓', '🥗', '🍗', '🍚', '🥦'];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return SizedBox(
+      width: double.infinity,
+      height: 132,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final travel = constraints.maxWidth * .56;
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 112,
+                    height: 112,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text('🍽️', style: TextStyle(fontSize: 52)),
+                  ),
+                  if (!reduceMotion)
+                    for (var index = 0; index < 3; index++)
+                      _MovingFood(
+                        emoji:
+                            _foods[(_controller.value * _foods.length + index)
+                                    .floor() %
+                                _foods.length],
+                        progress: (_controller.value + index / 3) % 1,
+                        travel: travel,
+                        laneOffset: (index - 1) * 18,
+                      ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MovingFood extends StatelessWidget {
+  const _MovingFood({
+    required this.emoji,
+    required this.progress,
+    required this.travel,
+    required this.laneOffset,
+  });
+
+  final String emoji;
+  final double progress;
+  final double travel;
+  final double laneOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    // 0–.42: arrive with a small overshoot; .42–.58: settle at the plate;
+    // .58–1: glide away. The opacity keeps entering/exiting food subtle.
+    final x = switch (progress) {
+      < .42 =>
+        -travel + (travel + 10) * Curves.easeOutBack.transform(progress / .42),
+      < .58 => 10 * (1 - Curves.easeOut.transform((progress - .42) / .16)),
+      _ => travel * Curves.easeIn.transform((progress - .58) / .42),
+    };
+    final scale = progress < .42
+        ? .72 + .28 * Curves.easeOut.transform(progress / .42)
+        : 1.0;
+    final opacity = progress < .08
+        ? progress / .08
+        : progress > .9
+        ? (1 - progress) / .1
+        : 1.0;
+    return Transform.translate(
+      offset: Offset(x, laneOffset),
+      child: Transform.scale(
+        scale: scale,
+        child: Opacity(
+          opacity: opacity.clamp(0, 1),
+          child: Text(emoji, style: const TextStyle(fontSize: 36)),
+        ),
       ),
     );
   }
@@ -390,7 +489,9 @@ class _PlanReadyView extends StatelessWidget {
                                 width: 23,
                                 height: 23,
                                 child: CircularProgressIndicator.adaptive(
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textOnPrimary),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.textOnPrimary,
+                                  ),
                                   strokeWidth: 2.5,
                                 ),
                               )

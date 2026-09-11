@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -8,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../main.dart';
 import '../../../shared/widgets/nextmeal_app_icon.dart';
+import '../../../shared/widgets/legal_footer.dart';
 
 /// CAL AI-inspired login screen.
 ///
@@ -39,7 +39,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 14),
               const _GoogleButton(),
               const SizedBox(height: 24),
-              const _LegalFooter(),
+              const LegalFooter(prefix: 'By continuing you agree to our '),
               const SizedBox(height: 16),
             ],
           ),
@@ -239,39 +239,6 @@ class _SocialButton extends StatelessWidget {
                 ],
               ),
       ),
-    );
-  }
-}
-
-class _LegalFooter extends StatelessWidget {
-  const _LegalFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        style: const TextStyle(
-          fontSize: 13,
-          color: AppColors.textTertiary,
-          height: 1.5,
-        ),
-        children: [
-          const TextSpan(text: 'By continuing you agree to our '),
-          TextSpan(
-            text: 'Terms',
-            style: TextStyle(color: AppColors.textSecondary),
-            recognizer: TapGestureRecognizer()..onTap = () {},
-          ),
-          const TextSpan(text: ' and '),
-          TextSpan(
-            text: 'Privacy Policy',
-            style: TextStyle(color: AppColors.textSecondary),
-            recognizer: TapGestureRecognizer()..onTap = () {},
-          ),
-          const TextSpan(text: '.'),
-        ],
-      ),
-      textAlign: TextAlign.center,
     );
   }
 }

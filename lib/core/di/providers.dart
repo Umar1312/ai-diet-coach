@@ -507,12 +507,16 @@ class ApiService {
     });
   }
 
-  Future<DailyPlan> swapSlot(int order, {List<String>? excludeNames}) async {
+  Future<DailyPlan> swapSlot(
+    String slotId, {
+    required String dayId,
+    List<String>? excludeNames,
+  }) async {
     return _wrap(() async {
       final response = await _dio.post(
-        '/day-plan/slots/$order/swap',
+        '/day-plan/slots/$slotId/swap',
         data: {
-          'slot_order': order,
+          'day_id': dayId,
           if (excludeNames != null && excludeNames.isNotEmpty)
             'exclude_names': excludeNames,
         },
@@ -522,15 +526,17 @@ class ApiService {
   }
 
   Future<SlotAlternativesResponse> fetchSlotAlternatives(
-    int order, {
+    String slotId, {
+    required String dayId,
     String reason = 'surprise_me',
     List<String> excludeNames = const [],
     bool preferPantry = true,
   }) async {
     return _wrap(() async {
       final response = await _dio.post(
-        '/day-plan/slots/$order/alternatives',
+        '/day-plan/slots/$slotId/alternatives',
         data: {
+          'day_id': dayId,
           'reason': reason,
           'exclude_names': excludeNames,
           'count': 3,
@@ -544,15 +550,17 @@ class ApiService {
   }
 
   Future<SlotReplacementResponse> replacePlanSlot(
-    int order, {
+    String slotId, {
+    required String dayId,
     required String expectedCurrentName,
     required Meal replacement,
     required bool rebalanceRemaining,
   }) async {
     return _wrap(() async {
       final response = await _dio.post(
-        '/day-plan/slots/$order/replace',
+        '/day-plan/slots/$slotId/replace',
         data: {
+          'day_id': dayId,
           'expected_current_name': expectedCurrentName,
           'meal': replacement.toJson(),
           'rebalance_remaining': rebalanceRemaining,

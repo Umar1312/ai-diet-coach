@@ -9,10 +9,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:diet_coach_ai/core/di/providers.dart';
 import 'package:diet_coach_ai/main.dart' show dashboardStore;
 import 'package:diet_coach_ai/presentation/screens/plan/plan_screen.dart';
+import 'package:diet_coach_ai/shared/models/dashboard_state.dart';
 
 class _DelayedLogAdapter implements HttpClientAdapter {
   final Map<String, dynamic> plan;
   final requests = <RequestOptions>[];
+  final allRequests = <RequestOptions>[];
   Completer<ResponseBody> pending = Completer<ResponseBody>();
   _DelayedLogAdapter(this.plan);
   @override
@@ -21,6 +23,7 @@ class _DelayedLogAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    allRequests.add(options);
     if (options.method == 'POST') {
       requests.add(options);
       return pending.future;
@@ -51,6 +54,33 @@ class _DelayedLogAdapter implements HttpClientAdapter {
 
 void main() {
   setUpAll(() => dotenv.testLoad(fileInput: 'BASE_URL=http://localhost'));
+
+  testWidgets('plan screen reuses dashboard state loaded for today', (
+    tester,
+  ) async {
+    final plan =
+        jsonDecode(File('test/fixtures/adaptive_plan.json').readAsStringSync())
+            as Map<String, dynamic>;
+    final now = DateTime.now();
+    String two(int value) => value.toString().padLeft(2, '0');
+    plan['day_id'] = '${now.year}-${two(now.month)}-${two(now.day)}';
+
+    final adapter = _DelayedLogAdapter(plan);
+    final originalAdapter = dio.httpClientAdapter;
+    dio.httpClientAdapter = adapter;
+    dashboardStore.applyPlan(DailyPlan.fromJson(plan));
+    addTearDown(() {
+      dio.httpClientAdapter = originalAdapter;
+      dashboardStore.reset();
+    });
+
+    await tester.pumpWidget(const MaterialApp(home: PlanScreen()));
+    await tester.pump();
+
+    expect(adapter.allRequests, isEmpty);
+    expect(find.text('Dal rice'), findsOneWidget);
+  });
+
   testWidgets(
     'confirmation shows loading, prevents duplicates, and allows retry after failure',
     (tester) async {
