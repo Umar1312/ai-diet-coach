@@ -134,6 +134,15 @@ class ApiService {
     });
   }
 
+  /// Records the IANA timezone supplied by the device. This deliberately has
+  /// no UI-facing return value: a failed background sync must never block
+  /// launching the app or using an existing plan.
+  Future<void> updateDeviceTimezone(String timezone) async {
+    await _wrap(() async {
+      await _dio.patch('/users/me', data: {'timezone': timezone});
+    });
+  }
+
   Future<PantryStarterPackResponse> fetchOnboardingStarterPack() async {
     return _wrap(() async {
       final response = await _dio.get('/users/onboarding/pantry-starter-pack');
