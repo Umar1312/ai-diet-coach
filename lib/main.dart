@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:mobx/mobx.dart';
 import 'firebase_options.dart';
 import 'core/constants/app_constants.dart';
@@ -13,6 +12,7 @@ import 'core/constants/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/services/revenuecat_service.dart';
 import 'core/services/meal_notification_service.dart';
+import 'core/services/device_timezone_sync_service.dart';
 import 'core/di/providers.dart';
 import 'stores/auth_store.dart';
 import 'stores/onboarding_store.dart';
@@ -55,6 +55,9 @@ final mealCheckInStore = MealCheckInStore(
 final mealSwapStore = MealSwapStore(
   apiService: apiService,
   dashboardStore: dashboardStore,
+);
+final deviceTimezoneSyncService = DeviceTimezoneSyncService(
+  apiService: apiService,
 );
 
 void main() async {
@@ -137,13 +140,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     notificationStore.onOpenCheckIn = _openPendingCheckIn;
-    _authReaction = reaction<AuthStatus>(
-      (_) => authStore.status.value,
-      (_) {
-        _openPendingCheckIn();
-        _syncDeviceTimezone();
-      },
-    );
+    _authReaction = reaction<AuthStatus>((_) => authStore.status.value, (_) {
+      _openPendingCheckIn();
+      _syncDeviceTimezone();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _openPendingCheckIn();
       _syncDeviceTimezone();
@@ -164,22 +164,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   void _syncDeviceTimezone() {
-    final status = authStore.status.value;
-    final isAuthenticated =
-        status == AuthStatus.authenticated ||
-        status == AuthStatus.needsSubscription;
-    if (!isAuthenticated) return;
+    if (!_canSyncAuthenticatedUser) return;
+    unawaited(deviceTimezoneSyncService.sync());
+  }
 
-    unawaited(() async {
-      try {
-        final timezone = await FlutterTimezone.getLocalTimezone();
-        await apiService.updateDeviceTimezone(timezone.identifier);
-      } catch (error) {
-        // Timezone reporting is a best-effort launch task. It should never
-        // interrupt a signed-in user if a platform read or network call fails.
-        debugPrint('Device timezone sync failed: $error');
-      }
-    }());
+  bool get _canSyncAuthenticatedUser {
+    final status = authStore.status.value;
+    return status == AuthStatus.authenticated ||
+        status == AuthStatus.needsSubscription;
   }
 
   void _openPendingCheckIn() {
