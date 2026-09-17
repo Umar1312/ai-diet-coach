@@ -123,12 +123,6 @@ class _AnimatedFlatware extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = Icon(
-      Icons.flatware_rounded,
-      size: size,
-      color: AppColors.textPrimary,
-    );
-    if (progress >= 1) return icon;
     return SizedBox(
       width: size,
       height: size,
@@ -140,7 +134,10 @@ class _AnimatedFlatware extends StatelessWidget {
               alignment: left
                   ? const Alignment(-.4, .75)
                   : const Alignment(.4, .75),
-              child: ClipRect(clipper: _UtensilClipper(left), child: icon),
+              child: CustomPaint(
+                size: Size.square(size),
+                painter: _LogoUtensilPainter(isFork: left),
+              ),
             ),
         ],
       ),
@@ -148,12 +145,57 @@ class _AnimatedFlatware extends StatelessWidget {
   }
 }
 
-class _UtensilClipper extends CustomClipper<Rect> {
-  const _UtensilClipper(this.left);
-  final bool left;
+/// Silhouettes matched to the fork and spoon in nextmeal-app-icon.png.
+/// Each utensil owns its full shape so rotation cannot expose another glyph.
+class _LogoUtensilPainter extends CustomPainter {
+  const _LogoUtensilPainter({required this.isFork});
+  final bool isFork;
+
   @override
-  Rect getClip(Size size) =>
-      Rect.fromLTWH(left ? 0 : size.width / 2, 0, size.width / 2, size.height);
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 100, size.height / 100);
+    final path = isFork ? _forkPath() : _spoonPath();
+    canvas.drawPath(path, Paint()..color = AppColors.textPrimary);
+    canvas.restore();
+  }
+
+  // The reference mark has three rounded tines and a gently tapered handle.
+  Path _forkPath() => Path()
+    ..moveTo(11, 5)
+    ..cubicTo(11, 0, 19, 0, 19, 5)
+    ..lineTo(19, 24)
+    ..cubicTo(19, 28, 23, 28, 23, 24)
+    ..lineTo(23, 5)
+    ..cubicTo(23, 0, 31, 0, 31, 5)
+    ..lineTo(31, 24)
+    ..cubicTo(31, 28, 35, 28, 35, 24)
+    ..lineTo(35, 5)
+    ..cubicTo(35, 0, 43, 0, 43, 5)
+    ..lineTo(43, 27)
+    ..cubicTo(43, 34, 39, 39, 35, 42)
+    ..cubicTo(33, 43, 33, 45, 33, 48)
+    ..lineTo(35, 90)
+    ..cubicTo(36, 103, 18, 103, 19, 90)
+    ..lineTo(21, 48)
+    ..cubicTo(21, 45, 21, 43, 19, 42)
+    ..cubicTo(15, 39, 11, 34, 11, 27)
+    ..close();
+
+  Path _spoonPath() => Path()
+    ..moveTo(72, 1)
+    ..cubicTo(82, 1, 89, 12, 89, 23)
+    ..cubicTo(89, 32, 85, 38, 81, 41)
+    ..cubicTo(78, 43, 78, 45, 78, 48)
+    ..lineTo(80, 90)
+    ..cubicTo(81, 103, 63, 103, 64, 90)
+    ..lineTo(66, 48)
+    ..cubicTo(66, 45, 66, 43, 63, 41)
+    ..cubicTo(59, 38, 55, 32, 55, 23)
+    ..cubicTo(55, 12, 62, 1, 72, 1)
+    ..close();
+
   @override
-  bool shouldReclip(_UtensilClipper oldClipper) => left != oldClipper.left;
+  bool shouldRepaint(covariant _LogoUtensilPainter oldDelegate) =>
+      isFork != oldDelegate.isFork;
 }
