@@ -2,7 +2,7 @@ name: diet_coach_ai
 description: "NextMeal creates personalized meal plans for your nutrition goals."
 publish_to: 'none'
 
-version: 1.0.0+6
+version: 1.0.1+0
 
 environment:
   sdk: ^3.11.4

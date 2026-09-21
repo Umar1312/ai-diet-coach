@@ -1,3 +1,4 @@
+import 'package:diet_coach_ai/features/health_sources/health_sources_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:diet_coach_ai/shared/widgets/stepper_slider.dart';
@@ -429,6 +430,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: _Section(
                       title: 'Legal',
                       children: [
+                        _ProfileCard(
+                          icon: Icons.menu_book_outlined,
+                          title: 'Health sources & calculations',
+                          value: 'Evidence behind your estimates',
+                          onTap: () => HealthSourcesLink.open(context),
+                        ),
                         _ProfileCard(
                           icon: Icons.description_outlined,
                           title: 'Terms of Use',

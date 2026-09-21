@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sources and calculation details for NextMeal nutrition estimates.">
+    <title>Health Sources &amp; Calculations — NextMeal</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">NextMeal</a>
+      <nav class="site-nav" aria-label="Legal and support navigation">
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="support.html">Support</a>
+        <a href="delete-account.html">Delete account</a>
+      </nav>
+    </header>
+
+    <main>
+      <p class="eyebrow">Health sources &amp; calculations</p>
+      <h1>How NextMeal estimates your targets.</h1>
+      <p class="lede">NextMeal provides nutrition estimates for general wellness. It does not provide medical advice, diagnosis, or treatment.</p>
+
+      <div class="callout warning">
+        <p>Talk to a qualified healthcare professional before making medical or dietary decisions, especially if you have a medical condition, are pregnant or breastfeeding, or are under 18.</p>
+      </div>
+
+      <h2>Calorie estimates</h2>
+      <p>NextMeal estimates resting energy needs with the Mifflin&ndash;St Jeor equation: 10 &times; weight (kg) + 6.25 &times; height (cm) &minus; 5 &times; age (years), then +5 for the male setting or &minus;161 for the female setting. The study concerns healthy adults, and individual needs can differ.</p>
+      <p>NextMeal then applies activity factors: sedentary 1.2, light 1.375, moderate 1.55, active 1.725, and very active 1.9. Goal adjustments are &minus;500 kcal/day for weight loss, 0 for maintenance, and +300 for muscle gain. These factors and adjustments are NextMeal assumptions. They are not prescriptions validated by this study or guarantees of weight change.</p>
+      <p><strong>Source:</strong> <a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noopener">Mifflin et al. (1990), A new predictive equation for resting energy expenditure in healthy individuals, American Journal of Clinical Nutrition</a>.</p>
+
+      <h2>Protein targets</h2>
+      <p>The International Society of Sports Nutrition position stand discusses 1.4&ndash;2.0 g/kg/day for most exercising people. This is exercise guidance, not a universal requirement.</p>
+      <p>NextMeal uses 1.4 g/kg for maintenance and 1.8 g/kg for weight loss or muscle gain. For weight loss with a lower goal weight, it uses that goal weight; otherwise, it uses current weight, with a 20 kg minimum reference. These selections are NextMeal choices and are not individually validated recommendations from the paper.</p>
+      <p><strong>Source:</strong> <a href="https://link.springer.com/article/10.1186/s12970-017-0177-8" target="_blank" rel="noopener">J&auml;ger et al. (2017), International Society of Sports Nutrition Position Stand: protein and exercise</a>.</p>
+
+      <h2>Fat and carbohydrate calculations</h2>
+      <p>Energy conversions use 4 kcal per gram of protein or carbohydrate and 9 kcal per gram of fat.</p>
+      <p>NextMeal allocates 25% of calories to fat, or 27% for muscle gain, with a minimum of 0.7 g/kg for weight loss or 0.8 g/kg otherwise. It uses the lower of current and goal weight, with a 20 kg minimum reference. Remaining calories are assigned to carbohydrates, never below zero. Grams are rounded. The allocation and minimums are NextMeal choices; the source supports the energy conversions only.</p>
+      <p><strong>Source:</strong> <a href="https://www.nal.usda.gov/programs/fnic" target="_blank" rel="noopener">USDA National Agricultural Library, Food and Nutrition Information Center</a>.</p>
+
+      <h2>Meal suggestions and AI estimates</h2>
+      <p>World Health Organization healthy-diet guidance is provided as general background when reviewing meal suggestions. NextMeal does not implement WHO guidance as an individualized plan or a calculation.</p>
+      <p>NextMeal uses AI to generate meal suggestions, explanations, and food estimates from your inputs and targets. These outputs are not individually reviewed or verified by WHO or the authors cited here. Portions, ingredients, and preparation affect actual nutrition; check packaging and adjust estimates when possible.</p>
+      <p><strong>Background guidance:</strong> <a href="https://www.who.int/news-room/fact-sheets/detail/healthy-diet" target="_blank" rel="noopener">World Health Organization, Healthy diet</a>.</p>
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; 2026 NextMeal</p>
+      <p><a href="terms.html">Terms</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="support.html">Support</a></p>
+    </footer>
+  </body>
+</html>
